@@ -1,0 +1,48 @@
+<fuse-loading-bar />
+
+<fuse-vertical-navigation class="bg-card print:hidden" [mode]="isScreenSmall ? 'over' : 'side'"
+  [name]="'mainNavigation'" [navigation]="navigation.default" [opened]="!isScreenSmall">
+  <ng-container fuseVerticalNavigationHeader>
+    <div class="flex h-14 items-center p-4">
+      <img class="w-30 dark:hidden" src="img/logo.png" alt="Logo image" />
+      <img class="hidden w-30 dark:flex" src="img/logo.png" alt="Logo image" />
+    </div>
+  </ng-container>
+  <ng-container fuseVerticalNavigationFooter>
+    <div class="flex items-center w-full px-4 py-2 border-t">
+      <div class="flex flex-col w-full overflow-hidden">
+        <div class="w-full text-md text-center text-ellipsis overflow-hidden leading-normal">
+          Copyright &copy; 2022
+        </div>
+        <div class="w-full  text-md text-center font-semibold text-ellipsis overflow-hidden leading-normal">
+          Tribunal Electoral FIERPI
+        </div>
+        <span class="font-medium text-center text-sm">Desarrollado por: <a
+            class="text-md font-normal  hover:underline cursor-pointer hover:text-primary-700"
+            href="https://github.com/guacho20" target=”_blank”>Jhon Guacho</a> </span>
+      </div>
+    </div>
+  </ng-container>
+</fuse-vertical-navigation>
+
+<div class="flex w-full min-w-0 flex-auto flex-col">
+  <div
+    class="bg-card relative z-49 flex h-12 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden">
+    <button mat-icon-button (click)="toggleNavigation('mainNavigation')">
+      <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+    </button>
+    <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
+      <user />
+    </div>
+  </div>
+  <div class="flex flex-auto flex-col">
+    @if (true) {
+    <router-outlet></router-outlet>
+    }
+  </div>
+
+  <div
+    class="bg-card relative z-49 flex h-10 w-full flex-0 items-center justify-start border-t px-4 dark:bg-transparent md:px-6 print:hidden">
+    <span class="text-secondary font-medium">Fuse &copy; {{ currentYear }}</span>
+  </div>
+</div>

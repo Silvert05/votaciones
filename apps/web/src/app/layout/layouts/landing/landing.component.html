@@ -1,0 +1,71 @@
+<fuse-loading-bar />
+
+@if (isScreenSmall) {
+<fuse-vertical-navigation class="dark bg-gray-900 print:hidden" [mode]="'over'" [name]="'mainNavigation'"
+  [navigation]="navigation.default" [opened]="false">
+  <ng-container fuseVerticalNavigationContentHeader>
+    <div class="flex h-14 items-center px-6 pt-4">
+      <img class="h-7" src="img/logo.png" alt="Logo">
+    </div>
+  </ng-container>
+</fuse-vertical-navigation>
+}
+
+<div class="flex w-full min-w-0 flex-auto flex-col bg-default">
+  <header
+    class="sticky top-0 z-49 flex h-14 w-full flex-0 items-center justify-between bg-card backdrop-blur-md px-4 md:px-6 lg:px-12 border-b border-transparent shadow-sm transition-all duration-300 dark:border-b dark:bg-gray-900/90 dark:shadow-none print:hidden">
+
+    @if (!isScreenSmall) {
+    <a [routerLink]="'/inicio'" class="flex items-center shrink-0 mr-6">
+      <img class="h-8 dark:hidden" src="img/logo.png" alt="Logo FIERPI">
+      <img class="h-8 hidden dark:block" src="img/logo-dark.png" alt="Logo FIERPI">
+    </a>
+    <div class="flex items-center gap-3 ml-4">
+      <fuse-horizontal-navigation [name]="'mainNavigation'" [navigation]="navigation.horizontal">
+      </fuse-horizontal-navigation>
+      <a [routerLink]="'admin/auth/login'" target="_blank"
+        class="inline-flex items-center gap-1.5 px-4 h-8 rounded-md bg-primary text-on-primary text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150">
+        <mat-icon class="icon-size-4" [svgIcon]="'mat_solid:login'"></mat-icon>
+        Iniciar Sesión
+      </a>
+    </div>
+
+    } @else {
+    <button mat-icon-button (click)="toggleNavigation('mainNavigation')">
+      <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+    </button>
+    <a [routerLink]="'/inicio'" class="absolute left-1/2 -translate-x-1/2">
+      <img class="h-8" src="img/logo.png" alt="Logo FIERPI">
+    </a>
+    <a [routerLink]="'admin/auth/login'" target="_blank"
+      class="inline-flex items-center gap-1 px-3 h-8 rounded-md bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity duration-150">
+      <mat-icon class="icon-size-4" [svgIcon]="'mat_solid:login'"></mat-icon>
+      <span class="hidden xs:inline">Ingresar</span>
+    </a>
+    }
+  </header>
+
+  <main class="flex flex-auto flex-col">
+    @if (true) {
+    <router-outlet></router-outlet>
+    }
+  </main>
+
+
+  <footer
+    class="bg-card relative flex flex-0 flex-col items-center w-full border-t py-10 px-6 dark:bg-transparent print:hidden">
+    <a [routerLink]="'/inicio'" class="mb-3">
+      <img class="dark:hidden h-12" src="img/logo.png" alt="Logo FIERPI">
+      <img class="hidden dark:flex h-12" src="img/logo-dark.png" alt="Logo FIERPI">
+    </a>
+    <p class="text-sm text-secondary text-center">
+      © {{ currentYear }} Tribunal Electoral FIERPI. Todos los derechos reservados.
+    </p>
+    <p class="text-sm text-secondary text-center mt-1">
+      Desarrollado por
+      <a href="https://github.com/guacho20" target="_blank" class="text-primary font-semibold hover:underline">
+        Jhon Guacho
+      </a>
+    </p>
+  </footer>
+</div>
