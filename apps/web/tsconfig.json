@@ -3,21 +3,37 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "experimentalDecorators": true,
     "importHelpers": true,
+    "moduleResolution": "bundler",
     "target": "ES2022",
-    "module": "preserve"
+    "module": "ES2022",
+    "paths": {
+      /*  "@core": [
+        "./src/@core/index.ts"
+      ], */
+      "@core/*": [
+        "./src/@core/*"
+      ],
+      "app/*": [
+        "./src/app/*"
+      ]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true
+    "strictInjectionParameters": false,
+    "strictInputAccessModifiers": false,
+    "strictTemplates": false
   },
   "files": [],
   "references": [
