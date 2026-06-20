@@ -1,0 +1,135 @@
+<div class="flex flex-col flex-auto min-w-0">
+
+  <section class="relative flex items-center min-h-[520px] md:min-h-[600px]
+      bg-[url(https://www.uni.lu/wp-content/uploads/sites/5/2024/02/AdobeStock_569706377-scaled.jpeg)]
+      bg-cover bg-center bg-no-repeat">
+
+    <div class="absolute inset-0 bg-primary/85"></div>
+
+    <div class="relative w-full mx-auto max-w-screen-xl px-6 md:px-10 lg:px-12 py-20 md:py-28">
+      <div class="max-w-2xl">
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-5">
+          Consulte si su iglesia<br>
+          <span class="text-amber-300">consta en el padrón</span><br>
+          para las elecciones
+        </h1>
+
+        <p class="text-base md:text-lg text-white/80 mb-8 max-w-xl leading-relaxed">
+          Verifique si su iglesia está habilitada para ejercer el derecho de votación en las elecciones del
+          <strong class="text-white">Consejo de Gobierno de la FIERPI</strong>.
+        </p>
+
+
+        <div class="flex flex-wrap gap-3">
+          <a [routerLink]="'/iglesias'"
+            class="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-amber-400 text-gray-900 font-bold text-sm md:text-base hover:bg-amber-300 transition-colors duration-200 shadow-lg">
+            VERIFICAR IGLESIA
+          </a>
+          <a [routerLink]="'/candidatos'"
+            class="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-white/15 text-white font-semibold text-sm md:text-base border border-white/30 hover:bg-white/25 transition-colors duration-200">
+            VER CANDIDATOS
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-16 md:py-20 px-6 md:px-10 lg:px-12 bg-white dark:bg-transparent">
+    <div class="mx-auto max-w-screen-xl">
+
+      <div class="text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold text-primary mb-3">
+          Proceso Electoral FIERPI 2022
+        </h2>
+        <p class="text-secondary max-w-xl mx-auto text-sm md:text-base">
+          Información sobre las elecciones del Consejo de Gobierno de la Federación de Iglesias Evangélicas de la
+          Provincia de Imbabura.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Card: Verificar -->
+        <div
+          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200">
+          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-5">
+            <mat-icon class="icon-size-7 text-primary" [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+          </div>
+          <h3 class="font-bold text-base mb-2">Verificar Iglesia</h3>
+          <p class="text-secondary text-sm leading-relaxed">
+            Consulte si su iglesia se encuentra registrada en el padrón electoral habilitada para votar.
+          </p>
+          <a [routerLink]="'/iglesias'" class="mt-5 text-primary text-sm font-semibold hover:underline">
+            Consultar →
+          </a>
+        </div>
+
+        <!-- Card: Candidatos -->
+        <div
+          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200">
+          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-5">
+            <mat-icon class="icon-size-7 text-primary" [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+          </div>
+          <h3 class="font-bold text-base mb-2">Candidatos</h3>
+          <p class="text-secondary text-sm leading-relaxed">
+            Conozca los candidatos que participan en las elecciones del Consejo de Gobierno de la FIERPI.
+          </p>
+          <a [routerLink]="'/candidatos'" class="mt-5 text-primary text-sm font-semibold hover:underline">
+            Ver candidatos →
+          </a>
+        </div>
+
+        <!-- Card: Resultados -->
+        <div
+          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200 sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-5">
+            <mat-icon class="icon-size-7 text-primary" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+          </div>
+          <h3 class="font-bold text-base mb-2">Resultados</h3>
+          <p class="text-secondary text-sm leading-relaxed">
+            Acceda a los resultados del proceso electoral una vez concluida la jornada de votación.
+          </p>
+          <a [routerLink]="'/resultados'" class="mt-5 text-primary text-sm font-semibold hover:underline">
+            Ver resultados →
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+  <div class="flex-auto p-6 sm:px-20 sm:pb-20">
+    <div class="pb-6 pt-2">
+      <div class="flex flex-col items-center">
+        <div
+          class="mt-1 text-2xl sm:text-3xl pb-3 font-extrabold tracking-tight text-primary leading-tight text-center">
+          REGLAMENTO DE ELECCIONES DE DIGNIDADES FIERPI 2022
+        </div>
+        <iframe [src]="path" frameborder="0" class="w-full h-140"></iframe>
+      </div>
+    </div>
+
+
+    <div class="flex flex-col items-center">
+      <div class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-primary leading-tight text-center">
+        TRIBUNAL ELECTORAL FIERPI 2022
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full min-w-0 pt-6">
+      @for (team of teams; track $index) {
+      <div
+        class="flex flex-col flex-auto items-center bg-card shadow rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-150 ease-in-out">
+        <div class="flex flex-col flex-auto w-full p-4 text-center">
+          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden dark:bg-card">
+            <img class="w-full h-full object-cover" [src]="team.photo" [alt]="team.name">
+          </div>
+          <div class="mt-2 font-medium">{{team.name}}</div>
+          <div class="text-secondary">{{team.position}}</div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+</div>
