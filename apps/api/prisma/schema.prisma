@@ -4,10 +4,52 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "./generated"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+enum Rol {
+  ADMIN
+  USER
+}
+
+model Usuario {
+  id          String     @id @default(uuid()) @db.Uuid
+  usuario     String     @unique @db.VarChar(150)
+  nombre      String     @db.VarChar(200)
+  password    String     @map("password") @db.VarChar(255)
+  rol         Rol        @default(USER)
+  activo      Boolean    @default(true)
+  email       String     @db.VarChar(150)
+
+  cambiarPassword Boolean @default(false) @map("cambiar_password")
+  fechaCaducidad  DateTime? @map("fecha_caducidad")
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@index([usuario])
+  @@map("usuarios")
+}
+
+model Auditoria {
+  id              Int      @id @default(autoincrement())
+  tabla           String   @db.VarChar(80)
+  registroId      String?  @map("registro_id") @db.Uuid
+  operacion       String   @db.VarChar(10)
+  datosAnteriores Json?    @map("datos_anteriores")
+  datosNuevos     Json?    @map("datos_nuevos")
+  usuario         String?  @map("usuario") @db.VarChar(100)
+  ip              String?  @map("ip") @db.Inet
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([tabla, createdAt(sort: Desc)])
+  @@index([registroId])
+  @@map("auditoria")
 }
