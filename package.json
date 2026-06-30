@@ -11,7 +11,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.33.2",
   "devDependencies": {
-    "turbo": "^2.10.1"
+    "turbo": "^2.9.18"
   }
 }
