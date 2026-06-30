@@ -1,0 +1,132 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+
+  <div class="text-4xl font-extrabold tracking-tight leading-tight">Auditoría</div>
+  <p class="mt-2 text-secondary">Registro de acciones y eventos del sistema</p>
+
+  <!-- Filtros -->
+  <div class="mt-6 flex flex-col md:flex-row md:flex-wrap gap-3 md:items-center">
+    <mat-form-field class="md:w-44" appearance="outline">
+      <mat-label>Contexto</mat-label>
+      <mat-select [formControl]="tablaCtrl" (selectionChange)="onFilterChange()">
+        <mat-option [value]="''">Todos</mat-option>
+        <mat-option [value]="'auth'">Autenticación</mat-option>
+        <mat-option [value]="'usuarios'">Usuarios</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="md:w-52" appearance="outline">
+      <mat-label>Operación</mat-label>
+      <mat-select [formControl]="operacionCtrl" (selectionChange)="onFilterChange()">
+        <mat-option [value]="''">Todas</mat-option>
+        @for (op of operaciones; track op.value) {
+        <mat-option [value]="op.value">{{ op.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="md:w-48" appearance="outline">
+      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" />
+      <input matInput [formControl]="usuarioCtrl" placeholder="Usuario">
+    </mat-form-field>
+
+    <mat-form-field class="md:w-44" appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="dp1" [formControl]="desdeCtrl" (dateChange)="onFilterChange()">
+      <mat-datepicker-toggle matIconSuffix [for]="dp1" />
+      <mat-datepicker #dp1 />
+    </mat-form-field>
+
+    <mat-form-field class="md:w-44" appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="dp2" [formControl]="hastaCtrl" (dateChange)="onFilterChange()">
+      <mat-datepicker-toggle matIconSuffix [for]="dp2" />
+      <mat-datepicker #dp2 />
+    </mat-form-field>
+
+    <button mat-button (click)="clearFilters()">
+      <mat-icon [svgIcon]="'heroicons_solid:x-mark'" />
+      <span>Limpiar</span>
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="mt-4 rounded shadow bg-card overflow-hidden">
+    @if (loading) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    <table mat-table [dataSource]="logs" multiTemplateDataRows class="w-full">
+
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let l" class="whitespace-nowrap">
+          {{ l.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="usuario">
+        <th mat-header-cell *matHeaderCellDef>Usuario</th>
+        <td mat-cell *matCellDef="let l" class="font-medium">{{ l.usuario ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tabla">
+        <th mat-header-cell *matHeaderCellDef>Contexto</th>
+        <td mat-cell *matCellDef="let l" class="text-secondary">{{ l.tabla }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="operacion">
+        <th mat-header-cell *matHeaderCellDef>Operación</th>
+        <td mat-cell *matCellDef="let l">
+          <span class="px-2 py-1 rounded-full text-xs font-medium" [class]="operacionClass(l.operacion)">
+            {{ operacionLabel(l.operacion) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="ip">
+        <th mat-header-cell *matHeaderCellDef>IP</th>
+        <td mat-cell *matCellDef="let l" class="text-secondary">{{ l.ip ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let l" class="text-right">
+          <button mat-icon-button (click)="toggle(l)" [matTooltip]="'Ver detalle'">
+            <mat-icon [svgIcon]="expandedId === l.id ? 'heroicons_solid:chevron-up' : 'heroicons_solid:chevron-down'" />
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Fila de detalle expandible -->
+      <ng-container matColumnDef="detalle">
+        <td mat-cell *matCellDef="let l" [attr.colspan]="columns.length">
+          @if (expandedId === l.id) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800">
+            <div>
+              <div class="text-sm font-semibold mb-1">Datos anteriores</div>
+              <pre
+                class="text-xs whitespace-pre-wrap break-all text-secondary">{{ l.datosAnteriores ? (l.datosAnteriores | json) : '—' }}</pre>
+            </div>
+            <div>
+              <div class="text-sm font-semibold mb-1">Datos nuevos</div>
+              <pre
+                class="text-xs whitespace-pre-wrap break-all text-secondary">{{ l.datosNuevos ? (l.datosNuevos | json) : '—' }}</pre>
+            </div>
+          </div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['detalle']" class="detail-row"></tr>
+    </table>
+
+    @if (!loading && logs.length === 0) {
+    <div class="p-8 text-center text-secondary">No hay registros de auditoría.</div>
+    }
+
+    <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageIndex" [pageSizeOptions]="[20, 50, 100]"
+      (page)="onPage($event)" showFirstLastButtons />
+  </div>
+</div>

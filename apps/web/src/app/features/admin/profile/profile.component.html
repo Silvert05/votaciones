@@ -1,0 +1,122 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="text-4xl font-extrabold tracking-tight leading-tight">Mi perfil</div>
+  <p class="mt-2 text-secondary">Administra tu información personal y tu contraseña</p>
+
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+    <!-- Datos del perfil -->
+    <div class="flex flex-col p-6 rounded-2xl shadow bg-card">
+      <div class="text-2xl font-semibold leading-tight">Datos personales</div>
+      <div class="text-secondary">Actualiza tu nombre y correo electrónico</div>
+
+      @if (profileAlert.show) {
+      <fuse-alert class="mt-4" [appearance]="'outline'" [showIcon]="false" [type]="profileAlert.type"
+        [@shake]="profileAlert.type === 'error'">
+        {{ profileAlert.message }}
+      </fuse-alert>
+      }
+
+      <form class="mt-4 flex flex-col" [formGroup]="profileForm">
+        <mat-form-field class="w-full">
+          <mat-label>Usuario</mat-label>
+          <input matInput [formControlName]="'usuario'">
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:user'" />
+        </mat-form-field>
+
+        <mat-form-field class="w-full">
+          <mat-label>Nombre</mat-label>
+          <input matInput [formControlName]="'nombre'" placeholder="Nombre completo">
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:identification'" />
+          @if (profileForm.get('nombre').hasError('required')) {
+          <mat-error>El nombre es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full">
+          <mat-label>Correo electrónico</mat-label>
+          <input matInput [formControlName]="'email'" placeholder="correo@dominio.com">
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:envelope'" />
+          @if (profileForm.get('email').hasError('required')) {
+          <mat-error>El correo es requerido</mat-error>
+          }
+          @if (profileForm.get('email').hasError('email')) {
+          <mat-error>El correo no es válido</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="flex justify-end mt-2">
+          <button color="primary" matButton="filled" (click)="saveProfile()" [disabled]="profileForm.disabled">
+            @if (!profileForm.disabled) {
+            <span>Guardar cambios</span>
+            } @else {
+            <mat-progress-spinner [diameter]="24" [mode]="'indeterminate'" />
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cambio de contraseña -->
+    <div class="flex flex-col p-6 rounded-2xl shadow bg-card">
+      <div class="text-2xl font-semibold leading-tight">Cambiar contraseña</div>
+      <div class="text-secondary">Por seguridad, ingresa tu contraseña actual</div>
+
+      @if (passwordAlert.show) {
+      <fuse-alert class="mt-4" [appearance]="'outline'" [showIcon]="false" [type]="passwordAlert.type"
+        [@shake]="passwordAlert.type === 'error'">
+        {{ passwordAlert.message }}
+      </fuse-alert>
+      }
+
+      <form class="mt-4 flex flex-col" [formGroup]="passwordForm">
+        <mat-form-field class="w-full">
+          <mat-label>Contraseña actual</mat-label>
+          <input matInput [type]="showCurrent ? 'text' : 'password'" [formControlName]="'currentPassword'">
+          <button mat-icon-button type="button" (click)="showCurrent = !showCurrent" matSuffix>
+            <mat-icon class="icon-size-5"
+              [svgIcon]="showCurrent ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+          </button>
+          @if (passwordForm.get('currentPassword').hasError('required')) {
+          <mat-error>La contraseña actual es requerida</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full">
+          <mat-label>Nueva contraseña</mat-label>
+          <input matInput [type]="showNew ? 'text' : 'password'" [formControlName]="'newPassword'">
+          <button mat-icon-button type="button" (click)="showNew = !showNew" matSuffix>
+            <mat-icon class="icon-size-5" [svgIcon]="showNew ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+          </button>
+          @if (passwordForm.get('newPassword').hasError('required')) {
+          <mat-error>La nueva contraseña es requerida</mat-error>
+          }
+          @if (passwordForm.get('newPassword').hasError('minlength')) {
+          <mat-error>Debe tener al menos 6 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full">
+          <mat-label>Confirmar nueva contraseña</mat-label>
+          <input matInput [type]="showNew ? 'text' : 'password'" [formControlName]="'confirmPassword'">
+          @if (passwordForm.get('confirmPassword').hasError('required')) {
+          <mat-error>Confirma la nueva contraseña</mat-error>
+          }
+          @if (passwordForm.hasError('mismatch') && !passwordForm.get('confirmPassword').hasError('required')) {
+          <mat-error>Las contraseñas no coinciden</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="flex justify-end mt-2">
+          <button color="primary" matButton="filled" (click)="changePassword()" [disabled]="passwordForm.disabled">
+            @if (!passwordForm.disabled) {
+            <span>Actualizar contraseña</span>
+            } @else {
+            <mat-progress-spinner [diameter]="24" [mode]="'indeterminate'" />
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>

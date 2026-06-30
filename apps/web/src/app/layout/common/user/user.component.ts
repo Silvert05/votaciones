@@ -1,20 +1,17 @@
 import { BooleanInput } from '@angular/cdk/coercion';
-import { NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   Input,
-  OnDestroy,
-  OnInit,
   ViewEncapsulation,
+  inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { AuthService } from 'app/features/admin/auth/services/auth.service';
 
 @Component({
   selector: 'user',
@@ -26,45 +23,31 @@ import { Subject } from 'rxjs';
     MatButtonModule,
     MatMenuModule,
     MatIconModule,
-    NgClass,
     MatDividerModule,
   ],
 })
-export class UserComponent implements OnInit, OnDestroy {
-
+export class UserComponent {
   static ngAcceptInputType_showAvatar: BooleanInput;
 
-
   @Input() showAvatar: boolean = true;
-  user: any;
 
-  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _router = inject(Router);
+  private _authService = inject(AuthService);
 
-  constructor(
-    private _changeDetectorRef: ChangeDetectorRef,
-    private _router: Router,
+  readonly user = this._authService.user;
 
-  ) { }
-
-  ngOnInit(): void {
-
+  goToProfile(): void {
+    this._router.navigate(['/admin/perfil']);
   }
-
-
-  ngOnDestroy(): void {
-    this._unsubscribeAll.next(null);
-    this._unsubscribeAll.complete();
-  }
-
-
-  updateUserStatus(status: string): void {
-    if (!this.user) {
-      return;
-    }
-  }
-
 
   signOut(): void {
-    this._router.navigate(['/admin/login']);
+    this._authService.logout().subscribe({
+      next: () => this._router.navigate(['/admin/auth/login']),
+      // Aunque falle la petición, se limpia la sesión y se redirige.
+      error: () => {
+        this._authService.clearSession();
+        this._router.navigate(['/admin/auth/login']);
+      },
+    });
   }
 }

@@ -1,0 +1,118 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Usuarios</div>
+      <p class="mt-2 text-secondary">Gestiona las cuentas de acceso al sistema</p>
+    </div>
+    <button matButton="filled" color="primary" (click)="create()">
+      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <span class="ml-1">Nuevo usuario</span>
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mt-6 flex flex-col md:flex-row gap-3">
+    <mat-form-field class="flex-auto">
+      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" />
+      <input matInput [formControl]="searchCtrl" placeholder="Buscar por usuario, nombre o email">
+    </mat-form-field>
+
+    <mat-form-field class="md:w-48" appearance="outline">
+      <mat-label>Rol</mat-label>
+      <mat-select [formControl]="rolCtrl" (selectionChange)="onFilterChange()">
+        <mat-option [value]="''">Todos</mat-option>
+        <mat-option [value]="'ADMIN'">Administrador</mat-option>
+        <mat-option [value]="'USER'">Usuario</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="md:w-48" appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select [formControl]="activoCtrl" (selectionChange)="onFilterChange()">
+        <mat-option [value]="''">Todos</mat-option>
+        <mat-option [value]="'true'">Activos</mat-option>
+        <mat-option [value]="'false'">Inactivos</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Tabla -->
+  <div class="mt-4 rounded shadow bg-card overflow-hidden">
+    @if (loading) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    <table mat-table [dataSource]="users" class="w-full">
+
+      <ng-container matColumnDef="usuario">
+        <th mat-header-cell *matHeaderCellDef>Usuario</th>
+        <td mat-cell *matCellDef="let u" class="font-medium">{{ u.usuario }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let u">{{ u.nombre }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let u" class="text-secondary">{{ u.email }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="rol">
+        <th mat-header-cell *matHeaderCellDef>Rol</th>
+        <td mat-cell *matCellDef="let u">
+          <span class="px-2 py-1 rounded-full text-xs font-medium"
+            [class]="u.rol === 'ADMIN' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-700'">
+            {{ u.rol === 'ADMIN' ? 'Administrador' : 'Usuario' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let u">
+          <span class="inline-flex items-center gap-1.5 text-sm">
+            <span class="w-2 h-2 rounded-full" [class]="u.activo ? 'bg-green-500' : 'bg-red-500'"></span>
+            {{ u.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+        <td mat-cell *matCellDef="let u" class="text-right">
+          <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+            <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="edit(u)">
+              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+              <span>Editar</span>
+            </button>
+            <button mat-menu-item (click)="resetPassword(u)">
+              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:key'" />
+              <span>Resetear contraseña</span>
+            </button>
+            <button [attr.color]="u.activo ? 'warn' : 'primary'" mat-menu-item (click)="toggleActivo(u)">
+              <mat-icon class="icon-size-5 mr-2"
+                [svgIcon]="u.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+              <span>{{ u.activo ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+
+    @if (!loading && users.length === 0) {
+    <div class="p-8 text-center text-secondary">No se encontraron usuarios.</div>
+    }
+
+    <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageIndex" [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPage($event)" showFirstLastButtons />
+  </div>
+</div>

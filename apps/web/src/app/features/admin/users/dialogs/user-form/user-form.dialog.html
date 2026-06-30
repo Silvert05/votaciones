@@ -1,0 +1,74 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+
+<mat-dialog-content>
+  @if (alert.show) {
+  <fuse-alert class="mb-3" [appearance]="'outline'" [showIcon]="false" [type]="alert.type">
+    {{ alert.message }}
+  </fuse-alert>
+  }
+
+  <form class="flex flex-col pt-2 space-y-2" [formGroup]="form">
+    <mat-form-field class="w-full">
+      <mat-label>Usuario</mat-label>
+      <input matInput [formControlName]="'usuario'" placeholder="nombre de usuario">
+      @if (form.get('usuario').hasError('required')) {
+      <mat-error>El usuario es requerido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="w-full">
+      <mat-label>Nombre</mat-label>
+      <input matInput [formControlName]="'nombre'" placeholder="Nombre completo">
+      @if (form.get('nombre').hasError('required')) {
+      <mat-error>El nombre es requerido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="w-full">
+      <mat-label>Correo electrónico</mat-label>
+      <input matInput [formControlName]="'email'" placeholder="correo@dominio.com">
+      @if (form.get('email').hasError('required')) {
+      <mat-error>El correo es requerido</mat-error>
+      }
+      @if (form.get('email').hasError('email')) {
+      <mat-error>El correo no es válido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="w-full">
+      <mat-label>Rol</mat-label>
+      <mat-select [formControlName]="'rol'">
+        <mat-option [value]="'USER'">Usuario</mat-option>
+        <mat-option [value]="'ADMIN'">Administrador</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (!isEdit) {
+    <mat-form-field class="w-full">
+      <mat-label>Contraseña temporal</mat-label>
+      <input matInput [type]="showPassword ? 'text' : 'password'" [formControlName]="'password'">
+      <button mat-icon-button type="button" (click)="showPassword = !showPassword" matSuffix>
+        <mat-icon class="icon-size-5" [svgIcon]="showPassword ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+      </button>
+      @if (form.get('password').hasError('required')) {
+      <mat-error>La contraseña es requerida</mat-error>
+      }
+      @if (form.get('password').hasError('minlength')) {
+      <mat-error>Debe tener al menos 6 caracteres</mat-error>
+      }
+      <mat-hint>El usuario deberá cambiarla en su primer ingreso</mat-hint>
+    </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancelar</button>
+  <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
+    @if (!saving) {
+    <span>{{ isEdit ? 'Guardar' : 'Crear' }}</span>
+    } @else {
+    <mat-progress-spinner [diameter]="22" [mode]="'indeterminate'" />
+    }
+  </button>
+</mat-dialog-actions>

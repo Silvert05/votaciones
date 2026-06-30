@@ -1,19 +1,25 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig
 } from '@angular/core';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideCore } from '@core/core.provider';
 import { provideIcons } from '@core/services/icons';
+import { fuseLoadingInterceptor } from '@core/services/loading';
 import { appRoutes } from 'app/app.routes';
+import { authInterceptor } from 'app/features/admin/auth/interceptors/auth.interceptor';
+import { spanishPaginatorIntl } from 'app/shared/spanish-paginator-intl';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAnimations(),
-    provideHttpClient(),
+    provideHttpClient(
+      withInterceptors([authInterceptor, fuseLoadingInterceptor])
+    ),
     provideRouter(
       appRoutes,
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
@@ -38,46 +44,10 @@ export const appConfig: ApplicationConfig = {
         },
       },
     },
-
-    // Fuse
     provideIcons(),
-    provideCore({
+    provideCore(),
 
-      layout: 'classic',
-      scheme: 'light',
-      screens: {
-        sm: '600px',
-        md: '960px',
-        lg: '1280px',
-        xl: '1440px',
-      },
-      theme: 'theme-brand',
-      themes: [
-        {
-          id: 'theme-default',
-          name: 'Default',
-        },
-        {
-          id: 'theme-brand',
-          name: 'Brand',
-        },
-        {
-          id: 'theme-teal',
-          name: 'Teal',
-        },
-        {
-          id: 'theme-rose',
-          name: 'Rose',
-        },
-        {
-          id: 'theme-purple',
-          name: 'Purple',
-        },
-        {
-          id: 'theme-amber',
-          name: 'Amber',
-        },
-      ],
-    }),
+    // Paginador de tablas en español
+    { provide: MatPaginatorIntl, useFactory: spanishPaginatorIntl },
   ],
 };

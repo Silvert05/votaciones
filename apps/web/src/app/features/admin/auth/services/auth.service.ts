@@ -1,0 +1,124 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import {
+  AuthUser,
+  LoginCredentials,
+  LoginResponse,
+  MessageResponse,
+} from '../models/auth.model';
+
+const TOKEN_KEY = 'access_token';
+const USER_KEY = 'auth_user';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private _http = inject(HttpClient);
+
+  private _user = signal<AuthUser | null>(this._readStoredUser());
+
+  /** Usuario autenticado (reactivo). */
+  readonly user = this._user.asReadonly();
+  readonly isAuthenticated = computed(() => this._user() !== null);
+
+  /** Inicia sesión. Puede devolver el flujo de cambio forzado de contraseña. */
+  login(credentials: LoginCredentials): Observable<LoginResponse> {
+    return this._http.post<LoginResponse>('/auth/login', credentials).pipe(
+      tap((res) => {
+        if (res.access_token && res.user) {
+          this._setSession(res.access_token, res.user);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Restablecimiento forzado de contraseña (primer ingreso). Usa el token
+   * temporal devuelto por el login.
+   */
+  resetPassword(newPassword: string, resetToken: string): Observable<LoginResponse> {
+    return this._http
+      .post<LoginResponse>(
+        '/auth/reset-password',
+        { newPassword },
+        { headers: { Authorization: `Bearer ${resetToken}` } },
+      )
+      .pipe(
+        tap((res) => {
+          if (res.access_token && res.user) {
+            this._setSession(res.access_token, res.user);
+          }
+        }),
+      );
+  }
+
+  /** Cambio de contraseña del usuario autenticado. */
+  changePassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Observable<MessageResponse> {
+    return this._http.post<MessageResponse>('/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+  }
+
+  /** Obtiene el perfil del usuario autenticado desde el servidor. */
+  profile(): Observable<AuthUser> {
+    return this._http
+      .get<AuthUser>('/auth/me')
+      .pipe(tap((user) => this._patchUser(user)));
+  }
+
+  /** Actualiza el perfil del usuario autenticado. */
+  updateProfile(data: {
+    nombre: string;
+    email?: string;
+  }): Observable<AuthUser> {
+    return this._http
+      .patch<AuthUser>('/auth/me', data)
+      .pipe(tap((user) => this._patchUser(user)));
+  }
+
+  /** Cierra la sesión (servidor + cliente). */
+  logout(): Observable<MessageResponse> {
+    return this._http
+      .post<MessageResponse>('/auth/logout', {})
+      .pipe(tap(() => this.clearSession()));
+  }
+
+  /** Token JWT de acceso almacenado. */
+  get accessToken(): string | null {
+    return sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  /** Limpia la sesión local. */
+  clearSession(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    this._user.set(null);
+  }
+
+  private _setSession(token: string, user: AuthUser): void {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    this._user.set(user);
+  }
+
+  private _patchUser(user: AuthUser): void {
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    this._user.set(user);
+  }
+
+  private _readStoredUser(): AuthUser | null {
+    const raw = sessionStorage.getItem(USER_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as AuthUser;
+    } catch {
+      return null;
+    }
+  }
+}

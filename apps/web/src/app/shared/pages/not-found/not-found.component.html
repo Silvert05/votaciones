@@ -1,0 +1,20 @@
+<div class="flex min-h-full flex-auto items-center justify-center px-6 py-16 sm:px-10">
+  <div class="mx-auto flex w-full max-w-2xl flex-col items-center text-center">
+    <div class="text-8xl font-extrabold leading-none tracking-tight text-primary sm:text-9xl">
+      404
+    </div>
+
+    <h1 class="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+      {{ title }}
+    </h1>
+
+    <p class="mt-3 max-w-xl text-base leading-7 text-secondary">
+      {{ description }}
+    </p>
+
+    <a class="mt-8" mat-flat-button color="primary" [routerLink]="homeLink">
+      <mat-icon [svgIcon]="'heroicons_solid:arrow-left'" />
+      <span class="ml-2">{{ homeLabel }}</span>
+    </a>
+  </div>
+</div>

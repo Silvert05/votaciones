@@ -6,7 +6,7 @@ const routes: Routes = [
     path: '',
     component: LayoutComponent,
     data: {
-      layout: 'enterprise'
+      layout: 'website'
     },
     children: [
       { path: 'inicio', loadComponent: () => import('./pages/home/home.component') },
@@ -15,6 +15,14 @@ const routes: Routes = [
       { path: 'participacion', loadComponent: () => import('./pages/participacion/participacion') },
       { path: 'resultados', loadComponent: () => import('./pages/resultados/resultados') },
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+      {
+        path: '**',
+        loadComponent: () => import('app/shared/pages/not-found/not-found.component'),
+        data: {
+          homeLink: '/inicio',
+          homeLabel: 'Volver al inicio',
+        },
+      },
     ],
   },
 ];

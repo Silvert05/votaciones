@@ -2,3 +2,143 @@
 /*  @ Import/write your custom styles here.
 /*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
+
+/* ===================================================================== */
+/*  Form fields — etiquetas más pequeñas en todos los tipos              */
+/*  (input, select, textarea, autocomplete, datepicker)                  */
+/* ===================================================================== */
+.mat-mdc-form-field {
+    .mat-mdc-floating-label,
+    .mdc-floating-label {
+        font-size: 13px !important;
+        letter-spacing: normal !important;
+    }
+
+    /* tamaño del texto escrito / valor del select acorde a la etiqueta */
+    .mat-mdc-input-element,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-placeholder {
+        font-size: 13.5px;
+    }
+}
+
+/* ===================================================================== */
+/*  Apariencia "outline" — Fuse solo estiliza "fill", así que aquí le    */
+/*  damos fondo sólido (no transparente) y una etiqueta legible.         */
+/* ===================================================================== */
+.mat-mdc-form-field.mat-form-field-appearance-outline {
+    .mat-mdc-text-field-wrapper {
+        background-color: rgba(var(--fuse-bg-card-rgb), 1) !important;
+        border-radius: 8px;
+    }
+
+    .mdc-floating-label {
+        font-weight: 500;
+        color: rgba(var(--fuse-text-secondary-rgb), 1) !important;
+    }
+
+    &.mat-focused .mdc-floating-label {
+        color: var(--fuse-primary) !important;
+    }
+
+    /* notch/borde con un gris consistente */
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+        border-color: rgba(var(--fuse-text-default-rgb), 0.16);
+    }
+
+    &.mat-focused .mdc-notched-outline__leading,
+    &.mat-focused .mdc-notched-outline__notch,
+    &.mat-focused .mdc-notched-outline__trailing {
+        border-color: var(--fuse-primary);
+    }
+}
+
+/* ===================================================================== */
+/*  mat-select — panel de opciones más compacto                          */
+/* ===================================================================== */
+.mat-mdc-select-panel {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+.mat-mdc-option {
+    min-height: 36px !important;
+
+    .mdc-list-item__primary-text {
+        font-size: 13px !important;
+    }
+
+    .mat-icon {
+        margin-right: 8px;
+    }
+}
+
+/* ===================================================================== */
+/*  mat-paginator — compacto                                             */
+/* ===================================================================== */
+.mat-mdc-paginator {
+    font-size: 12px;
+
+    .mat-mdc-paginator-container {
+        min-height: 44px;
+        padding: 4px 8px;
+    }
+
+    .mat-mdc-paginator-page-size {
+        align-items: center;
+        margin-right: 8px;
+
+        .mat-mdc-paginator-page-size-label {
+            margin: 0 6px;
+        }
+
+        .mat-mdc-form-field {
+            width: 72px;
+        }
+    }
+
+    .mat-mdc-paginator-range-label {
+        margin: 0 12px;
+    }
+
+    .mat-mdc-icon-button {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+    }
+}
+
+/* ===================================================================== */
+/*  mat-menu-item — soporte de color (warn / primary) vía [attr.color]   */
+/*  mat-menu-item NO tiene input "color" propio, por eso no funcionaba.  */
+/* ===================================================================== */
+.mat-mdc-menu-item[color='warn'] {
+    --mat-menu-item-label-text-color: var(--fuse-warn);
+    --mat-menu-item-icon-color: var(--fuse-warn);
+    color: var(--fuse-warn) !important;
+
+    .mat-icon,
+    .mat-mdc-menu-item-text {
+        color: var(--fuse-warn) !important;
+    }
+}
+
+.mat-mdc-menu-item[color='primary'] {
+    --mat-menu-item-label-text-color: var(--fuse-primary);
+    --mat-menu-item-icon-color: var(--fuse-primary);
+    color: var(--fuse-primary) !important;
+
+    .mat-icon,
+    .mat-mdc-menu-item-text {
+        color: var(--fuse-primary) !important;
+    }
+}
+
+/* ===================================================================== */
+/*  Overlay de diálogos — oscurecer el backdrop                          */
+/* ===================================================================== */
+.cdk-overlay-dark-backdrop {
+    background: rgba(0, 0, 0, 0.6) !important;
+}

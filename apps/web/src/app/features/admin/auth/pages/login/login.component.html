@@ -1,0 +1,64 @@
+<div class="flex flex-col flex-auto items-center justify-center min-w-0">
+  <div class="w-full sm:w-auto py-6 px-10 sm:p-8 sm:rounded-2xl sm:shadow sm:bg-card">
+    <div class="w-full max-w-100 sm:w-96 mx-auto sm:mx-0">
+      <div class="flex -mx-8 -mt-8 rounded items-center justify-center">
+        <img class="w-auto rounded-t-2xl" src="img/electoral1.png">
+      </div>
+      <div class="mt-4 text-2xl font-bold tracking-tight text-center leading-tight">FIERPI ELECCIONES 2022</div>
+      <div class="flex justify-center items-center mt-1 text-md text-secondary">
+        <div>Inicia sesión para acceder al sistema</div>
+      </div>
+      @if (showAlert) {
+      <fuse-alert class="my-2" [appearance]="'outline'" [showIcon]="false" [type]="alert.type"
+        [@shake]="alert.type === 'error'">
+        {{ alert.message }}
+      </fuse-alert>
+      }
+      <form class="mt-4 space-y-3" [formGroup]="loginForm" #loginNgForm="ngForm">
+
+        <mat-form-field class="w-full">
+          <input id="email" matInput [formControlName]="'username'" placeholder="Usuario">
+          <mat-icon class="icon-size-5" [svgIcon]="'mat_solid:email'" />
+          @if (loginForm.get('username').hasError('required')) {
+          <mat-error>
+            Usuario es requerido
+          </mat-error>
+          }
+        </mat-form-field>
+
+
+        <mat-form-field class="w-full">
+          <input id="password" matInput [type]="showPassword ? 'text' : 'password'" [formControlName]="'password'"
+            placeholder="Contraseña">
+          <button mat-icon-button type="button" (click)="showPassword = !showPassword" matSuffix>
+            @if (!showPassword) {
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:eye'" />
+            }@else {
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:eye-slash'" />
+            }
+          </button>
+          <mat-error>
+            Contraseña es requerido
+          </mat-error>
+        </mat-form-field>
+        <button class="w-full" color="primary" matButton="filled" (click)="login()" [disabled]="loginForm.disabled">
+          @if (!loginForm.disabled) {
+          <span>
+            INGRESAR
+          </span>
+          }
+          @if (loginForm.disabled) {
+          <mat-progress-spinner [diameter]="24" [mode]="'indeterminate'" />
+          }
+        </button>
+        <div class="flex-auto mt-3 border-t"></div>
+
+        <div class="flex items-center mt-4">
+          <div class="flex-auto mt-px border-t"></div>
+          <div class="mx-2 text-sm text-secondary">© 2022 All rights reserved</div>
+          <div class="flex-auto mt-px border-t"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
