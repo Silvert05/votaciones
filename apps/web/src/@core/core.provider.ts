@@ -1,4 +1,3 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   EnvironmentProviders,
   Provider,
@@ -8,19 +7,14 @@ import {
 } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
-import { CoreConfig } from '@core/services/config';
 import { CORE_CONFIG } from '@core/services/config/config.constants';
-import {
-  FuseLoadingService,
-  fuseLoadingInterceptor,
-} from '@core/services/loading';
+import { FuseLoadingService } from '@core/services/loading';
 import { FuseMediaWatcherService } from '@core/services/media-watcher';
 import { FusePlatformService } from '@core/services/platform';
 import { FuseSplashScreenService } from '@core/services/splash-screen';
 import { FuseUtilsService } from '@core/services/utils';
 
 export const provideCore = (
-  config: CoreConfig
 ): Array<Provider | EnvironmentProviders> => {
   // Base providers
   const providers: Array<Provider | EnvironmentProviders> = [
@@ -28,16 +22,54 @@ export const provideCore = (
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: {
         appearance: 'fill',
+        floatLabel: 'always',
+        subscriptSizing: 'dynamic',
       },
     },
     {
       provide: CORE_CONFIG,
-      useValue: config ?? {},
+      useValue: {
+
+        layout: 'empty',
+        scheme: 'light',
+        screens: {
+          sm: '600px',
+          md: '960px',
+          lg: '1280px',
+          xl: '1440px',
+        },
+        theme: 'theme-brand',
+        themes: [
+          {
+            id: 'theme-default',
+            name: 'Default',
+          },
+          {
+            id: 'theme-brand',
+            name: 'Brand',
+          },
+          {
+            id: 'theme-teal',
+            name: 'Teal',
+          },
+          {
+            id: 'theme-rose',
+            name: 'Rose',
+          },
+          {
+            id: 'theme-purple',
+            name: 'Purple',
+          },
+          {
+            id: 'theme-amber',
+            name: 'Amber',
+          },
+        ],
+      },
     },
 
     importProvidersFrom(MatDialogModule),
 
-    provideHttpClient(withInterceptors([fuseLoadingInterceptor])),
     provideEnvironmentInitializer(() => inject(FuseLoadingService)),
 
     provideEnvironmentInitializer(() => inject(FuseMediaWatcherService)),

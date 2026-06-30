@@ -228,21 +228,26 @@ $dark-base: (
         )
     );
 
-    /* Merge the custom base colors with the generated themes */
+    /* Merge the custom base colors with the generated themes.
+       Preserve _mat-system so AM22's token functions resolve correctly. */
+    $light-mat-system: map.get($light-theme, _mat-system);
     $light-theme-colors: map.merge(map.get($light-theme, color), $light-base);
     $light-theme: map.merge(
-        (
-            color: $light-theme-colors,
+        map.merge(
+            (color: $light-theme-colors),
+            $light-theme-colors
         ),
-        $light-theme-colors
+        (_mat-system: $light-mat-system)
     );
 
+    $dark-mat-system: map.get($dark-theme, _mat-system);
     $dark-theme-colors: map.merge(map.get($dark-theme, color), $dark-base);
     $dark-theme: map.merge(
-        (
-            color: $dark-theme-colors,
+        map.merge(
+            (color: $dark-theme-colors),
+            $dark-theme-colors
         ),
-        $dark-theme-colors
+        (_mat-system: $dark-mat-system)
     );
 
     /* Generate and encapsulate Angular Material themes */

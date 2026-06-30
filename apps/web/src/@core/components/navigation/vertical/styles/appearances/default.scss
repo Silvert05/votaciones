@@ -1,6 +1,6 @@
 /* Variables */
 :root {
-    --fuse-vertical-navigation-width: 256px;
+    --fuse-vertical-navigation-width: 240px;
 }
 
 fuse-vertical-navigation {
@@ -147,12 +147,12 @@ fuse-vertical-navigation {
 
             /* Divider */
             > fuse-vertical-navigation-divider-item {
-                margin: 12px 0;
+                margin: 8px 0;
             }
 
             /* Group */
             > fuse-vertical-navigation-group-item {
-                margin-top: 16px;
+                margin-top: 12px;
             }
         }
 
@@ -220,12 +220,12 @@ fuse-vertical-navigation {
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
-                padding: 7px 12px;
-                font-size: 13px;
+                padding: 5px 10px;
+                font-size: 12.5px;
                 font-weight: 500;
                 line-height: 20px;
                 text-decoration: none;
-                border-radius: 6px;
+                border-radius: 5px;
 
                 /* Disabled state */
                 &.fuse-vertical-navigation-item-disabled {
@@ -234,7 +234,7 @@ fuse-vertical-navigation {
                 }
 
                 .fuse-vertical-navigation-item-icon {
-                    margin-right: 16px;
+                    margin-right: 10px;
                 }
 
                 .fuse-vertical-navigation-item-title-wrapper {
@@ -267,7 +267,7 @@ fuse-vertical-navigation {
     fuse-vertical-navigation-collapsable-item,
     fuse-vertical-navigation-group-item {
         > .fuse-vertical-navigation-item-wrapper {
-            margin: 0 8px;
+            margin: 0 6px;
         }
     }
 
@@ -275,7 +275,7 @@ fuse-vertical-navigation {
     fuse-vertical-navigation-aside-item,
     fuse-vertical-navigation-basic-item,
     fuse-vertical-navigation-collapsable-item {
-        margin-bottom: 2px;
+        margin-bottom: 1px;
 
         .fuse-vertical-navigation-item {
             cursor: pointer;
@@ -323,11 +323,11 @@ fuse-vertical-navigation {
 
         > .fuse-vertical-navigation-item-children {
             > *:first-child {
-                margin-top: 4px;
+                margin-top: 2px;
             }
 
             > *:last-child {
-                padding-bottom: 4px;
+                padding-bottom: 2px;
 
                 > .fuse-vertical-navigation-item-children {
                     > *:last-child {
@@ -337,7 +337,7 @@ fuse-vertical-navigation {
             }
 
             .fuse-vertical-navigation-item {
-                padding: 7px 12px;
+                padding: 5px 10px;
             }
         }
 
@@ -346,25 +346,25 @@ fuse-vertical-navigation {
             overflow: hidden;
 
             .fuse-vertical-navigation-item {
-                padding-left: 56px;
+                padding-left: 44px;
             }
 
             /* 2nd level */
             .fuse-vertical-navigation-item-children {
                 .fuse-vertical-navigation-item {
-                    padding-left: 72px;
+                    padding-left: 58px;
                 }
 
                 /* 3rd level */
                 .fuse-vertical-navigation-item-children {
                     .fuse-vertical-navigation-item {
-                        padding-left: 88px;
+                        padding-left: 72px;
                     }
 
                     /* 4th level */
                     .fuse-vertical-navigation-item-children {
                         .fuse-vertical-navigation-item {
-                            padding-left: 104px;
+                            padding-left: 86px;
                         }
                     }
                 }
@@ -374,7 +374,7 @@ fuse-vertical-navigation {
 
     /* Divider */
     fuse-vertical-navigation-divider-item {
-        margin: 12px 0;
+        margin: 8px 0;
 
         .fuse-vertical-navigation-item-wrapper {
             height: 1px;
@@ -393,9 +393,9 @@ fuse-vertical-navigation {
 
                 .fuse-vertical-navigation-item-title-wrapper {
                     .fuse-vertical-navigation-item-title {
-                        font-size: 12px;
+                        font-size: 11px;
                         font-weight: 600;
-                        letter-spacing: 0.05em;
+                        letter-spacing: 0.06em;
                         text-transform: uppercase;
                     }
                 }
@@ -481,7 +481,7 @@ fuse-vertical-navigation-collapsable-item {
             &:not(.fuse-vertical-navigation-item-disabled) {
                 &.fuse-vertical-navigation-item-active,
                 &.fuse-vertical-navigation-item-active-forced {
-                    @apply bg-gray-800 bg-opacity-5 dark:bg-white dark:bg-opacity-12;
+                    @apply bg-primary text-white dark:bg-white dark:bg-opacity-12;
 
                     .fuse-vertical-navigation-item-icon {
                         @apply opacity-100;
@@ -505,12 +505,12 @@ fuse-vertical-navigation-collapsable-item {
                     @apply bg-gray-800 bg-opacity-5 dark:bg-white dark:bg-opacity-12;
 
                     .fuse-vertical-navigation-item-icon {
-                        @apply opacity-100;
+                        @apply opacity-100 text-primary;
                     }
 
                     .fuse-vertical-navigation-item-title,
                     .fuse-vertical-navigation-item-arrow {
-                        @apply opacity-100;
+                        @apply opacity-100 text-primary;
                     }
 
                     .fuse-vertical-navigation-item-subtitle {
