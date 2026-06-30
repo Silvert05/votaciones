@@ -65,4 +65,4 @@ pnpm -C apps/api db:migrate
 
 ## Créditos 👨🏻‍💻
 
-- [Jhon Guacho](https://github.com/guacho20) (Desarrollador)
+- [Jhon Guacho](https://github.com/guachodev) (Desarrollador)
