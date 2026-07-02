@@ -3,6 +3,15 @@
 /*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
 
+:root {
+    --fuse-primary: #183f84;
+    --fuse-primary-rgb: 24, 63, 132;
+    --fuse-on-primary: #ffffff;
+    --fuse-accent: #183f84;
+    --fuse-accent-rgb: 24, 63, 132;
+    --fuse-on-accent: #ffffff;
+}
+
 /* ===================================================================== */
 /*  Form fields — etiquetas más pequeñas en todos los tipos              */
 /*  (input, select, textarea, autocomplete, datepicker)                  */

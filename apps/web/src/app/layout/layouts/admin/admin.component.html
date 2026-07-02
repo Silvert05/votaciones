@@ -4,28 +4,22 @@
 <fuse-vertical-navigation class="bg-card print:hidden" [mode]="isScreenSmall ? 'over' : 'side'"
   [name]="'mainNavigation'" [navigation]="navigation()" [opened]="!isScreenSmall">
 
-  <ng-container fuseVerticalNavigationHeader>
-    <div class="flex h-14 items-center px-4">
-      <img class="w-30 dark:hidden" src="img/logo.png" alt="Logo image" />
-      <img class="hidden w-30 dark:flex" src="img/logo.png" alt="Logo image" />
-    </div>
-  </ng-container>
-
-  <ng-container fuseVerticalNavigationFooter>
-    <div class="flex items-center w-full px-4 py-2">
-      <div class="flex flex-col w-full overflow-hidden">
-        <div class="w-full text-md text-center text-ellipsis overflow-hidden leading-normal">
-          Copyright &copy; 2022
-        </div>
-        <div class="w-full  text-md text-center font-semibold text-ellipsis overflow-hidden-leading-normal">
-          Tribunal Electoral FIERPI
-        </div>
-        <span class="font-medium text-center text-sm">Desarrollado por: <a
-            class="text-md font-normal  hover:underline cursor-pointer hover:text-primary-700"
-            href="https://github.com/guachodev" target=”_blank”>Jhon Guacho</a> </span>
-      </div>
-    </div>
-  </ng-container>
+<ng-container fuseVerticalNavigationHeader>
+  <div class="flex h-14 items-center justify-center px-4">
+    <img
+      class="max-h-full w-auto object-contain dark:hidden"
+      src="img/logo.png"
+      alt="Logo image"
+      style="image-rendering: -webkit-optimize-contrast;"
+    />
+    <img
+      class="hidden max-h-full w-auto object-contain dark:flex"
+      src="img/logo.png"
+      alt="Logo image"
+      style="image-rendering: -webkit-optimize-contrast;"
+    />
+  </div>
+</ng-container>
 
 </fuse-vertical-navigation>
 

@@ -199,6 +199,34 @@
 
 /* ─── Color tokens — primary / accent / warn per appearance ──────────────── */
 
+.mat-mdc-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-outlined-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary,
+.mat-tonal-button.mat-primary,
+.mat-mdc-icon-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary {
+    --mat-button-filled-container-color: #ff5100 !important;
+    --mat-button-filled-label-text-color: #ffffff !important;
+    --mat-button-filled-state-layer-color: #ffffff !important;
+    --mat-button-protected-container-color: #ff5100 !important;
+    --mat-button-protected-label-text-color: #ffffff !important;
+    --mat-button-protected-state-layer-color: #ffffff !important;
+    --mat-button-tonal-container-color: rgba(255, 81, 0, 0.16) !important;
+    --mat-button-tonal-label-text-color: #ff5100 !important;
+    --mat-button-tonal-state-layer-color: #ff5100 !important;
+    --mat-button-text-label-text-color: #ff5100 !important;
+    --mat-button-text-state-layer-color: #ff5100 !important;
+    --mat-button-outlined-label-text-color: #ff5100 !important;
+    --mat-button-outlined-outline-color: #ff5100 !important;
+    --mat-button-outlined-state-layer-color: #ff5100 !important;
+    --mat-icon-button-icon-color: #ff5100 !important;
+    --mat-icon-button-state-layer-color: #ff5100 !important;
+    --mdc-fab-container-color: #ff5100 !important;
+    --mat-fab-foreground-color: #ffffff !important;
+}
+
 /* Filled (matButton="filled" → .mat-mdc-unelevated-button) */
 .mat-mdc-unelevated-button {
     &.mat-primary {
