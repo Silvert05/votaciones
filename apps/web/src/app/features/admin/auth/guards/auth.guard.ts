@@ -46,3 +46,15 @@ export const roleGuard =
 
     return router.createUrlTree(['/admin/dashboard']);
   };
+
+/** Restringe pantallas administrativas segun las rutas asignadas al perfil. */
+export const optionGuard: CanActivateFn = (_route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.canAccessRoute(state.url)) {
+    return true;
+  }
+
+  return router.createUrlTree(['/admin/dashboard']);
+};

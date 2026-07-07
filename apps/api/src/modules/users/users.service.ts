@@ -25,6 +25,13 @@ const userSelect = {
   nombre: true,
   email: true,
   rol: true,
+  perfilId: true,
+  perfil: {
+    select: {
+      id: true,
+      nombre: true,
+    },
+  },
   activo: true,
   cambiarPassword: true,
   fechaCaducidad: true,
@@ -45,10 +52,11 @@ export class UsersService {
   ) {}
 
   async findAll(query: QueryUsersDto) {
-    const { page, limit, search, rol, activo } = query;
+    const { page, limit, search, rol, perfilId, activo } = query;
 
     const where: Prisma.UsuarioWhereInput = {};
     if (rol) where.rol = rol;
+    if (perfilId) where.perfilId = perfilId;
     if (activo !== undefined) where.activo = activo;
     if (search) {
       where.OR = [
@@ -99,6 +107,7 @@ export class UsersService {
         email: dto.email,
         password: passwordHash,
         rol: dto.rol ?? Rol.USER,
+        perfilId: dto.perfilId || null,
         activo: true,
         // Contraseña temporal: el usuario debe cambiarla en el primer ingreso.
         cambiarPassword: true,
@@ -132,6 +141,7 @@ export class UsersService {
         ...(dto.nombre !== undefined ? { nombre: dto.nombre } : {}),
         ...(dto.email !== undefined ? { email: dto.email } : {}),
         ...(dto.rol !== undefined ? { rol: dto.rol } : {}),
+        ...(dto.perfilId !== undefined ? { perfilId: dto.perfilId || null } : {}),
       },
       select: userSelect,
     });

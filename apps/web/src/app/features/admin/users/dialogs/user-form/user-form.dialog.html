@@ -43,6 +43,17 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field class="w-full">
+      <mat-label>Perfil</mat-label>
+      <mat-select [formControlName]="'perfilId'">
+        <mat-option [value]="null">Sin perfil</mat-option>
+        @for (perfil of perfiles; track perfil.id) {
+        <mat-option [value]="perfil.id">{{ perfil.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>El perfil define las pantallas del menu permitidas</mat-hint>
+    </mat-form-field>
+
     @if (!isEdit) {
     <mat-form-field class="w-full">
       <mat-label>Contraseña temporal</mat-label>

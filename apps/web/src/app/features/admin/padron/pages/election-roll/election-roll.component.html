@@ -1,0 +1,185 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Padron electoral</div>
+      <p class="mt-2 text-secondary">Electores habilitados, observados o inhabilitados por eleccion</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button matButton="tonal" type="button" (click)="autoGenerar()" [disabled]="!selectedEleccionCtrl.value">
+        <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
+        <span class="ml-1">Autogenerar</span>
+      </button>
+      <button matButton="filled" color="primary" type="button" (click)="publicar()" [disabled]="!selectedEleccionCtrl.value">
+        <mat-icon [svgIcon]="'heroicons_solid:check-badge'" />
+        <span class="ml-1">Publicar</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 p-4 border-b">
+        <mat-form-field appearance="outline" class="xl:col-span-2">
+          <mat-label>Eleccion</mat-label>
+          <mat-select [formControl]="selectedEleccionCtrl">
+            @for (eleccion of elecciones; track eleccion.id) {
+            <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select [formControl]="estadoCtrl" (selectionChange)="onFilterChange()">
+            <mat-option value="">Todos</mat-option>
+            @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ label(estado) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select [formControl]="tipoCtrl" (selectionChange)="onFilterChange()">
+            <mat-option value="">Todos</mat-option>
+            @for (tipo of tipos; track tipo) {
+            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="md:col-span-2">
+          <mat-label>Buscar</mat-label>
+          <input matInput [formControl]="searchCtrl" placeholder="Cedula, nombres o unidad">
+          <mat-icon matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="md:col-span-2">
+          <mat-label>Asignar electores activos</mat-label>
+          <mat-select [formControl]="asignarCtrl" multiple>
+            @for (elector of electores; track elector.id) {
+            <mat-option [value]="elector.id">
+              {{ elector.identificacion }} - {{ elector.apellidos }} {{ elector.nombres }}
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="flex items-center">
+          <button matButton="filled" color="primary" type="button" (click)="asignar()" [disabled]="!selectedEleccionCtrl.value">
+            <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+            <span class="ml-1">Asignar</span>
+          </button>
+        </div>
+      </div>
+
+      @if (loading) {
+      <mat-progress-bar [mode]="'indeterminate'" />
+      }
+
+      <table mat-table [dataSource]="padron" class="w-full">
+        <ng-container matColumnDef="identificacion">
+          <th mat-header-cell *matHeaderCellDef>Identificacion</th>
+          <td mat-cell *matCellDef="let p" class="font-medium">{{ p.elector.identificacion }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Elector</th>
+          <td mat-cell *matCellDef="let p">
+            <div class="font-medium">{{ p.elector.apellidos }} {{ p.elector.nombres }}</div>
+            <div class="text-sm text-secondary">{{ p.elector.facultad ?? p.elector.carrera ?? '-' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let p">{{ label(p.elector.tipo) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let p">
+            <span [class]="estadoClass(p.estado)">{{ label(p.estado) }}</span>
+            @if (p.motivo) {
+            <div class="text-xs text-secondary mt-1">{{ p.motivo }}</div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="publicado">
+          <th mat-header-cell *matHeaderCellDef>Publicado</th>
+          <td mat-cell *matCellDef="let p">
+            <div>{{ p.publicado ? 'Si' : 'No' }}</div>
+            <div class="text-xs text-secondary">{{ formatDate(p.fechaPublicacion) }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+          <td mat-cell *matCellDef="let p" class="text-right">
+            <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="edit(p)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <span>Editar estado</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" class="cursor-pointer" (click)="edit(row)"></tr>
+      </table>
+
+      @if (!loading && padron.length === 0) {
+      <div class="p-8 text-center text-secondary">No hay electores asignados al padron.</div>
+      }
+
+      <mat-paginator
+        [length]="total"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)" />
+    </div>
+
+    <div class="rounded shadow bg-card p-4">
+      <div class="text-lg font-semibold">Estado en padron</div>
+      @if (selectedPadron) {
+      <div class="mt-2 text-sm text-secondary">
+        {{ selectedPadron.elector.identificacion }} - {{ selectedPadron.elector.apellidos }} {{ selectedPadron.elector.nombres }}
+      </div>
+      }
+
+      <form class="mt-4 grid grid-cols-1 gap-3" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="estado">
+            @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ label(estado) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Motivo</mat-label>
+          <input matInput formControlName="motivo">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Observacion</mat-label>
+          <textarea matInput rows="4" formControlName="observacion"></textarea>
+        </mat-form-field>
+      </form>
+
+      <div class="mt-4 flex justify-end">
+        <button matButton="filled" color="primary" type="button" (click)="saveEstado()" [disabled]="saving || !selectedPadron">
+          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <span class="ml-1">Guardar estado</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

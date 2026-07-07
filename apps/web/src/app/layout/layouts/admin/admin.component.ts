@@ -17,7 +17,6 @@ import {
 import { FuseMediaWatcherService } from '@core/services/media-watcher';
 import { AuthService } from 'app/features/admin/auth/services/auth.service';
 import { UserComponent } from 'app/layout/common/user/user.component';
-import { AdminNavigation, filterNavigationByRole } from 'app/layout/data';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -39,9 +38,7 @@ export class AdminLayout implements OnInit, OnDestroy {
   private _authService = inject(AuthService);
 
   /** Navegación filtrada según el rol del usuario autenticado. */
-  navigation = computed(() =>
-    filterNavigationByRole(AdminNavigation, this._authService.user()?.rol ?? null),
-  );
+  navigation = computed(() => this._authService.menu());
 
   private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -55,6 +52,8 @@ export class AdminLayout implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._authService.refreshAccess().subscribe({ error: () => {} });
+
     this._fuseMediaWatcherService.onMediaChange$
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe(({ matchingAliases }) => {

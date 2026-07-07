@@ -11,10 +11,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Rol } from 'prisma/generated/enums';
 
@@ -45,6 +47,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(Rol, { message: 'El rol no es válido.' })
   rol?: Rol;
+
+  @ApiPropertyOptional({ description: 'Perfil de acceso asignado' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== '')
+  @IsUUID()
+  perfilId?: string | null;
 }
 
 export class UpdateUserDto {
@@ -65,6 +73,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(Rol, { message: 'El rol no es válido.' })
   rol?: Rol;
+
+  @ApiPropertyOptional({ description: 'Perfil de acceso asignado' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== '')
+  @IsUUID()
+  perfilId?: string | null;
 }
 
 export class ToggleActivoDto {
@@ -105,6 +119,12 @@ export class QueryUsersDto {
   @IsOptional()
   @IsEnum(Rol)
   rol?: Rol;
+
+  @ApiPropertyOptional({ description: 'Filtra por perfil' })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== '')
+  @IsUUID()
+  perfilId?: string;
 
   @ApiPropertyOptional({ description: 'Filtra por estado activo' })
   @IsOptional()

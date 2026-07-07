@@ -17,6 +17,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { FuseAlertComponent, FuseAlertType } from '@core/components/alert';
+import { Perfil } from 'app/features/admin/security/models/security.model';
+import { SecurityService } from 'app/features/admin/security/services/security.service';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
 
@@ -44,6 +46,7 @@ export class UserFormDialog implements OnInit {
   form: FormGroup;
   saving = false;
   showPassword = false;
+  perfiles: Perfil[] = [];
   alert: { show: boolean; type: FuseAlertType; message: string } = {
     show: false,
     type: 'error',
@@ -52,6 +55,7 @@ export class UserFormDialog implements OnInit {
 
   private _fb = inject(FormBuilder);
   private _usersService = inject(UsersService);
+  private _securityService = inject(SecurityService);
   private _dialogRef = inject(MatDialogRef<UserFormDialog>);
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: UserFormData) {}
@@ -70,10 +74,17 @@ export class UserFormDialog implements OnInit {
       nombre: [u?.nombre ?? '', [Validators.required]],
       email: [u?.email ?? '', [Validators.required, Validators.email]],
       rol: [u?.rol ?? 'USER', [Validators.required]],
+      perfilId: [u?.perfilId ?? null],
       password: [
         '',
         this.isEdit ? [] : [Validators.required, Validators.minLength(6)],
       ],
+    });
+
+    this._securityService.listPerfiles().subscribe({
+      next: (perfiles) => {
+        this.perfiles = perfiles.filter((perfil) => perfil.activo);
+      },
     });
   }
 
@@ -92,6 +103,7 @@ export class UserFormDialog implements OnInit {
           nombre: v.nombre,
           email: v.email,
           rol: v.rol,
+          perfilId: v.perfilId || null,
         })
       : this._usersService.create({
           usuario: v.usuario,
@@ -99,6 +111,7 @@ export class UserFormDialog implements OnInit {
           email: v.email,
           password: v.password,
           rol: v.rol,
+          perfilId: v.perfilId || null,
         });
 
     request$.subscribe({

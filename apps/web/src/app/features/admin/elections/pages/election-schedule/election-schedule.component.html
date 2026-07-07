@@ -1,0 +1,105 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Cronograma electoral</div>
+      <p class="mt-2 text-secondary">Fechas oficiales del proceso seleccionado</p>
+    </div>
+    <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selected">
+      <mat-icon [svgIcon]="'heroicons_solid:calendar-days'" />
+      <span class="ml-1">Guardar cronograma</span>
+    </button>
+  </div>
+
+  <div class="mt-6 rounded shadow bg-card overflow-hidden">
+    @if (loading) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    <div class="p-4 border-b">
+      <mat-form-field appearance="outline" class="w-full md:w-160">
+        <mat-label>Eleccion</mat-label>
+        <mat-select [formControl]="selectedIdCtrl">
+          @for (eleccion of elecciones; track eleccion.id) {
+          <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (selected) {
+    <form class="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" [formGroup]="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Convocatoria</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaConvocatoria">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Publicacion padron</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaPublicacionPadron">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Inicio inscripcion</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaInicioInscripcion">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fin inscripcion</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaFinInscripcion">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Inicio impugnacion candidaturas</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaInicioImpugnacionCandidaturas">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fin impugnacion candidaturas</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaFinImpugnacionCandidaturas">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Publicacion candidaturas</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaPublicacionCandidaturas">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Inicio campania</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaInicioCampania">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fin campania</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaFinCampania">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Inicio votacion</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaInicioVotacion">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fin votacion</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaFinVotacion">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Publicacion resultados</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaPublicacionResultados">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fin impugnacion resultados</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaFinImpugnacionResultados">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Resultados finales</mat-label>
+        <input matInput type="datetime-local" formControlName="fechaResultadosFinales">
+      </mat-form-field>
+    </form>
+    } @else {
+    <div class="p-8 text-center text-secondary">No hay una eleccion seleccionada.</div>
+    }
+  </div>
+</div>

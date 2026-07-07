@@ -1,0 +1,133 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Perfiles</div>
+      <p class="mt-2 text-secondary">Agrupa opciones de menu y rutas para asignarlas a usuarios</p>
+    </div>
+    <button matButton="filled" color="primary" type="button" (click)="newPerfil()">
+      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <span class="ml-1">Nuevo perfil</span>
+    </button>
+  </div>
+
+  <div class="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <div class="rounded shadow bg-card overflow-hidden">
+      @if (loading) {
+      <mat-progress-bar [mode]="'indeterminate'" />
+      }
+
+      <table mat-table [dataSource]="perfiles" class="w-full">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Perfil</th>
+          <td mat-cell *matCellDef="let p" class="font-medium">{{ p.nombre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="descripcion">
+          <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+          <td mat-cell *matCellDef="let p" class="text-secondary">{{ p.descripcion ?? '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="opciones">
+          <th mat-header-cell *matHeaderCellDef>Opciones</th>
+          <td mat-cell *matCellDef="let p">{{ p._count?.opciones ?? 0 }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="usuarios">
+          <th mat-header-cell *matHeaderCellDef>Usuarios</th>
+          <td mat-cell *matCellDef="let p">{{ p._count?.usuarios ?? 0 }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="inline-flex items-center gap-1.5 text-sm">
+              <span class="w-2 h-2 rounded-full" [class]="p.activo ? 'bg-green-500' : 'bg-red-500'"></span>
+              {{ p.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+          <td mat-cell *matCellDef="let p" class="text-right">
+            <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="select(p)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <span>Editar accesos</span>
+              </button>
+              <button mat-menu-item (click)="togglePerfil(p)">
+                <mat-icon class="icon-size-5 mr-2"
+                  [svgIcon]="p.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+                <span>{{ p.activo ? 'Desactivar' : 'Activar' }}</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+
+      @if (!loading && perfiles.length === 0) {
+      <div class="p-8 text-center text-secondary">No hay perfiles registrados.</div>
+      }
+    </div>
+
+    <div class="rounded shadow bg-card p-4">
+      <div class="text-lg font-semibold">
+        {{ selectedPerfil ? 'Editar perfil' : 'Nuevo perfil' }}
+      </div>
+
+      <form class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" placeholder="Consejo Electoral">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descripcion</mat-label>
+          <input matInput formControlName="descripcion">
+        </mat-form-field>
+      </form>
+
+      <div class="flex justify-end">
+        <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
+          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <span class="ml-1">{{ selectedPerfil ? 'Guardar perfil' : 'Crear perfil' }}</span>
+        </button>
+      </div>
+
+      <div class="mt-6 border-t pt-4">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-lg font-semibold">Opciones asignadas</div>
+            <p class="text-sm text-secondary">Estas rutas construyen el menu y los accesos del usuario.</p>
+          </div>
+          <button matButton="filled" color="primary" type="button" (click)="saveOpciones()"
+            [disabled]="!selectedPerfil || savingOptions">
+            <mat-icon [svgIcon]="'heroicons_solid:shield-check'" />
+            <span class="ml-1">Asignar</span>
+          </button>
+        </div>
+
+        <div class="mt-4 max-h-96 overflow-auto divide-y">
+          @for (opcion of opcionesOrdenadas(); track opcion.id) {
+          <label class="flex items-start gap-3 py-3">
+            <mat-checkbox [checked]="isChecked(opcion.id)"
+              (change)="toggleOpcion(opcion.id, $event.checked)" />
+            <span class="min-w-0">
+              <span class="block font-medium">{{ opcion.titulo }}</span>
+              <span class="block text-sm text-secondary">
+                {{ opcion.padre?.titulo ?? 'Raiz' }} - {{ opcion.ruta ?? 'Grupo de menu' }}
+              </span>
+            </span>
+          </label>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

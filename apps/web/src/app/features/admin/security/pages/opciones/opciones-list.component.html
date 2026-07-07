@@ -1,0 +1,144 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Opciones</div>
+      <p class="mt-2 text-secondary">Registra pantallas y elementos del menu por ruta</p>
+    </div>
+    @if (editing) {
+    <button mat-button type="button" (click)="cancelEdit()">
+      <mat-icon [svgIcon]="'heroicons_solid:x-mark'" />
+      <span>Cancelar edicion</span>
+    </button>
+    }
+  </div>
+
+  <div class="mt-6 rounded shadow bg-card p-4">
+    <form class="grid grid-cols-1 md:grid-cols-12 gap-3" [formGroup]="form">
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Codigo</mat-label>
+        <input matInput formControlName="codigo" placeholder="seguridad.perfiles">
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Titulo</mat-label>
+        <input matInput formControlName="titulo" placeholder="Perfiles">
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Ruta</mat-label>
+        <input matInput formControlName="ruta" placeholder="/admin/seguridad/perfiles">
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Icono</mat-label>
+        <input matInput formControlName="icono" placeholder="heroicons_outline:identification">
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="tipo">
+          @for (tipo of tipos; track tipo) {
+          <mat-option [value]="tipo">{{ tipo === 'GRUPO' ? 'Grupo' : 'Pantalla' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-3" appearance="outline">
+        <mat-label>Padre</mat-label>
+        <mat-select formControlName="padreId">
+          <mat-option [value]="null">Sin padre</mat-option>
+          @for (opcion of parentOptions(); track opcion.id) {
+          <mat-option [value]="opcion.id">{{ opcion.titulo }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-2" appearance="outline">
+        <mat-label>Orden</mat-label>
+        <input matInput type="number" formControlName="orden">
+      </mat-form-field>
+
+      <mat-form-field class="md:col-span-4" appearance="outline">
+        <mat-label>Subtitulo</mat-label>
+        <input matInput formControlName="subtitulo">
+      </mat-form-field>
+
+      <div class="md:col-span-12 flex justify-end">
+        <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
+          <mat-icon [svgIcon]="editing ? 'heroicons_solid:check' : 'heroicons_solid:plus'" />
+          <span class="ml-1">{{ editing ? 'Guardar cambios' : 'Crear opcion' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="mt-4 rounded shadow bg-card overflow-hidden">
+    @if (loading) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    <table mat-table [dataSource]="opciones" class="w-full">
+      <ng-container matColumnDef="titulo">
+        <th mat-header-cell *matHeaderCellDef>Opcion</th>
+        <td mat-cell *matCellDef="let o" class="font-medium">{{ o.titulo }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef>Codigo</th>
+        <td mat-cell *matCellDef="let o" class="text-secondary">{{ o.codigo }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="ruta">
+        <th mat-header-cell *matHeaderCellDef>Ruta</th>
+        <td mat-cell *matCellDef="let o" class="text-secondary">{{ o.ruta ?? 'Menu contenedor' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="padre">
+        <th mat-header-cell *matHeaderCellDef>Padre</th>
+        <td mat-cell *matCellDef="let o">{{ o.padre?.titulo ?? 'Raiz' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tipo">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let o">{{ o.tipo === 'GRUPO' ? 'Grupo' : 'Pantalla' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let o">
+          <span class="inline-flex items-center gap-1.5 text-sm">
+            <span class="w-2 h-2 rounded-full" [class]="o.activo ? 'bg-green-500' : 'bg-red-500'"></span>
+            {{ o.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+        <td mat-cell *matCellDef="let o" class="text-right">
+          <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+            <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="edit(o)">
+              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+              <span>Editar</span>
+            </button>
+            <button mat-menu-item (click)="toggle(o)">
+              <mat-icon class="icon-size-5 mr-2"
+                [svgIcon]="o.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+              <span>{{ o.activo ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+
+    @if (!loading && opciones.length === 0) {
+    <div class="p-8 text-center text-secondary">No hay opciones registradas.</div>
+    }
+  </div>
+</div>

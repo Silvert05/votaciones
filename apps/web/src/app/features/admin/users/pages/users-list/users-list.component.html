@@ -27,6 +27,16 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field class="md:w-56" appearance="outline">
+      <mat-label>Perfil</mat-label>
+      <mat-select [formControl]="perfilCtrl" (selectionChange)="onFilterChange()">
+        <mat-option [value]="''">Todos</mat-option>
+        @for (perfil of perfiles; track perfil.id) {
+        <mat-option [value]="perfil.id">{{ perfil.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
     <mat-form-field class="md:w-48" appearance="outline">
       <mat-label>Estado</mat-label>
       <mat-select [formControl]="activoCtrl" (selectionChange)="onFilterChange()">
@@ -67,6 +77,13 @@
             [class]="u.rol === 'ADMIN' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-700'">
             {{ u.rol === 'ADMIN' ? 'Administrador' : 'Usuario' }}
           </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="perfil">
+        <th mat-header-cell *matHeaderCellDef>Perfil</th>
+        <td mat-cell *matCellDef="let u" class="text-secondary">
+          {{ u.perfil?.nombre ?? 'Sin perfil' }}
         </td>
       </ng-container>
 

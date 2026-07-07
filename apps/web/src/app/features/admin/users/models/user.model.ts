@@ -6,6 +6,11 @@ export interface User {
   nombre: string;
   email: string;
   rol: Rol;
+  perfilId: string | null;
+  perfil?: {
+    id: string;
+    nombre: string;
+  } | null;
   activo: boolean;
   cambiarPassword: boolean;
   fechaCaducidad: string | null;
@@ -26,6 +31,7 @@ export interface UsersQuery {
   limit?: number;
   search?: string;
   rol?: Rol;
+  perfilId?: string;
   activo?: boolean;
 }
 
@@ -35,10 +41,12 @@ export interface CreateUserPayload {
   email: string;
   password: string;
   rol: Rol;
+  perfilId?: string | null;
 }
 
 export interface UpdateUserPayload {
   nombre: string;
   email: string;
   rol: Rol;
+  perfilId?: string | null;
 }

@@ -19,6 +19,7 @@ export class UsersService {
     if (query.limit) params = params.set('limit', query.limit);
     if (query.search) params = params.set('search', query.search);
     if (query.rol) params = params.set('rol', query.rol);
+    if (query.perfilId) params = params.set('perfilId', query.perfilId);
     if (query.activo !== undefined) {
       params = params.set('activo', query.activo);
     }

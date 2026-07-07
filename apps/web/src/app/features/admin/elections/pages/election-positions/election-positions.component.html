@@ -1,0 +1,148 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Dignidades</div>
+      <p class="mt-2 text-secondary">Cargos y representaciones habilitadas para una eleccion</p>
+    </div>
+    <button matButton="filled" color="primary" type="button" (click)="newDignidad()" [disabled]="!selected">
+      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <span class="ml-1">Nueva dignidad</span>
+    </button>
+  </div>
+
+  <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
+      @if (loading) {
+      <mat-progress-bar [mode]="'indeterminate'" />
+      }
+
+      <div class="p-4 border-b">
+        <mat-form-field appearance="outline" class="w-full md:w-160">
+          <mat-label>Eleccion</mat-label>
+          <mat-select [formControl]="selectedIdCtrl">
+            @for (eleccion of elecciones; track eleccion.id) {
+            <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <table mat-table [dataSource]="selected?.dignidades ?? []" class="w-full">
+        <ng-container matColumnDef="orden">
+          <th mat-header-cell *matHeaderCellDef>Orden</th>
+          <td mat-cell *matCellDef="let d">{{ d.orden }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Dignidad</th>
+          <td mat-cell *matCellDef="let d">
+            <div class="font-medium">{{ d.nombre }}</div>
+            <div class="text-sm text-secondary">{{ d.descripcion ?? '-' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="elector">
+          <th mat-header-cell *matHeaderCellDef>Elector</th>
+          <td mat-cell *matCellDef="let d">{{ label(d.tipoElectorPermitido) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="ganadores">
+          <th mat-header-cell *matHeaderCellDef>Ganadores</th>
+          <td mat-cell *matCellDef="let d">{{ d.cantidadGanadores }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="lista">
+          <th mat-header-cell *matHeaderCellDef>Lista</th>
+          <td mat-cell *matCellDef="let d">{{ d.requiereLista ? 'Si' : 'No' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let d">
+            <span class="inline-flex items-center gap-1.5 text-sm">
+              <span class="w-2 h-2 rounded-full" [class]="d.activo ? 'bg-green-500' : 'bg-red-500'"></span>
+              {{ d.activo ? 'Activa' : 'Inactiva' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+          <td mat-cell *matCellDef="let d" class="text-right">
+            <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="edit(d)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <span>Editar</span>
+              </button>
+              <button mat-menu-item (click)="toggleActivo(d)">
+                <mat-icon class="icon-size-5 mr-2"
+                  [svgIcon]="d.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+                <span>{{ d.activo ? 'Desactivar' : 'Activar' }}</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" class="cursor-pointer" (click)="edit(row)"></tr>
+      </table>
+
+      @if (selected && selected.dignidades.length === 0) {
+      <div class="p-8 text-center text-secondary">No hay dignidades registradas.</div>
+      }
+    </div>
+
+    <div class="rounded shadow bg-card p-4">
+      <div class="text-lg font-semibold">
+        {{ selectedDignidad ? 'Editar dignidad' : 'Nueva dignidad' }}
+      </div>
+
+      <form class="mt-4 grid grid-cols-1 gap-3" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descripcion</mat-label>
+          <textarea matInput rows="3" formControlName="descripcion"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de elector</mat-label>
+          <mat-select formControlName="tipoElectorPermitido">
+            @for (tipo of tiposElector; track tipo) {
+            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <mat-form-field appearance="outline">
+            <mat-label>Ganadores</mat-label>
+            <input matInput type="number" min="1" max="50" formControlName="cantidadGanadores">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Orden</mat-label>
+            <input matInput type="number" min="0" max="9999" formControlName="orden">
+          </mat-form-field>
+        </div>
+
+        <label class="flex items-center min-h-14">
+          <mat-checkbox formControlName="requiereLista">Requiere lista</mat-checkbox>
+        </label>
+      </form>
+
+      <div class="mt-4 flex justify-end">
+        <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selected">
+          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <span class="ml-1">{{ selectedDignidad ? 'Guardar' : 'Crear' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

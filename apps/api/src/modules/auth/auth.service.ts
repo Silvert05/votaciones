@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcrypt';
 import { envs } from 'src/config';
 import { PrismaService } from 'src/prisma';
+import { SeguridadService } from '../seguridad/seguridad.service';
 import {
   AuditOperacion,
   AuditTabla,
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly auditoria: AuditoriaService,
+    private readonly seguridad: SeguridadService,
   ) {}
 
   /**
@@ -199,7 +201,7 @@ export class AuthService {
     return this.toPublicUser(user);
   }
 
-  private generateAuthResponse(user: PublicUserSource) {
+  private async generateAuthResponse(user: PublicUserSource) {
     const payload: JwtPayload = {
       sub: user.id,
       usuario: user.usuario,
@@ -213,7 +215,7 @@ export class AuthService {
 
     return {
       access_token,
-      user: this.toPublicUser(user),
+      user: await this.toPublicUser(user),
     };
   }
 
@@ -224,13 +226,19 @@ export class AuthService {
     });
   }
 
-  private toPublicUser(user: PublicUserSource): AuthUser {
+  private async toPublicUser(user: PublicUserSource): Promise<AuthUser> {
+    const access = await this.seguridad.getAccessForUser(user.id, user.rol);
+
     return {
       id: user.id,
       usuario: user.usuario,
       nombre: user.nombre,
       email: user.email,
       rol: user.rol,
+      perfil: access.perfil,
+      menu: access.menu,
+      rutasPermitidas: access.rutasPermitidas,
+      codigosPermitidos: access.codigosPermitidos,
       cambiarPassword: user.cambiarPassword,
     };
   }

@@ -5,6 +5,7 @@ import {
   AuthUser,
   LoginCredentials,
   LoginResponse,
+  MenuItem,
   MessageResponse,
 } from '../models/auth.model';
 
@@ -20,6 +21,10 @@ export class AuthService {
   /** Usuario autenticado (reactivo). */
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
+  readonly menu = computed<MenuItem[]>(() => this._user()?.menu ?? []);
+  readonly rutasPermitidas = computed<string[]>(
+    () => this._user()?.rutasPermitidas ?? [],
+  );
 
   /** Inicia sesión. Puede devolver el flujo de cambio forzado de contraseña. */
   login(credentials: LoginCredentials): Observable<LoginResponse> {
@@ -70,6 +75,11 @@ export class AuthService {
       .pipe(tap((user) => this._patchUser(user)));
   }
 
+  /** Refresca menu y rutas permitidas desde el backend. */
+  refreshAccess(): Observable<AuthUser> {
+    return this.profile();
+  }
+
   /** Actualiza el perfil del usuario autenticado. */
   updateProfile(data: {
     nombre: string;
@@ -90,6 +100,27 @@ export class AuthService {
   /** Token JWT de acceso almacenado. */
   get accessToken(): string | null {
     return sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  canAccessRoute(url: string): boolean {
+    const user = this._user();
+    if (!user) {
+      return false;
+    }
+
+    const normalized = this._normalizeUrl(url);
+    if (normalized === '/admin/dashboard' || normalized === '/admin/perfil') {
+      return true;
+    }
+
+    const rutas = user.rutasPermitidas ?? [];
+    if (user.rol === 'ADMIN' && rutas.length === 0) {
+      return true;
+    }
+
+    return rutas.some(
+      (ruta) => normalized === ruta || normalized.startsWith(`${ruta}/`),
+    );
   }
 
   /** Limpia la sesión local. */
@@ -120,5 +151,10 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private _normalizeUrl(url: string): string {
+    const [path] = url.split('?');
+    return path.replace(/\/$/, '') || '/';
   }
 }

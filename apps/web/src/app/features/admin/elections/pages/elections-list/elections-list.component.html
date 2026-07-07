@@ -1,0 +1,171 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Elecciones</div>
+      <p class="mt-2 text-secondary">Procesos institucionales, convocatoria y estados oficiales</p>
+    </div>
+    <button matButton="filled" color="primary" type="button" (click)="newEleccion()">
+      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <span class="ml-1">Nueva eleccion</span>
+    </button>
+  </div>
+
+  <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b">
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar</mat-label>
+          <input matInput [formControl]="searchCtrl" placeholder="Nombre o descripcion">
+          <mat-icon matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select [formControl]="tipoCtrl" (selectionChange)="onFilterChange()">
+            <mat-option value="">Todos</mat-option>
+            @for (tipo of tipos; track tipo) {
+            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select [formControl]="estadoCtrl" (selectionChange)="onFilterChange()">
+            <mat-option value="">Todos</mat-option>
+            @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ label(estado) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (loading) {
+      <mat-progress-bar [mode]="'indeterminate'" />
+      }
+
+      <table mat-table [dataSource]="elecciones" class="w-full">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Eleccion</th>
+          <td mat-cell *matCellDef="let e">
+            <div class="font-medium">{{ e.nombre }}</div>
+            <div class="text-sm text-secondary">{{ e.descripcion ?? '-' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let e">{{ label(e.tipo) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let e">
+            <span [class]="estadoClass(e.estado)">{{ label(e.estado) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="convocatoria">
+          <th mat-header-cell *matHeaderCellDef>Convocatoria</th>
+          <td mat-cell *matCellDef="let e">{{ formatDate(e.fechaConvocatoria) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dignidades">
+          <th mat-header-cell *matHeaderCellDef>Dignidades</th>
+          <td mat-cell *matCellDef="let e">{{ e._count?.dignidades ?? 0 }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+          <td mat-cell *matCellDef="let e" class="text-right">
+            <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
+              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="select(e)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <span>Editar</span>
+              </button>
+              @for (estado of nextStates(e); track estado) {
+              <button mat-menu-item (click)="cambiarEstado(e, estado)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:arrow-path-rounded-square'" />
+                <span>Pasar a {{ label(estado) }}</span>
+              </button>
+              }
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" class="cursor-pointer" (click)="select(row)"></tr>
+      </table>
+
+      @if (!loading && elecciones.length === 0) {
+      <div class="p-8 text-center text-secondary">No hay elecciones registradas.</div>
+      }
+
+      <mat-paginator
+        [length]="total"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)" />
+    </div>
+
+    <div class="rounded shadow bg-card p-4">
+      <div class="text-lg font-semibold">
+        {{ selected ? 'Editar eleccion' : 'Nueva eleccion' }}
+      </div>
+
+      <form class="mt-4 grid grid-cols-1 gap-3" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descripcion</mat-label>
+          <textarea matInput rows="3" formControlName="descripcion"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipo">
+            @for (tipo of tipos; track tipo) {
+            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de convocatoria</mat-label>
+          <input matInput type="datetime-local" formControlName="fechaConvocatoria">
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <mat-form-field appearance="outline">
+            <mat-label>Vuelta</mat-label>
+            <input matInput type="number" min="1" max="99" formControlName="vueltaActual">
+          </mat-form-field>
+
+          <label class="flex items-center min-h-14">
+            <mat-checkbox formControlName="aprobadaPorOcs">Aprobada por OCS</mat-checkbox>
+          </label>
+        </div>
+      </form>
+
+      @if (selected) {
+      <div class="mt-2 text-sm text-secondary">
+        Estado actual: <span class="font-medium">{{ label(selected.estado) }}</span>
+      </div>
+      }
+
+      <div class="mt-4 flex justify-end">
+        <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
+          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <span class="ml-1">{{ selected ? 'Guardar' : 'Crear' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

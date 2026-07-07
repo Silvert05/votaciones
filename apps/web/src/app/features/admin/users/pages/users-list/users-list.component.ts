@@ -14,6 +14,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { Rol } from '../../../auth/models/auth.model';
+import { Perfil } from '../../../security/models/security.model';
+import { SecurityService } from '../../../security/services/security.service';
 import { ResetPasswordDialog } from '../../dialogs/reset-password/reset-password.dialog';
 import {
   UserFormData,
@@ -41,18 +43,29 @@ import { UsersService } from '../../services/users.service';
 })
 export default class UsersListComponent implements OnInit {
   private _usersService = inject(UsersService);
+  private _securityService = inject(SecurityService);
   private _dialog = inject(MatDialog);
   private _snackBar = inject(MatSnackBar);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
-  readonly columns = ['usuario', 'nombre', 'email', 'rol', 'estado', 'acciones'];
+  readonly columns = [
+    'usuario',
+    'nombre',
+    'email',
+    'rol',
+    'perfil',
+    'estado',
+    'acciones',
+  ];
 
   users: User[] = [];
+  perfiles: Perfil[] = [];
   total = 0;
   loading = false;
 
   searchCtrl = new FormControl('');
   rolCtrl = new FormControl<Rol | ''>('');
+  perfilCtrl = new FormControl<string>('');
   activoCtrl = new FormControl<'' | 'true' | 'false'>('');
 
   private _query: UsersQuery = { page: 1, limit: 10 };
@@ -64,6 +77,11 @@ export default class UsersListComponent implements OnInit {
         this._query.page = 1;
         this.load();
       });
+    this._securityService.listPerfiles().subscribe({
+      next: (perfiles) => {
+        this.perfiles = perfiles;
+      },
+    });
     this.load();
   }
 
@@ -71,6 +89,7 @@ export default class UsersListComponent implements OnInit {
     this.loading = true;
     this._query.search = this.searchCtrl.value || undefined;
     this._query.rol = (this.rolCtrl.value as Rol) || undefined;
+    this._query.perfilId = this.perfilCtrl.value || undefined;
     this._query.activo =
       this.activoCtrl.value === '' ? undefined : this.activoCtrl.value === 'true';
 
