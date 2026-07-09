@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider     = "prisma-client"
   output       = "./generated"
@@ -13,29 +11,460 @@ datasource db {
   provider = "postgresql"
 }
 
-
 enum Rol {
   ADMIN
   USER
 }
 
+enum TipoOpcion {
+  GRUPO
+  PANTALLA
+}
+
+enum TipoEleccion {
+  OCS
+  CONSEJO_ESTUDIANTIL
+  PRESIDENTES_CURSO
+  OTRO
+}
+
+enum EstadoEleccion {
+  BORRADOR
+  CONVOCADA
+  PADRON_PUBLICADO
+  CANDIDATURAS_ABIERTAS
+  CANDIDATURAS_CALIFICADAS
+  CAMPANIA
+  VOTACION_ABIERTA
+  VOTACION_CERRADA
+  ESCRUTINIO
+  RESULTADOS_PROVISIONALES
+  IMPUGNACION_RESULTADOS
+  RESULTADOS_DEFINITIVOS
+  POSESIONADA
+  ANULADA
+}
+
+enum TipoElector {
+  DOCENTE
+  ESTUDIANTE
+  AMBOS
+}
+
+enum EstadoPadronElector {
+  HABILITADO
+  INHABILITADO
+  OBSERVADO
+}
+
+enum EstadoListaElectoral {
+  BORRADOR
+  INSCRITA
+  CALIFICADA
+  RECHAZADA
+  RETIRADA
+}
+
+enum EstadoCandidatura {
+  INSCRITA
+  CALIFICADA
+  RECHAZADA
+  RETIRADA
+}
+
+enum TipoVoto {
+  CANDIDATO
+  BLANCO
+  NULO
+}
+
+enum EstadoActaEscrutinio {
+  BORRADOR
+  CERRADA
+  APROBADA
+}
+
+enum EstadoImpugnacionResultado {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
 model Usuario {
-  id          String     @id @default(uuid()) @db.Uuid
-  usuario     String     @unique @db.VarChar(150)
-  nombre      String     @db.VarChar(200)
-  password    String     @map("password") @db.VarChar(255)
-  rol         Rol        @default(USER)
-  activo      Boolean    @default(true)
-  email       String     @db.VarChar(150)
-
-  cambiarPassword Boolean @default(false) @map("cambiar_password")
+  id              String    @id @default(uuid()) @db.Uuid
+  usuario         String    @unique @db.VarChar(150)
+  nombre          String    @db.VarChar(200)
+  password        String    @map("password") @db.VarChar(255)
+  rol             Rol       @default(USER)
+  perfilId        String?   @map("perfil_id") @db.Uuid
+  activo          Boolean   @default(true)
+  email           String    @db.VarChar(150)
+  cambiarPassword Boolean   @default(false) @map("cambiar_password")
   fechaCaducidad  DateTime? @map("fecha_caducidad")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  perfil Perfil? @relation(fields: [perfilId], references: [id], onDelete: SetNull)
 
   @@index([usuario])
+  @@index([perfilId])
   @@map("usuarios")
+}
+
+model Perfil {
+  id          String   @id @default(uuid()) @db.Uuid
+  nombre      String   @unique @db.VarChar(120)
+  descripcion String?  @db.VarChar(255)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  usuarios Usuario[]
+  opciones PerfilOpcion[]
+
+  @@index([activo])
+  @@map("perfiles")
+}
+
+model Opcion {
+  id        String     @id @default(uuid()) @db.Uuid
+  codigo    String     @unique @db.VarChar(120)
+  titulo    String     @db.VarChar(120)
+  subtitulo String?    @db.VarChar(180)
+  ruta      String?    @unique @db.VarChar(180)
+  icono     String?    @db.VarChar(120)
+  tipo      TipoOpcion @default(PANTALLA)
+  orden     Int        @default(0)
+  activo    Boolean    @default(true)
+  padreId   String?    @map("padre_id") @db.Uuid
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  padre    Opcion?        @relation("OpcionJerarquia", fields: [padreId], references: [id], onDelete: SetNull)
+  hijos    Opcion[]       @relation("OpcionJerarquia")
+  perfiles PerfilOpcion[]
+
+  @@index([padreId])
+  @@index([activo])
+  @@index([orden])
+  @@map("opciones")
+}
+
+model PerfilOpcion {
+  perfilId   String   @map("perfil_id") @db.Uuid
+  opcionId   String   @map("opcion_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  perfil Perfil @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  opcion Opcion @relation(fields: [opcionId], references: [id], onDelete: Cascade)
+
+  @@id([perfilId, opcionId])
+  @@index([opcionId])
+  @@map("perfiles_opciones")
+}
+
+model Eleccion {
+  id                String         @id @default(uuid()) @db.Uuid
+  nombre            String         @db.VarChar(180)
+  descripcion       String?        @db.Text
+  tipo              TipoEleccion
+  estado            EstadoEleccion @default(BORRADOR)
+  fechaConvocatoria DateTime?      @map("fecha_convocatoria")
+  aprobadaPorOcs    Boolean        @default(false) @map("aprobada_por_ocs")
+  vueltaActual      Int            @default(1) @map("vuelta_actual")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  cronograma             CronogramaElectoral?
+  dignidades             Dignidad[]
+  padron                 PadronElectoral[]
+  listasElectorales      ListaElectoral[]
+  candidaturas           Candidatura[]
+  votosEmitidos          VotoEmitido[]
+  conteosVotos           ConteoVoto[]
+  actasEscrutinio        ActaEscrutinio[]
+  impugnacionesResultado ImpugnacionResultado[]
+  historialEstados       HistorialEstadoEleccion[]
+
+  @@index([estado])
+  @@index([tipo])
+  @@index([fechaConvocatoria])
+  @@map("elecciones")
+}
+
+model Elector {
+  id             String      @id @default(uuid()) @db.Uuid
+  identificacion String      @unique @db.VarChar(20)
+  nombres        String      @db.VarChar(120)
+  apellidos      String      @db.VarChar(120)
+  email          String?     @db.VarChar(180)
+  tipo           TipoElector
+  facultad       String?     @db.VarChar(160)
+  carrera        String?     @db.VarChar(160)
+  curso          String?     @db.VarChar(80)
+  activo         Boolean     @default(true)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  padrones      PadronElectoral[]
+  candidaturas  Candidatura[]
+  votosEmitidos VotoEmitido[]
+
+  @@index([tipo])
+  @@index([activo])
+  @@map("electores")
+}
+
+model PadronElectoral {
+  id               String              @id @default(uuid()) @db.Uuid
+  eleccionId       String              @map("eleccion_id") @db.Uuid
+  electorId        String              @map("elector_id") @db.Uuid
+  estado           EstadoPadronElector @default(HABILITADO)
+  motivo           String?             @db.VarChar(255)
+  observacion      String?             @db.Text
+  publicado        Boolean             @default(false)
+  fechaPublicacion DateTime?           @map("fecha_publicacion")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  elector  Elector  @relation(fields: [electorId], references: [id], onDelete: Restrict)
+
+  @@unique([eleccionId, electorId])
+  @@index([eleccionId])
+  @@index([electorId])
+  @@index([estado])
+  @@map("padrones_electorales")
+}
+
+model ListaElectoral {
+  id          String               @id @default(uuid()) @db.Uuid
+  eleccionId  String               @map("eleccion_id") @db.Uuid
+  codigo      String               @db.VarChar(30)
+  nombre      String               @db.VarChar(160)
+  color       String?              @db.VarChar(20)
+  descripcion String?              @db.Text
+  propuesta   String?              @db.Text
+  estado      EstadoListaElectoral @default(BORRADOR)
+  observacion String?              @db.Text
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  eleccion     Eleccion      @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  candidaturas Candidatura[]
+
+  @@unique([eleccionId, codigo])
+  @@index([eleccionId])
+  @@index([estado])
+  @@map("listas_electorales")
+}
+
+model Candidatura {
+  id          String            @id @default(uuid()) @db.Uuid
+  eleccionId  String            @map("eleccion_id") @db.Uuid
+  dignidadId  String            @map("dignidad_id") @db.Uuid
+  electorId   String            @map("elector_id") @db.Uuid
+  listaId     String?           @map("lista_id") @db.Uuid
+  orden       Int               @default(0)
+  estado      EstadoCandidatura @default(INSCRITA)
+  observacion String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  eleccion     Eleccion                @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad     Dignidad                @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  elector      Elector                 @relation(fields: [electorId], references: [id], onDelete: Restrict)
+  lista        ListaElectoral?         @relation(fields: [listaId], references: [id], onDelete: SetNull)
+  conteosVotos ConteoVoto[]
+  detallesActa DetalleActaEscrutinio[]
+
+  @@unique([eleccionId, dignidadId, electorId])
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([electorId])
+  @@index([listaId])
+  @@index([estado])
+  @@map("candidaturas")
+}
+
+model Dignidad {
+  id                   String      @id @default(uuid()) @db.Uuid
+  eleccionId           String      @map("eleccion_id") @db.Uuid
+  nombre               String      @db.VarChar(160)
+  descripcion          String?     @db.Text
+  tipoElectorPermitido TipoElector @default(AMBOS) @map("tipo_elector_permitido")
+  cantidadGanadores    Int         @default(1) @map("cantidad_ganadores")
+  requiereLista        Boolean     @default(true) @map("requiere_lista")
+  orden                Int         @default(0)
+  activo               Boolean     @default(true)
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
+
+  eleccion               Eleccion               @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  candidaturas           Candidatura[]
+  votosEmitidos          VotoEmitido[]
+  conteosVotos           ConteoVoto[]
+  actasEscrutinio        ActaEscrutinio[]
+  impugnacionesResultado ImpugnacionResultado[]
+
+  @@index([eleccionId])
+  @@index([tipoElectorPermitido])
+  @@map("dignidades")
+}
+
+model VotoEmitido {
+  id         String   @id @default(uuid()) @db.Uuid
+  eleccionId String   @map("eleccion_id") @db.Uuid
+  dignidadId String   @map("dignidad_id") @db.Uuid
+  electorId  String   @map("elector_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad Dignidad @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  elector  Elector  @relation(fields: [electorId], references: [id], onDelete: Restrict)
+
+  @@unique([eleccionId, dignidadId, electorId])
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([electorId])
+  @@map("votos_emitidos")
+}
+
+model ConteoVoto {
+  id            String   @id @default(uuid()) @db.Uuid
+  eleccionId    String   @map("eleccion_id") @db.Uuid
+  dignidadId    String   @map("dignidad_id") @db.Uuid
+  candidaturaId String?  @map("candidatura_id") @db.Uuid
+  tipo          TipoVoto
+  opcionKey     String   @map("opcion_key") @db.VarChar(80)
+  total         Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  eleccion    Eleccion     @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad    Dignidad     @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  candidatura Candidatura? @relation(fields: [candidaturaId], references: [id], onDelete: SetNull)
+
+  @@unique([eleccionId, dignidadId, opcionKey])
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([candidaturaId])
+  @@map("conteos_votos")
+}
+
+model ActaEscrutinio {
+  id            String               @id @default(uuid()) @db.Uuid
+  eleccionId    String               @map("eleccion_id") @db.Uuid
+  dignidadId    String               @map("dignidad_id") @db.Uuid
+  numeroActa    String               @map("numero_acta") @db.VarChar(40)
+  totalPadron   Int                  @default(0) @map("total_padron")
+  totalVotantes Int                  @default(0) @map("total_votantes")
+  votosValidos  Int                  @default(0) @map("votos_validos")
+  votosBlancos  Int                  @default(0) @map("votos_blancos")
+  votosNulos    Int                  @default(0) @map("votos_nulos")
+  estado        EstadoActaEscrutinio @default(BORRADOR)
+  observacion   String?              @db.Text
+  cerradaAt     DateTime?            @map("cerrada_at")
+  aprobadaAt    DateTime?            @map("aprobada_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  eleccion      Eleccion                @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad      Dignidad                @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  detalles      DetalleActaEscrutinio[]
+  impugnaciones ImpugnacionResultado[]
+
+  @@unique([eleccionId, dignidadId])
+  @@unique([numeroActa])
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([estado])
+  @@map("actas_escrutinio")
+}
+
+model DetalleActaEscrutinio {
+  id            String   @id @default(uuid()) @db.Uuid
+  actaId        String   @map("acta_id") @db.Uuid
+  candidaturaId String?  @map("candidatura_id") @db.Uuid
+  tipo          TipoVoto
+  opcionKey     String   @map("opcion_key") @db.VarChar(80)
+  total         Int      @default(0)
+  orden         Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  acta        ActaEscrutinio @relation(fields: [actaId], references: [id], onDelete: Cascade)
+  candidatura Candidatura?   @relation(fields: [candidaturaId], references: [id], onDelete: SetNull)
+
+  @@unique([actaId, opcionKey])
+  @@index([actaId])
+  @@index([candidaturaId])
+  @@map("detalles_acta_escrutinio")
+}
+
+model ImpugnacionResultado {
+  id                String                     @id @default(uuid()) @db.Uuid
+  eleccionId        String                     @map("eleccion_id") @db.Uuid
+  dignidadId        String?                    @map("dignidad_id") @db.Uuid
+  actaId            String?                    @map("acta_id") @db.Uuid
+  presentadoPor     String                     @map("presentado_por") @db.VarChar(160)
+  fundamento        String                     @db.Text
+  estado            EstadoImpugnacionResultado @default(PENDIENTE)
+  resolucion        String?                    @db.Text
+  fechaPresentacion DateTime                   @default(now()) @map("fecha_presentacion")
+  fechaResolucion   DateTime?                  @map("fecha_resolucion")
+  createdAt         DateTime                   @default(now()) @map("created_at")
+  updatedAt         DateTime                   @updatedAt @map("updated_at")
+
+  eleccion Eleccion        @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad Dignidad?       @relation(fields: [dignidadId], references: [id], onDelete: SetNull)
+  acta     ActaEscrutinio? @relation(fields: [actaId], references: [id], onDelete: SetNull)
+
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([actaId])
+  @@index([estado])
+  @@map("impugnaciones_resultados")
+}
+
+model CronogramaElectoral {
+  id                                 String    @id @default(uuid()) @db.Uuid
+  eleccionId                         String    @unique @map("eleccion_id") @db.Uuid
+  fechaConvocatoria                  DateTime? @map("fecha_convocatoria")
+  fechaPublicacionPadron             DateTime? @map("fecha_publicacion_padron")
+  fechaInicioInscripcion             DateTime? @map("fecha_inicio_inscripcion")
+  fechaFinInscripcion                DateTime? @map("fecha_fin_inscripcion")
+  fechaInicioImpugnacionCandidaturas DateTime? @map("fecha_inicio_impugnacion_candidaturas")
+  fechaFinImpugnacionCandidaturas    DateTime? @map("fecha_fin_impugnacion_candidaturas")
+  fechaPublicacionCandidaturas       DateTime? @map("fecha_publicacion_candidaturas")
+  fechaInicioCampania                DateTime? @map("fecha_inicio_campania")
+  fechaFinCampania                   DateTime? @map("fecha_fin_campania")
+  fechaInicioVotacion                DateTime? @map("fecha_inicio_votacion")
+  fechaFinVotacion                   DateTime? @map("fecha_fin_votacion")
+  fechaPublicacionResultados         DateTime? @map("fecha_publicacion_resultados")
+  fechaFinImpugnacionResultados      DateTime? @map("fecha_fin_impugnacion_resultados")
+  fechaResultadosFinales             DateTime? @map("fecha_resultados_finales")
+  createdAt                          DateTime  @default(now()) @map("created_at")
+  updatedAt                          DateTime  @updatedAt @map("updated_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+
+  @@map("cronogramas_electorales")
+}
+
+model HistorialEstadoEleccion {
+  id             String          @id @default(uuid()) @db.Uuid
+  eleccionId     String          @map("eleccion_id") @db.Uuid
+  estadoAnterior EstadoEleccion? @map("estado_anterior")
+  estadoNuevo    EstadoEleccion  @map("estado_nuevo")
+  comentario     String?         @db.VarChar(255)
+  usuario        String?         @db.VarChar(100)
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+
+  @@index([eleccionId, createdAt(sort: Desc)])
+  @@map("historial_estados_eleccion")
 }
 
 model Auditoria {
