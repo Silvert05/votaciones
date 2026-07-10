@@ -130,4 +130,24 @@ export class PadronesController {
   ) {
     return this.padronesService.publicarPadron(eleccionId, { user, ip });
   }
+
+  @Get('elecciones/:eleccionId/credenciales')
+  @ApiOperation({ summary: 'Listar credenciales de votacion generadas (DNI + clave)' })
+  listCredenciales(@Param('eleccionId', ParseUUIDPipe) eleccionId: string) {
+    return this.padronesService.listCredenciales(eleccionId);
+  }
+
+  @Post('elecciones/:eleccionId/items/:padronId/credencial')
+  @ApiOperation({ summary: 'Regenerar la credencial de un elector' })
+  regenerarCredencial(
+    @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
+    @Param('padronId', ParseUUIDPipe) padronId: string,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.padronesService.regenerarCredencial(eleccionId, padronId, {
+      user,
+      ip,
+    });
+  }
 }

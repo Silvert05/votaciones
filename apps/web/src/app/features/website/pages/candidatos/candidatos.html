@@ -1,1 +1,85 @@
-<p>candidatos works!</p>
+<div class="min-h-full bg-gray-50 dark:bg-gray-900">
+
+  <!-- Cabecera -->
+  <div class="bg-gradient-to-r from-[#1d4ed8] to-[#0ea5e9] text-white">
+    <div class="max-w-6xl mx-auto px-6 py-10 text-center">
+      <h1 class="text-3xl sm:text-4xl font-extrabold">Candidatos</h1>
+      @if (data) {
+      <p class="mt-2 text-white/85">{{ data.eleccion.nombre }}</p>
+      @if (data.eleccion.institucion) {
+      <p class="text-white/70 text-sm">{{ data.eleccion.institucion }}</p>
+      }
+      }
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+    @if (cargando) {
+    <div class="text-center text-secondary p-10">Cargando candidatos…</div>
+    }
+
+    @else if (!data || !data.dignidades.length) {
+    <div class="max-w-lg mx-auto text-center text-secondary p-10 bg-card rounded-2xl shadow-sm border">
+      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:user-group'" />
+      <p class="font-medium">Aún no hay candidaturas publicadas.</p>
+    </div>
+    }
+
+    @else {
+    <div class="flex flex-col gap-12">
+      @for (d of data.dignidades; track d.id) {
+      <section>
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-1.5 h-8 rounded-full bg-[#1d4ed8]"></span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ d.nombre }}</h2>
+            @if (d.descripcion) {
+            <p class="text-secondary text-sm">{{ d.descripcion }}</p>
+            }
+          </div>
+          <span class="ml-auto text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+            {{ d.cantidadGanadores }} a elegir
+          </span>
+        </div>
+
+        @if (!d.candidaturas.length) {
+        <p class="text-secondary text-sm">Sin candidaturas calificadas para esta dignidad.</p>
+        } @else {
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+          @for (c of d.candidaturas; track c.id) {
+          <div
+            class="group bg-card rounded-2xl shadow-sm border overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+            <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <img [src]="foto(c.elector.identificacion, c.elector.fotoUrl)" [alt]="c.elector.apellidos"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            </div>
+            <div class="p-4 text-center">
+              <div class="font-bold leading-tight">{{ c.elector.apellidos }}</div>
+              <div class="text-secondary text-sm">{{ c.elector.nombres }}</div>
+              @if (c.lista) {
+              <div class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full"
+                [style.background]="(c.lista.color || '#1d4ed8') + '22'" [style.color]="c.lista.color || '#1d4ed8'">
+                <span class="w-2.5 h-2.5 rounded-full" [style.background]="c.lista.color || '#1d4ed8'"></span>
+                Lista {{ c.lista.codigo }}
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </section>
+      }
+    </div>
+
+    <div class="mt-12 text-center">
+      <a [routerLink]="'/votar'"
+        class="inline-flex items-center gap-2 rounded-xl bg-[#1d4ed8] px-8 py-3.5 text-white font-bold hover:bg-[#1a45bf] active:scale-[0.99] transition">
+        <mat-icon [svgIcon]="'heroicons_outline:finger-print'" />
+        Ir a votar
+      </a>
+    </div>
+    }
+  </div>
+</div>

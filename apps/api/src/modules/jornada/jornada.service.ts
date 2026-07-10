@@ -1,0 +1,392 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EstadoEleccion, EstadoPadronElector } from 'prisma/generated/enums';
+import { PrismaService } from 'src/prisma';
+import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { AuthUser } from '../auth/entities/auth.entity';
+import { IniciarVotacionDto, PasoJornadaDto } from './dto/jornada.dto';
+
+interface Actor {
+  user: AuthUser;
+  ip?: string | null;
+}
+
+@Injectable()
+export class JornadaService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditoria: AuditoriaService,
+  ) {}
+
+  async obtenerEstado(eleccionId: string) {
+    const eleccion = await this.getEleccion(eleccionId);
+    const jornada = await this.ensureJornada(eleccionId);
+
+    const [padronHabilitado, votosEmitidos, dignidades] = await Promise.all([
+      this.prisma.padronElectoral.count({
+        where: {
+          eleccionId,
+          publicado: true,
+          estado: EstadoPadronElector.HABILITADO,
+        },
+      }),
+      this.prisma.votoEmitido.count({ where: { eleccionId } }),
+      this.prisma.dignidad.count({ where: { eleccionId, activo: true } }),
+    ]);
+
+    return {
+      eleccion: {
+        id: eleccion.id,
+        nombre: eleccion.nombre,
+        tipo: eleccion.tipo,
+        estado: eleccion.estado,
+        institucion: eleccion.configuracion?.nombreInstitucion ?? null,
+      },
+      jornada,
+      pasoActual: this.pasoActual(jornada),
+      resumen: { padronHabilitado, votosEmitidos, dignidades },
+    };
+  }
+
+  async inicializar(eleccionId: string, dto: PasoJornadaDto, actor: Actor) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (jornada.inicializadaAt) return this.obtenerEstado(eleccionId);
+
+    const [padron, calificadas] = await Promise.all([
+      this.prisma.padronElectoral.count({
+        where: {
+          eleccionId,
+          publicado: true,
+          estado: EstadoPadronElector.HABILITADO,
+        },
+      }),
+      this.prisma.candidatura.count({
+        where: { eleccionId, estado: 'CALIFICADA' },
+      }),
+    ]);
+    if (!padron) {
+      throw new BadRequestException(
+        'No se puede inicializar: el padron no esta publicado con electores habilitados.',
+      );
+    }
+    if (!calificadas) {
+      throw new BadRequestException(
+        'No se puede inicializar: no hay candidaturas calificadas.',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: { inicializadaAt: new Date(), configBloqueada: true },
+      });
+      await tx.jornadaEvento.create({
+        data: {
+          jornadaId: jornada.id,
+          paso: 'INICIALIZACION',
+          reporte: dto.reporte ?? 'Jornada inicializada.',
+          usuario: actor.user.usuario,
+        },
+      });
+    });
+
+    await this.audit(eleccionId, 'INICIALIZACION', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async puestaCero(eleccionId: string, dto: PasoJornadaDto, actor: Actor) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (!jornada.inicializadaAt) {
+      throw new BadRequestException('Primero debe inicializar la jornada.');
+    }
+
+    const votos = await this.prisma.votoEmitido.count({ where: { eleccionId } });
+    if (votos > 0) {
+      throw new BadRequestException(
+        `La puesta a cero fallo: existen ${votos} votos previos registrados.`,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: { puestaCeroAt: new Date() },
+      });
+      await tx.jornadaEvento.create({
+        data: {
+          jornadaId: jornada.id,
+          paso: 'PUESTA_A_CERO',
+          reporte: dto.reporte ?? 'Puesta a cero verificada: 0 votos.',
+          usuario: actor.user.usuario,
+        },
+      });
+    });
+
+    await this.audit(eleccionId, 'PUESTA_A_CERO', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async iniciarVotacion(
+    eleccionId: string,
+    dto: IniciarVotacionDto,
+    actor: Actor,
+  ) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (!jornada.puestaCeroAt) {
+      throw new BadRequestException(
+        'Primero debe completar la puesta a cero.',
+      );
+    }
+
+    const eleccion = await this.getEleccion(eleccionId);
+    const fechaFin = dto.fechaFinVotacion
+      ? new Date(dto.fechaFinVotacion)
+      : jornada.fechaFinVotacion;
+
+    await this.prisma.$transaction(async (tx) => {
+      if (eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA) {
+        await tx.eleccion.update({
+          where: { id: eleccionId },
+          data: { estado: EstadoEleccion.VOTACION_ABIERTA },
+        });
+        await tx.historialEstadoEleccion.create({
+          data: {
+            eleccionId,
+            estadoAnterior: eleccion.estado,
+            estadoNuevo: EstadoEleccion.VOTACION_ABIERTA,
+            comentario: 'Inicio de votacion desde la jornada electoral.',
+            usuario: actor.user.usuario,
+          },
+        });
+      }
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: {
+          votacionIniciadaAt: new Date(),
+          linkVotacionActivo: true,
+          fechaFinVotacion: fechaFin,
+        },
+      });
+      await tx.jornadaEvento.create({
+        data: {
+          jornadaId: jornada.id,
+          paso: 'INICIO_VOTACION',
+          reporte: dto.reporte ?? 'Votacion iniciada. Link habilitado.',
+          usuario: actor.user.usuario,
+        },
+      });
+    });
+
+    await this.audit(eleccionId, 'INICIO_VOTACION', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async cerrarVotacion(eleccionId: string, dto: PasoJornadaDto, actor: Actor) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (!jornada.votacionIniciadaAt) {
+      throw new BadRequestException('La votacion no ha sido iniciada.');
+    }
+    if (jornada.votacionCerradaAt) return this.obtenerEstado(eleccionId);
+
+    const eleccion = await this.getEleccion(eleccionId);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (eleccion.estado === EstadoEleccion.VOTACION_ABIERTA) {
+        await tx.eleccion.update({
+          where: { id: eleccionId },
+          data: { estado: EstadoEleccion.VOTACION_CERRADA },
+        });
+        await tx.historialEstadoEleccion.create({
+          data: {
+            eleccionId,
+            estadoAnterior: eleccion.estado,
+            estadoNuevo: EstadoEleccion.VOTACION_CERRADA,
+            comentario: 'Cierre de votacion desde la jornada electoral.',
+            usuario: actor.user.usuario,
+          },
+        });
+      }
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: { votacionCerradaAt: new Date(), linkVotacionActivo: false },
+      });
+      await tx.jornadaEvento.create({
+        data: {
+          jornadaId: jornada.id,
+          paso: 'CIERRE_VOTACION',
+          reporte: dto.reporte ?? 'Votacion cerrada.',
+          usuario: actor.user.usuario,
+        },
+      });
+    });
+
+    await this.audit(eleccionId, 'CIERRE_VOTACION', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async generarResultados(
+    eleccionId: string,
+    dto: PasoJornadaDto,
+    actor: Actor,
+  ) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (!jornada.votacionCerradaAt) {
+      throw new BadRequestException(
+        'Debe cerrar la votacion antes de generar resultados.',
+      );
+    }
+
+    const eleccion = await this.getEleccion(eleccionId);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (eleccion.estado === EstadoEleccion.VOTACION_CERRADA) {
+        await tx.eleccion.update({
+          where: { id: eleccionId },
+          data: { estado: EstadoEleccion.RESULTADOS_PROVISIONALES },
+        });
+        await tx.historialEstadoEleccion.create({
+          data: {
+            eleccionId,
+            estadoAnterior: eleccion.estado,
+            estadoNuevo: EstadoEleccion.RESULTADOS_PROVISIONALES,
+            comentario: 'Publicacion de resultados desde la jornada electoral.',
+            usuario: actor.user.usuario,
+          },
+        });
+      }
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: { resultadosAt: new Date() },
+      });
+      await tx.jornadaEvento.create({
+        data: {
+          jornadaId: jornada.id,
+          paso: 'RESULTADOS',
+          reporte: dto.reporte ?? 'Resultados electorales publicados.',
+          usuario: actor.user.usuario,
+        },
+      });
+    });
+
+    await this.audit(eleccionId, 'RESULTADOS', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async reactivarLink(eleccionId: string, actor: Actor) {
+    const jornada = await this.ensureJornada(eleccionId);
+    if (!jornada.votacionIniciadaAt || jornada.votacionCerradaAt) {
+      throw new BadRequestException(
+        'El link solo puede reactivarse con la votacion abierta.',
+      );
+    }
+    await this.prisma.jornadaElectoral.update({
+      where: { id: jornada.id },
+      data: { linkVotacionActivo: true },
+    });
+    await this.audit(eleccionId, 'REACTIVAR_LINK', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  async reiniciar(eleccionId: string, actor: Actor) {
+    const jornada = await this.ensureJornada(eleccionId);
+    const eleccion = await this.getEleccion(eleccionId);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.conteoVoto.deleteMany({ where: { eleccionId } });
+      await tx.votoEmitido.deleteMany({ where: { eleccionId } });
+      await tx.jornadaEvento.deleteMany({ where: { jornadaId: jornada.id } });
+      await tx.jornadaElectoral.update({
+        where: { id: jornada.id },
+        data: {
+          configBloqueada: false,
+          inicializadaAt: null,
+          puestaCeroAt: null,
+          votacionIniciadaAt: null,
+          votacionCerradaAt: null,
+          resultadosAt: null,
+          fechaFinVotacion: null,
+          linkVotacionActivo: false,
+        },
+      });
+      if (
+        eleccion.estado === EstadoEleccion.VOTACION_ABIERTA ||
+        eleccion.estado === EstadoEleccion.VOTACION_CERRADA ||
+        eleccion.estado === EstadoEleccion.RESULTADOS_PROVISIONALES
+      ) {
+        await tx.eleccion.update({
+          where: { id: eleccionId },
+          data: { estado: EstadoEleccion.CANDIDATURAS_CALIFICADAS },
+        });
+        await tx.historialEstadoEleccion.create({
+          data: {
+            eleccionId,
+            estadoAnterior: eleccion.estado,
+            estadoNuevo: EstadoEleccion.CANDIDATURAS_CALIFICADAS,
+            comentario: 'Reinicio de la jornada electoral.',
+            usuario: actor.user.usuario,
+          },
+        });
+      }
+    });
+
+    await this.audit(eleccionId, 'REINICIAR', actor);
+    return this.obtenerEstado(eleccionId);
+  }
+
+  private pasoActual(jornada: {
+    inicializadaAt: Date | null;
+    puestaCeroAt: Date | null;
+    votacionIniciadaAt: Date | null;
+    votacionCerradaAt: Date | null;
+    resultadosAt: Date | null;
+  }): number {
+    if (!jornada.inicializadaAt) return 1;
+    if (!jornada.puestaCeroAt) return 2;
+    if (!jornada.votacionIniciadaAt) return 3;
+    if (!jornada.votacionCerradaAt) return 4;
+    return 5;
+  }
+
+  private async ensureJornada(eleccionId: string) {
+    await this.getEleccion(eleccionId);
+    const existing = await this.prisma.jornadaElectoral.findUnique({
+      where: { eleccionId },
+      include: { eventos: { orderBy: { createdAt: 'asc' } } },
+    });
+    if (existing) return existing;
+    return this.prisma.jornadaElectoral.create({
+      data: { eleccionId },
+      include: { eventos: { orderBy: { createdAt: 'asc' } } },
+    });
+  }
+
+  private async getEleccion(eleccionId: string) {
+    const eleccion = await this.prisma.eleccion.findUnique({
+      where: { id: eleccionId },
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        estado: true,
+        configuracion: { select: { nombreInstitucion: true } },
+      },
+    });
+    if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');
+    return eleccion;
+  }
+
+  private audit(eleccionId: string, paso: string, actor: Actor) {
+    return this.auditoria.registrar({
+      tabla: AuditTabla.JORNADAS_ELECTORALES,
+      operacion: AuditOperacion.ESTADO,
+      registroId: eleccionId,
+      datosNuevos: { paso },
+      usuario: actor.user.usuario,
+      ip: actor.ip,
+    });
+  }
+}

@@ -1,0 +1,278 @@
+<div class="flex flex-col min-h-full bg-gray-50 dark:bg-gray-900">
+  @if (loading || working) {
+  <mat-progress-bar class="!absolute top-0 left-0 right-0 z-50" [mode]="'indeterminate'" />
+  }
+
+  <!-- Cabecera de la eleccion -->
+  @if (eleccion && fase !== 'seleccion') {
+  <div class="bg-gradient-to-r from-[#1d4ed8] to-[#0ea5e9] text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+      @if (eleccion.configuracion?.escudoUrl) {
+      <img [src]="eleccion.configuracion?.escudoUrl" alt="escudo"
+        class="h-16 w-16 object-contain rounded-lg bg-white/95 p-1.5 shadow shrink-0">
+      }
+      <div class="flex-auto">
+        <h1 class="text-xl sm:text-2xl font-bold leading-tight">{{ eleccion.nombre }}</h1>
+        @if (eleccion.configuracion?.nombreInstitucion) {
+        <p class="text-white/85 text-sm">{{ eleccion.configuracion?.nombreInstitucion }}</p>
+        }
+        <p class="text-white/60 text-[11px] uppercase tracking-widest mt-0.5">Voto Electrónico No Presencial (VENP)</p>
+      </div>
+      @if (countdown && fase !== 'listo') {
+      <div class="bg-white/15 rounded-xl px-5 py-2 text-center shrink-0">
+        <div class="text-[10px] text-white/70 uppercase tracking-wide">Finaliza en</div>
+        <div class="text-2xl font-bold tabular-nums">{{ countdown }}</div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <div class="flex-auto w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+    <!-- Seleccion de eleccion -->
+    @if (fase === 'seleccion') {
+    <div class="text-center mb-8">
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-[#1d4ed8]">Módulo de Votación</h1>
+      <p class="text-secondary mt-2">Selecciona el proceso electoral en el que deseas votar</p>
+    </div>
+    @if (!elecciones.length && !loading) {
+    <div class="max-w-lg mx-auto text-center text-secondary p-10 bg-card rounded-2xl shadow-sm border">
+      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:inbox'" />
+      <p class="font-medium">No hay votaciones abiertas en este momento.</p>
+    </div>
+    }
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+      @for (e of elecciones; track e.id) {
+      <button type="button"
+        class="group text-left bg-card rounded-2xl shadow-sm border p-6 hover:border-[#1d4ed8] hover:shadow-lg transition-all duration-200"
+        (click)="elegir(e)">
+        <div class="flex items-start gap-4">
+          @if (e.configuracion?.escudoUrl) {
+          <img [src]="e.configuracion?.escudoUrl" alt="escudo" class="h-12 w-12 object-contain rounded-lg shrink-0">
+          }
+          <div class="flex-auto">
+            <div class="font-bold text-lg leading-tight">{{ e.nombre }}</div>
+            <div class="text-secondary text-sm mt-1">{{ e.configuracion?.nombreInstitucion }}</div>
+          </div>
+        </div>
+        <div
+          class="mt-4 inline-flex items-center gap-2 text-[#1d4ed8] font-semibold group-hover:gap-3 transition-all">
+          <mat-icon [svgIcon]="'heroicons_outline:finger-print'" /> Ingresar a votar
+          <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-right'" />
+        </div>
+      </button>
+      }
+    </div>
+    }
+
+    <!-- Login del votante -->
+    @if (fase === 'login') {
+    <div class="max-w-md mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Bienvenido al Módulo de Votación
+        </h2>
+        <p class="text-secondary mt-2">Utilice su número de cédula y contraseña para ingresar a votar</p>
+      </div>
+      <div class="bg-card rounded-2xl shadow-lg border p-6 sm:p-8">
+        <h3 class="text-lg font-bold mb-5">Ingrese sus credenciales</h3>
+        <div class="flex flex-col gap-5">
+          <div>
+            <label class="block text-sm font-medium mb-1.5">Número de cédula (DNI)</label>
+            <div class="relative">
+              <mat-icon
+                class="icon-size-5 absolute left-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none"
+                [svgIcon]="'heroicons_outline:identification'" />
+              <input
+                class="w-full rounded-xl border border-gray-300 dark:border-gray-700 pl-10 pr-3 py-3 bg-transparent focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/20 outline-none transition"
+                type="text" [formControl]="identificacionCtrl" placeholder="0102030405">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">Contraseña</label>
+            <div class="relative">
+              <mat-icon
+                class="icon-size-5 absolute left-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none"
+                [svgIcon]="'heroicons_outline:lock-closed'" />
+              <input
+                class="w-full rounded-xl border border-gray-300 dark:border-gray-700 pl-10 pr-11 py-3 bg-transparent focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/20 outline-none transition"
+                [type]="verPassword ? 'text' : 'password'" [formControl]="passwordCtrl" placeholder="••••••••"
+                (keyup.enter)="ingresar()">
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary"
+                (click)="verPassword = !verPassword">
+                <mat-icon class="icon-size-5"
+                  [svgIcon]="verPassword ? 'heroicons_outline:eye-slash' : 'heroicons_outline:eye'" />
+              </button>
+            </div>
+          </div>
+          <button
+            class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1d4ed8] py-3.5 text-white font-bold text-base hover:bg-[#1a45bf] active:scale-[0.99] transition disabled:opacity-60"
+            [disabled]="working" (click)="ingresar()">
+            <span>INGRESAR</span>
+            <mat-icon [svgIcon]="'heroicons_outline:arrow-right'" />
+          </button>
+        </div>
+        <div class="mt-5 text-center">
+          <a [routerLink]="'/instructivo'"
+            class="inline-flex items-center gap-1 text-sm text-[#1d4ed8] font-medium hover:underline">
+            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:question-mark-circle'" />
+            ¿Cómo votar? Ver instructivo
+          </a>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Cedula de votacion -->
+    @if (fase === 'cedula' && cedulaActual) {
+    <div class="max-w-3xl mx-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2 text-sm text-secondary">
+          <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'" />
+          Cédula {{ cedulaIndex + 1 }} de {{ totalCedulas }}
+        </div>
+        <div class="text-sm font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+          {{ cedulaActual.cantidadGanadores }} a elegir
+        </div>
+      </div>
+
+      <!-- Progreso -->
+      <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-6">
+        <div class="h-full bg-[#1d4ed8] transition-all duration-300"
+          [style.width.%]="((cedulaIndex + 1) / totalCedulas) * 100"></div>
+      </div>
+
+      <div class="bg-card rounded-2xl shadow-sm border p-6 sm:p-8">
+        <h2 class="text-2xl font-bold text-center">{{ cedulaActual.nombre }}</h2>
+        <p class="text-center text-secondary mt-1">
+          Marque su preferencia. Si no marca ninguna, se tomará como <strong>"Voto en Blanco"</strong>.
+        </p>
+
+        <div class="mt-6 flex flex-col gap-3">
+          @for (c of cedulaActual.candidaturas; track c.id) {
+          <label
+            class="flex items-center gap-4 border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-gray-800"
+            [style.borderColor]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id ? '#1d4ed8' : 'transparent'"
+            [class.bg-blue-50]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id">
+            <input type="radio" class="w-5 h-5 accent-[#1d4ed8]"
+              [checked]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id"
+              (change)="marcar(cedulaActual.id, 'CANDIDATO:' + c.id)">
+            <img [src]="c.elector.fotoUrl || 'https://i.pravatar.cc/100?u=' + c.elector.identificacion" alt="foto"
+              class="w-14 h-14 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700">
+            <div class="flex-auto min-w-0">
+              <div class="font-bold text-base">{{ c.elector.apellidos }} {{ c.elector.nombres }}</div>
+              @if (c.lista) {
+              <div class="text-xs text-secondary flex items-center gap-1.5 mt-0.5">
+                <span class="w-3 h-3 rounded-full inline-block" [style.background]="c.lista.color || '#999'"></span>
+                Lista {{ c.lista.codigo }} · {{ c.lista.nombre }}
+              </div>
+              }
+            </div>
+          </label>
+          }
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+            <label
+              class="flex items-center gap-3 border-2 rounded-xl p-3 cursor-pointer transition hover:bg-gray-50 dark:hover:bg-gray-800"
+              [style.borderColor]="seleccion(cedulaActual.id) === 'BLANCO' ? '#1d4ed8' : 'transparent'"
+              [class.bg-blue-50]="seleccion(cedulaActual.id) === 'BLANCO'">
+              <input type="radio" class="w-5 h-5 accent-[#1d4ed8]"
+                [checked]="seleccion(cedulaActual.id) === 'BLANCO'" (change)="marcar(cedulaActual.id, 'BLANCO')">
+              <span class="font-medium">Voto en blanco</span>
+            </label>
+            <label
+              class="flex items-center gap-3 border-2 rounded-xl p-3 cursor-pointer transition hover:bg-gray-50 dark:hover:bg-gray-800"
+              [style.borderColor]="seleccion(cedulaActual.id) === 'NULO' ? '#1d4ed8' : 'transparent'"
+              [class.bg-blue-50]="seleccion(cedulaActual.id) === 'NULO'">
+              <input type="radio" class="w-5 h-5 accent-[#1d4ed8]"
+                [checked]="seleccion(cedulaActual.id) === 'NULO'" (change)="marcar(cedulaActual.id, 'NULO')">
+              <span class="font-medium">Voto nulo</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-between">
+          <button type="button" [disabled]="cedulaIndex === 0" (click)="anterior()"
+            class="inline-flex items-center gap-1 rounded-xl border px-5 py-2.5 font-medium disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800">
+            <mat-icon [svgIcon]="'heroicons_outline:arrow-left'" /><span>Anterior</span>
+          </button>
+          <button type="button" (click)="siguiente()"
+            class="inline-flex items-center gap-1 rounded-xl bg-[#1d4ed8] px-6 py-2.5 text-white font-semibold hover:bg-[#1a45bf] active:scale-[0.99] transition">
+            <span>{{ cedulaIndex === totalCedulas - 1 ? 'Revisar voto' : 'Siguiente' }}</span>
+            <mat-icon [svgIcon]="'heroicons_outline:arrow-right'" />
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Confirmacion -->
+    @if (fase === 'confirmar') {
+    <div class="max-w-2xl mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl sm:text-3xl font-bold">Confirme su voto</h2>
+        <p class="text-secondary mt-1">Revise sus selecciones antes de emitir. Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="bg-card rounded-2xl shadow-sm border overflow-hidden">
+        <div class="divide-y">
+          @for (r of resumen(); track r.dignidad) {
+          <div class="flex items-center justify-between gap-4 p-4">
+            <span class="text-secondary text-sm">{{ r.dignidad }}</span>
+            <span class="font-semibold text-right">{{ r.opcion }}</span>
+          </div>
+          }
+        </div>
+      </div>
+      <div class="mt-6 flex flex-col sm:flex-row justify-between gap-3">
+        <button type="button" (click)="fase = 'cedula'; cedulaIndex = 0"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border px-5 py-3 font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+          <mat-icon [svgIcon]="'heroicons_outline:arrow-left'" /><span>Volver a revisar</span>
+        </button>
+        <button type="button" [disabled]="working" (click)="confirmar()"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-8 py-3 text-white font-bold hover:bg-green-700 active:scale-[0.99] transition disabled:opacity-60">
+          <mat-icon [svgIcon]="'heroicons_outline:check-circle'" /><span>Emitir mi voto</span>
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Listo / Mensaje de confirmacion -->
+    @if (fase === 'listo') {
+    <div class="max-w-2xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-light text-center text-gray-600 dark:text-gray-300 mb-8">
+        Mensaje de confirmación
+      </h2>
+      <div class="bg-card rounded-2xl shadow-lg border p-8 sm:p-10">
+        <div class="flex items-start gap-5">
+          <div class="shrink-0 w-16 h-16 rounded-full bg-[#0ea5e9] flex items-center justify-center shadow-lg">
+            <mat-icon class="text-white icon-size-10" [svgIcon]="'heroicons_solid:check'" />
+          </div>
+          <div class="flex-auto pt-1">
+            <div class="font-bold text-lg text-gray-800 dark:text-gray-100">Estimado(a) Elector(a):</div>
+            <p class="text-secondary mt-1">
+              Le informamos que su participación ha sido registrada satisfactoriamente. Su voto es secreto y ya fue
+              contabilizado.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-col items-center gap-4">
+        <div class="flex items-center gap-3 text-secondary">
+          <svg class="animate-spin h-5 w-5 text-[#1d4ed8]" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span class="text-sm">Volviendo al inicio de sesión en <strong>{{ redirectSegundos }}s</strong>…</span>
+        </div>
+        <button type="button" (click)="volverALogin()"
+          class="inline-flex items-center gap-2 rounded-xl border px-6 py-2.5 font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+          <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'" />
+          Finalizar ahora
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+</div>

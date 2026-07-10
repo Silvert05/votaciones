@@ -1,0 +1,94 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Configuracion institucional</div>
+      <p class="mt-2 text-secondary">Personaliza la identidad visual de la jornada de votacion</p>
+    </div>
+    <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selectedId">
+      <mat-icon [svgIcon]="'heroicons_solid:paint-brush'" />
+      <span class="ml-1">Guardar configuracion</span>
+    </button>
+  </div>
+
+  <div class="mt-6 rounded shadow bg-card overflow-hidden">
+    @if (loading) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    <div class="p-4 border-b">
+      <mat-form-field appearance="outline" class="w-full md:w-160">
+        <mat-label>Eleccion</mat-label>
+        <mat-select [formControl]="selectedIdCtrl">
+          @for (eleccion of elecciones; track eleccion.id) {
+          <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (selectedId) {
+    <form class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3" [formGroup]="form">
+      <mat-form-field appearance="outline" class="md:col-span-2">
+        <mat-label>Nombre de la institucion</mat-label>
+        <input matInput type="text" formControlName="nombreInstitucion" maxlength="200">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>URL del logo</mat-label>
+        <input matInput type="url" formControlName="logoUrl" placeholder="https://...">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>URL del escudo</mat-label>
+        <input matInput type="url" formControlName="escudoUrl" placeholder="https://...">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="md:col-span-2">
+        <mat-label>URL del video promocional</mat-label>
+        <input matInput type="url" formControlName="videoUrl" placeholder="https://youtube.com/embed/...">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color primario (hex)</mat-label>
+        <input matInput type="text" formControlName="colorPrimario" placeholder="#1d4ed8">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color secundario (hex)</mat-label>
+        <input matInput type="text" formControlName="colorSecundario" placeholder="#0ea5e9">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color de acento (hex)</mat-label>
+        <input matInput type="text" formControlName="colorAcento" placeholder="#f59e0b">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="md:col-span-2">
+        <mat-label>Mensaje de bienvenida</mat-label>
+        <textarea matInput rows="3" formControlName="mensajeBienvenida"></textarea>
+      </mat-form-field>
+
+      <div class="md:col-span-2 flex flex-wrap items-center gap-4 p-4 rounded border">
+        <span class="text-sm text-secondary">Vista previa:</span>
+        <span class="inline-flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorPrimario"></span>
+          <span class="text-sm">Primario</span>
+        </span>
+        <span class="inline-flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorSecundario"></span>
+          <span class="text-sm">Secundario</span>
+        </span>
+        <span class="inline-flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorAcento"></span>
+          <span class="text-sm">Acento</span>
+        </span>
+        @if (form.value.logoUrl) {
+        <img [src]="form.value.logoUrl" alt="logo" class="h-10 w-auto object-contain ml-auto">
+        }
+      </div>
+    </form>
+    } @else {
+    <div class="p-8 text-center text-secondary">No hay una eleccion seleccionada.</div>
+    }
+  </div>
+</div>

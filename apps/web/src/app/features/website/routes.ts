@@ -12,8 +12,10 @@ const routes: Routes = [
       { path: 'inicio', loadComponent: () => import('./pages/home/home.component') },
       { path: 'actividades', loadComponent: () => import('./pages/actividades/actividades') },
       { path: 'candidatos', loadComponent: () => import('./pages/candidatos/candidatos') },
+      { path: 'votar', loadComponent: () => import('./pages/votar/votar') },
       { path: 'participacion', loadComponent: () => import('./pages/participacion/participacion') },
       { path: 'resultados', loadComponent: () => import('./pages/resultados/resultados') },
+      { path: 'instructivo', loadComponent: () => import('./pages/instructivo/instructivo') },
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       {
         path: '**',

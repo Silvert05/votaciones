@@ -90,6 +90,14 @@ enum EstadoImpugnacionResultado {
   RECHAZADA
 }
 
+enum PasoJornada {
+  INICIALIZACION
+  PUESTA_A_CERO
+  INICIO_VOTACION
+  CIERRE_VOTACION
+  RESULTADOS
+}
+
 model Usuario {
   id              String    @id @default(uuid()) @db.Uuid
   usuario         String    @unique @db.VarChar(150)
@@ -175,6 +183,8 @@ model Eleccion {
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
 
+  configuracion          ConfiguracionEleccion?
+  jornada                JornadaElectoral?
   cronograma             CronogramaElectoral?
   dignidades             Dignidad[]
   padron                 PadronElectoral[]
@@ -192,12 +202,32 @@ model Eleccion {
   @@map("elecciones")
 }
 
+model ConfiguracionEleccion {
+  id                String   @id @default(uuid()) @db.Uuid
+  eleccionId        String   @unique @map("eleccion_id") @db.Uuid
+  nombreInstitucion String?  @map("nombre_institucion") @db.VarChar(200)
+  logoUrl           String?  @map("logo_url") @db.Text
+  escudoUrl         String?  @map("escudo_url") @db.Text
+  videoUrl          String?  @map("video_url") @db.Text
+  colorPrimario     String?  @map("color_primario") @db.VarChar(20)
+  colorSecundario   String?  @map("color_secundario") @db.VarChar(20)
+  colorAcento       String?  @map("color_acento") @db.VarChar(20)
+  mensajeBienvenida String?  @map("mensaje_bienvenida") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+
+  @@map("configuraciones_eleccion")
+}
+
 model Elector {
   id             String      @id @default(uuid()) @db.Uuid
   identificacion String      @unique @db.VarChar(20)
   nombres        String      @db.VarChar(120)
   apellidos      String      @db.VarChar(120)
   email          String?     @db.VarChar(180)
+  fotoUrl        String?     @map("foto_url") @db.Text
   tipo           TipoElector
   facultad       String?     @db.VarChar(160)
   carrera        String?     @db.VarChar(160)
@@ -219,11 +249,14 @@ model PadronElectoral {
   id               String              @id @default(uuid()) @db.Uuid
   eleccionId       String              @map("eleccion_id") @db.Uuid
   electorId        String              @map("elector_id") @db.Uuid
-  estado           EstadoPadronElector @default(HABILITADO)
-  motivo           String?             @db.VarChar(255)
-  observacion      String?             @db.Text
-  publicado        Boolean             @default(false)
-  fechaPublicacion DateTime?           @map("fecha_publicacion")
+  estado             EstadoPadronElector @default(HABILITADO)
+  motivo             String?             @db.VarChar(255)
+  observacion        String?             @db.Text
+  publicado          Boolean             @default(false)
+  fechaPublicacion   DateTime?           @map("fecha_publicacion")
+  credencialHash     String?             @map("credencial_hash") @db.VarChar(255)
+  credencialTemporal String?             @map("credencial_temporal") @db.VarChar(60)
+  credencialGeneradaAt DateTime?         @map("credencial_generada_at")
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")
 
@@ -425,6 +458,40 @@ model ImpugnacionResultado {
   @@index([actaId])
   @@index([estado])
   @@map("impugnaciones_resultados")
+}
+
+model JornadaElectoral {
+  id                 String    @id @default(uuid()) @db.Uuid
+  eleccionId         String    @unique @map("eleccion_id") @db.Uuid
+  configBloqueada    Boolean   @default(false) @map("config_bloqueada")
+  inicializadaAt     DateTime? @map("inicializada_at")
+  puestaCeroAt       DateTime? @map("puesta_cero_at")
+  votacionIniciadaAt DateTime? @map("votacion_iniciada_at")
+  votacionCerradaAt  DateTime? @map("votacion_cerrada_at")
+  resultadosAt       DateTime? @map("resultados_at")
+  fechaFinVotacion   DateTime? @map("fecha_fin_votacion")
+  linkVotacionActivo Boolean   @default(false) @map("link_votacion_activo")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  eleccion Eleccion        @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  eventos  JornadaEvento[]
+
+  @@map("jornadas_electorales")
+}
+
+model JornadaEvento {
+  id        String      @id @default(uuid()) @db.Uuid
+  jornadaId String      @map("jornada_id") @db.Uuid
+  paso      PasoJornada
+  reporte   String?     @db.Text
+  usuario   String?     @db.VarChar(100)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  jornada JornadaElectoral @relation(fields: [jornadaId], references: [id], onDelete: Cascade)
+
+  @@index([jornadaId])
+  @@map("jornada_eventos")
 }
 
 model CronogramaElectoral {

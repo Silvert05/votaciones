@@ -18,6 +18,8 @@ export const AuditTabla = {
   PERFILES: 'perfiles',
   OPCIONES: 'opciones',
   ELECCIONES: 'elecciones',
+  CONFIGURACIONES_ELECCION: 'configuraciones_eleccion',
+  JORNADAS_ELECTORALES: 'jornadas_electorales',
   DIGNIDADES: 'dignidades',
   CRONOGRAMAS: 'cronogramas_electorales',
   ELECTORES: 'electores',

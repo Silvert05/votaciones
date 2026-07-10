@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { hashSync } from 'bcrypt';
+import { randomInt } from 'crypto';
 import { Prisma } from 'prisma/generated/client';
 import {
   EstadoEleccion,
@@ -349,6 +351,27 @@ export class PadronesService {
           },
         });
       }
+
+      // Generar credenciales de votacion (DNI + clave) para habilitados sin clave.
+      const sinCredencial = await tx.padronElectoral.findMany({
+        where: {
+          eleccionId,
+          estado: EstadoPadronElector.HABILITADO,
+          credencialHash: null,
+        },
+        select: { id: true },
+      });
+      for (const row of sinCredencial) {
+        const clave = this.generarCredencial();
+        await tx.padronElectoral.update({
+          where: { id: row.id },
+          data: {
+            credencialHash: hashSync(clave, 10),
+            credencialTemporal: clave,
+            credencialGeneradaAt: now,
+          },
+        });
+      }
     });
 
     await this.audit(AuditTabla.PADRONES, AuditOperacion.ESTADO, eleccionId, {
@@ -358,6 +381,73 @@ export class PadronesService {
     });
 
     return { publicado: true, habilitados };
+  }
+
+  async listCredenciales(eleccionId: string) {
+    await this.ensureEleccion(eleccionId);
+    const data = await this.prisma.padronElectoral.findMany({
+      where: { eleccionId, credencialHash: { not: null } },
+      orderBy: [
+        { elector: { apellidos: 'asc' } },
+        { elector: { nombres: 'asc' } },
+      ],
+      select: {
+        id: true,
+        credencialTemporal: true,
+        credencialGeneradaAt: true,
+        elector: {
+          select: {
+            identificacion: true,
+            nombres: true,
+            apellidos: true,
+            email: true,
+          },
+        },
+      },
+    });
+    return data.map((row) => ({
+      padronId: row.id,
+      identificacion: row.elector.identificacion,
+      nombres: row.elector.nombres,
+      apellidos: row.elector.apellidos,
+      email: row.elector.email,
+      credencial: row.credencialTemporal,
+      generadaAt: row.credencialGeneradaAt,
+    }));
+  }
+
+  async regenerarCredencial(
+    eleccionId: string,
+    padronId: string,
+    actor: Actor,
+  ) {
+    const padron = await this.findPadronOrFail(eleccionId, padronId);
+    const clave = this.generarCredencial();
+    await this.prisma.padronElectoral.update({
+      where: { id: padronId },
+      data: {
+        credencialHash: hashSync(clave, 10),
+        credencialTemporal: clave,
+        credencialGeneradaAt: new Date(),
+      },
+    });
+
+    await this.audit(AuditTabla.PADRONES, AuditOperacion.UPDATE, padronId, {
+      datosAnteriores: { electorId: padron.electorId },
+      datosNuevos: { credencialRegenerada: true },
+      actor,
+    });
+
+    return { identificacion: padron.elector.identificacion, credencial: clave };
+  }
+
+  private generarCredencial(): string {
+    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let clave = '';
+    for (let i = 0; i < 8; i++) {
+      clave += alfabeto[randomInt(alfabeto.length)];
+    }
+    return clave;
   }
 
   private async ensureEleccion(id: string) {

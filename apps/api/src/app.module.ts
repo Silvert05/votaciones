@@ -9,6 +9,8 @@ import { PadronesModule } from './modules/padrones/padrones.module';
 import { SeguridadModule } from './modules/seguridad/seguridad.module';
 import { UsersModule } from './modules/users/users.module';
 import { VotacionModule } from './modules/votacion/votacion.module';
+import { JornadaModule } from './modules/jornada/jornada.module';
+import { PublicoModule } from './modules/publico/publico.module';
 import { EscrutinioModule } from './modules/escrutinio/escrutinio.module';
 
 @Module({
@@ -24,6 +26,8 @@ import { EscrutinioModule } from './modules/escrutinio/escrutinio.module';
     CandidaturasModule,
     PadronesModule,
     VotacionModule,
+    JornadaModule,
+    PublicoModule,
     EscrutinioModule,
     AuthModule,
     UsersModule,

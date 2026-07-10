@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   CambiarEstadoPayload,
+  ConfiguracionEleccion,
   CreateDignidadPayload,
   CreateEleccionPayload,
   Dignidad,
@@ -11,6 +12,7 @@ import {
   EleccionesQuery,
   UpdateDignidadPayload,
   UpdateEleccionPayload,
+  UpsertConfiguracionPayload,
   UpsertCronogramaPayload,
   CronogramaElectoral,
 } from '../models/election.model';
@@ -49,6 +51,22 @@ export class ElectionsService {
     payload: CambiarEstadoPayload,
   ): Observable<EleccionDetalle> {
     return this._http.patch<EleccionDetalle>(`/elecciones/${id}/estado`, payload);
+  }
+
+  getConfiguracion(id: string): Observable<ConfiguracionEleccion | null> {
+    return this._http.get<ConfiguracionEleccion | null>(
+      `/elecciones/${id}/configuracion`,
+    );
+  }
+
+  upsertConfiguracion(
+    id: string,
+    payload: UpsertConfiguracionPayload,
+  ): Observable<ConfiguracionEleccion> {
+    return this._http.patch<ConfiguracionEleccion>(
+      `/elecciones/${id}/configuracion`,
+      payload,
+    );
   }
 
   upsertCronograma(

@@ -97,6 +97,12 @@ const routes: Routes = [
           import('./elections/pages/elections-list/elections-list.component')
       },
       {
+        path: 'elecciones/configuracion',
+        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        loadComponent: () =>
+          import('./elections/pages/election-config/election-config.component')
+      },
+      {
         path: 'elecciones/cronograma',
         canActivate: [roleGuard(['ADMIN']), optionGuard],
         loadComponent: () =>
@@ -131,6 +137,12 @@ const routes: Routes = [
         canActivate: [roleGuard(['ADMIN']), optionGuard],
         loadComponent: () =>
           import('./candidaturas/pages/candidaturas/candidaturas.component')
+      },
+      {
+        path: 'elecciones/jornada',
+        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        loadComponent: () =>
+          import('./jornada/pages/jornada/jornada.component')
       },
       {
         path: 'elecciones/votacion',

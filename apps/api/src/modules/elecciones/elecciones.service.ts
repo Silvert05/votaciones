@@ -16,6 +16,7 @@ import {
 } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
+import { UpsertConfiguracionEleccionDto } from './dto/configuracion.dto';
 import { UpsertCronogramaDto } from './dto/cronograma.dto';
 import {
   CambiarEstadoEleccionDto,
@@ -53,6 +54,7 @@ const eleccionListSelect = {
 
 const eleccionDetailSelect = {
   ...eleccionListSelect,
+  configuracion: true,
   cronograma: true,
   dignidades: {
     orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
@@ -270,6 +272,51 @@ export class EleccionesService {
     });
 
     return cronograma;
+  }
+
+  async getConfiguracion(eleccionId: string) {
+    await this.ensureEleccion(eleccionId);
+    return this.prisma.configuracionEleccion.findUnique({
+      where: { eleccionId },
+    });
+  }
+
+  async upsertConfiguracion(
+    eleccionId: string,
+    dto: UpsertConfiguracionEleccionDto,
+    actor: Actor,
+  ) {
+    await this.ensureEleccion(eleccionId);
+
+    const before = await this.prisma.configuracionEleccion.findUnique({
+      where: { eleccionId },
+    });
+
+    const data = {
+      nombreInstitucion: this.emptyToNull(dto.nombreInstitucion),
+      logoUrl: this.emptyToNull(dto.logoUrl),
+      escudoUrl: this.emptyToNull(dto.escudoUrl),
+      videoUrl: this.emptyToNull(dto.videoUrl),
+      colorPrimario: this.emptyToNull(dto.colorPrimario),
+      colorSecundario: this.emptyToNull(dto.colorSecundario),
+      colorAcento: this.emptyToNull(dto.colorAcento),
+      mensajeBienvenida: this.emptyToNull(dto.mensajeBienvenida),
+    };
+
+    const configuracion = await this.prisma.configuracionEleccion.upsert({
+      where: { eleccionId },
+      update: data,
+      create: { eleccionId, ...data },
+    });
+
+    await this.audit(
+      AuditTabla.CONFIGURACIONES_ELECCION,
+      before ? AuditOperacion.UPDATE : AuditOperacion.CREATE,
+      configuracion.id,
+      { datosAnteriores: before, datosNuevos: configuracion, actor },
+    );
+
+    return configuracion;
   }
 
   async createDignidad(

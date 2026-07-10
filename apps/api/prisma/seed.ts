@@ -185,6 +185,28 @@ async function main() {
       },
     }),
     prisma.opcion.upsert({
+      where: { codigo: 'elecciones.configuracion' },
+      update: {
+        titulo: 'Configuracion',
+        ruta: '/admin/elecciones/configuracion',
+        icono: 'heroicons_outline:paint-brush',
+        tipo: 'PANTALLA',
+        padreId: elecciones.id,
+        orden: 15,
+        activo: true,
+      },
+      create: {
+        codigo: 'elecciones.configuracion',
+        titulo: 'Configuracion',
+        ruta: '/admin/elecciones/configuracion',
+        icono: 'heroicons_outline:paint-brush',
+        tipo: 'PANTALLA',
+        padreId: elecciones.id,
+        orden: 15,
+        activo: true,
+      },
+    }),
+    prisma.opcion.upsert({
       where: { codigo: 'elecciones.cronograma' },
       update: {
         titulo: 'Cronograma',
@@ -313,6 +335,28 @@ async function main() {
         tipo: 'PANTALLA',
         padreId: elecciones.id,
         orden: 70,
+        activo: true,
+      },
+    }),
+    prisma.opcion.upsert({
+      where: { codigo: 'elecciones.jornada' },
+      update: {
+        titulo: 'Jornada electoral',
+        ruta: '/admin/elecciones/jornada',
+        icono: 'heroicons_outline:flag',
+        tipo: 'PANTALLA',
+        padreId: elecciones.id,
+        orden: 75,
+        activo: true,
+      },
+      create: {
+        codigo: 'elecciones.jornada',
+        titulo: 'Jornada electoral',
+        ruta: '/admin/elecciones/jornada',
+        icono: 'heroicons_outline:flag',
+        tipo: 'PANTALLA',
+        padreId: elecciones.id,
+        orden: 75,
         activo: true,
       },
     }),
@@ -520,7 +564,414 @@ async function main() {
   });
   console.log(`✅ Usuario: ${operador.usuario} (debe cambiar contraseña)`);
 
+  await seedProcesoElectoral();
+
   console.log('🌱 Seed completo');
+}
+
+// UUID fijo para poder re-sembrar de forma idempotente (borra y recrea).
+const ELECCION_DEMO_ID = '11111111-1111-4111-8111-111111111111';
+
+interface ElectorSeed {
+  identificacion: string;
+  nombres: string;
+  apellidos: string;
+  tipo: 'DOCENTE' | 'ESTUDIANTE';
+  email: string;
+  facultad?: string;
+  carrera?: string;
+  curso?: string;
+}
+
+const ESTUDIANTES: ElectorSeed[] = [
+  ['0102030401', 'Maria', 'Andrade'],
+  ['0102030402', 'Juan', 'Bermeo'],
+  ['0102030403', 'Camila', 'Castro'],
+  ['0102030404', 'Diego', 'Delgado'],
+  ['0102030405', 'Elena', 'Espinoza'],
+  ['0102030406', 'Fabian', 'Freire'],
+  ['0102030407', 'Gabriela', 'Guaman'],
+  ['0102030408', 'Hugo', 'Herrera'],
+  ['0102030409', 'Ivonne', 'Ibarra'],
+  ['0102030410', 'Kevin', 'Jara'],
+  ['0102030411', 'Lucia', 'Leon'],
+  ['0102030412', 'Mateo', 'Morales'],
+].map(([identificacion, nombres, apellidos]) => ({
+  identificacion,
+  nombres,
+  apellidos,
+  tipo: 'ESTUDIANTE' as const,
+  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@estudiante.ejemplo.edu`,
+  facultad: 'Facultad de Ingenieria',
+  carrera: 'Ingenieria en Sistemas',
+  curso: 'Quinto Semestre',
+}));
+
+const DOCENTES: ElectorSeed[] = [
+  ['0203040501', 'Nadia', 'Navarro'],
+  ['0203040502', 'Oscar', 'Ordonez'],
+  ['0203040503', 'Paola', 'Pena'],
+  ['0203040504', 'Ramiro', 'Quezada'],
+  ['0203040505', 'Sofia', 'Ramos'],
+  ['0203040506', 'Tomas', 'Salazar'],
+  ['0203040507', 'Ursula', 'Torres'],
+  ['0203040508', 'Victor', 'Vega'],
+].map(([identificacion, nombres, apellidos]) => ({
+  identificacion,
+  nombres,
+  apellidos,
+  tipo: 'DOCENTE' as const,
+  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@docente.ejemplo.edu`,
+  facultad: 'Facultad de Ingenieria',
+}));
+
+async function seedProcesoElectoral() {
+  console.log('🗳️  Sembrando proceso electoral de demostracion...');
+
+  // Idempotencia: borrar la eleccion demo (cascade limpia dignidades,
+  // listas, candidaturas, padron, votos, conteos y configuracion).
+  await prisma.eleccion.deleteMany({ where: { id: ELECCION_DEMO_ID } });
+
+  // Electores (globales) via upsert por identificacion.
+  const electores = new Map<string, string>();
+  for (const e of [...ESTUDIANTES, ...DOCENTES]) {
+    const fotoUrl = `https://i.pravatar.cc/150?u=${e.identificacion}`;
+    const elector = await prisma.elector.upsert({
+      where: { identificacion: e.identificacion },
+      update: {
+        nombres: e.nombres,
+        apellidos: e.apellidos,
+        tipo: e.tipo,
+        email: e.email,
+        fotoUrl,
+        facultad: e.facultad ?? null,
+        carrera: e.carrera ?? null,
+        curso: e.curso ?? null,
+        activo: true,
+      },
+      create: {
+        identificacion: e.identificacion,
+        nombres: e.nombres,
+        apellidos: e.apellidos,
+        tipo: e.tipo,
+        email: e.email,
+        fotoUrl,
+        facultad: e.facultad ?? null,
+        carrera: e.carrera ?? null,
+        curso: e.curso ?? null,
+        activo: true,
+      },
+    });
+    electores.set(e.identificacion, elector.id);
+  }
+
+  // Eleccion en jornada de votacion abierta.
+  const eleccion = await prisma.eleccion.create({
+    data: {
+      id: ELECCION_DEMO_ID,
+      nombre: 'Eleccion de Representantes al OCS 2026 (Demo)',
+      descripcion:
+        'Proceso de demostracion precargado para simular el voto electronico de principio a fin.',
+      tipo: 'OCS',
+      estado: 'VOTACION_ABIERTA',
+      fechaConvocatoria: new Date('2026-06-01T08:00:00.000Z'),
+      aprobadaPorOcs: true,
+    },
+  });
+
+  await prisma.historialEstadoEleccion.create({
+    data: {
+      eleccionId: eleccion.id,
+      estadoAnterior: null,
+      estadoNuevo: 'VOTACION_ABIERTA',
+      comentario: 'Jornada de votacion abierta (datos de demostracion).',
+      usuario: 'seed',
+    },
+  });
+
+  // Configuracion institucional (identidad visual del video VENP).
+  await prisma.configuracionEleccion.create({
+    data: {
+      eleccionId: eleccion.id,
+      nombreInstitucion: 'Universidad Nacional Ejemplo',
+      logoUrl: 'https://placehold.co/200x80/1d4ed8/ffffff?text=UNE',
+      escudoUrl: 'https://placehold.co/120x120/1d4ed8/ffffff?text=Escudo',
+      videoUrl: 'https://www.youtube.com/embed/AnuLEj7suo8',
+      colorPrimario: '#1d4ed8',
+      colorSecundario: '#0ea5e9',
+      colorAcento: '#f59e0b',
+      mensajeBienvenida:
+        'Bienvenido al sistema de voto electronico. Selecciona tus preferencias y confirma tu voto.',
+    },
+  });
+
+  // Cronograma coherente con la jornada abierta.
+  await prisma.cronogramaElectoral.create({
+    data: {
+      eleccionId: eleccion.id,
+      fechaConvocatoria: new Date('2026-06-01T08:00:00.000Z'),
+      fechaPublicacionPadron: new Date('2026-06-05T08:00:00.000Z'),
+      fechaInicioInscripcion: new Date('2026-06-08T08:00:00.000Z'),
+      fechaFinInscripcion: new Date('2026-06-12T18:00:00.000Z'),
+      fechaPublicacionCandidaturas: new Date('2026-06-15T08:00:00.000Z'),
+      fechaInicioCampania: new Date('2026-06-16T08:00:00.000Z'),
+      fechaFinCampania: new Date('2026-06-28T18:00:00.000Z'),
+      fechaInicioVotacion: new Date('2026-06-30T08:00:00.000Z'),
+      fechaFinVotacion: new Date('2026-06-30T18:00:00.000Z'),
+    },
+  });
+
+  // Listas / organizaciones politicas.
+  const listasData = [
+    { codigo: 'A', nombre: 'Lista Unidad', color: '#2563eb' },
+    { codigo: 'B', nombre: 'Lista Renovacion', color: '#16a34a' },
+    { codigo: 'C', nombre: 'Lista Compromiso', color: '#dc2626' },
+  ];
+  const listas = new Map<string, string>();
+  for (const l of listasData) {
+    const lista = await prisma.listaElectoral.create({
+      data: {
+        eleccionId: eleccion.id,
+        codigo: l.codigo,
+        nombre: l.nombre,
+        color: l.color,
+        estado: 'CALIFICADA',
+        propuesta: `Propuesta de la ${l.nombre}.`,
+      },
+    });
+    listas.set(l.codigo, lista.id);
+  }
+
+  // Dignidades / cargos a elegir.
+  const dignPresidente = await prisma.dignidad.create({
+    data: {
+      eleccionId: eleccion.id,
+      nombre: 'Presidente del Consejo Estudiantil',
+      tipoElectorPermitido: 'ESTUDIANTE',
+      cantidadGanadores: 1,
+      requiereLista: true,
+      orden: 1,
+    },
+  });
+  const dignRepEstudiantes = await prisma.dignidad.create({
+    data: {
+      eleccionId: eleccion.id,
+      nombre: 'Representantes Estudiantiles al OCS',
+      tipoElectorPermitido: 'ESTUDIANTE',
+      cantidadGanadores: 2,
+      requiereLista: true,
+      orden: 2,
+    },
+  });
+  const dignRepDocentes = await prisma.dignidad.create({
+    data: {
+      eleccionId: eleccion.id,
+      nombre: 'Representantes Docentes al OCS',
+      tipoElectorPermitido: 'DOCENTE',
+      cantidadGanadores: 2,
+      requiereLista: true,
+      orden: 3,
+    },
+  });
+
+  // Candidaturas calificadas: un candidato por lista en cada dignidad.
+  const candidatosPresidente = ['0102030401', '0102030402', '0102030403'];
+  const candidatosRepEst = ['0102030404', '0102030405', '0102030406'];
+  const candidatosRepDoc = ['0203040501', '0203040502', '0203040503'];
+  const codigosLista = ['A', 'B', 'C'];
+
+  async function crearCandidaturas(dignidadId: string, ids: string[]) {
+    const result: Array<{ candidaturaId: string; codigoLista: string }> = [];
+    for (let i = 0; i < ids.length; i++) {
+      const codigoLista = codigosLista[i];
+      const candidatura = await prisma.candidatura.create({
+        data: {
+          eleccionId: eleccion.id,
+          dignidadId,
+          electorId: electores.get(ids[i])!,
+          listaId: listas.get(codigoLista)!,
+          orden: i + 1,
+          estado: 'CALIFICADA',
+        },
+      });
+      result.push({ candidaturaId: candidatura.id, codigoLista });
+    }
+    return result;
+  }
+
+  const candPresidente = await crearCandidaturas(
+    dignPresidente.id,
+    candidatosPresidente,
+  );
+  const candRepEst = await crearCandidaturas(
+    dignRepEstudiantes.id,
+    candidatosRepEst,
+  );
+  const candRepDoc = await crearCandidaturas(
+    dignRepDocentes.id,
+    candidatosRepDoc,
+  );
+
+  // Padron electoral publicado y habilitado (todos los electores demo).
+  // Credencial de votante conocida para pruebas: DNI + CLAVE_DEMO.
+  const fechaPublicacion = new Date('2026-06-05T08:00:00.000Z');
+  const CLAVE_DEMO = 'Voto2026';
+  const claveHash = hashSync(CLAVE_DEMO, 10);
+  await prisma.padronElectoral.createMany({
+    data: [...electores.values()].map((electorId) => ({
+      eleccionId: eleccion.id,
+      electorId,
+      estado: 'HABILITADO' as const,
+      publicado: true,
+      fechaPublicacion,
+      credencialHash: claveHash,
+      credencialTemporal: CLAVE_DEMO,
+      credencialGeneradaAt: fechaPublicacion,
+    })),
+  });
+
+  // Simulacion de votos (participacion ~80%, con un ganador marcado por lista A).
+  const votosEmitidos: Array<{
+    eleccionId: string;
+    dignidadId: string;
+    electorId: string;
+  }> = [];
+  const conteoAcc = new Map<
+    string,
+    {
+      dignidadId: string;
+      candidaturaId: string | null;
+      tipo: 'CANDIDATO' | 'BLANCO' | 'NULO';
+      opcionKey: string;
+      total: number;
+    }
+  >();
+
+  function registrarVoto(
+    dignidadId: string,
+    electorId: string,
+    candidatos: Array<{ candidaturaId: string; codigoLista: string }>,
+    i: number,
+  ) {
+    let tipo: 'CANDIDATO' | 'BLANCO' | 'NULO';
+    let candidaturaId: string | null;
+    let opcionKey: string;
+
+    if (i % 11 === 5) {
+      tipo = 'BLANCO';
+      candidaturaId = null;
+      opcionKey = 'BLANCO';
+    } else if (i % 17 === 7) {
+      tipo = 'NULO';
+      candidaturaId = null;
+      opcionKey = 'NULO';
+    } else {
+      // Sesgo hacia la lista A para producir un ganador claro.
+      const idx = i % 3 === 0 ? 0 : i % candidatos.length;
+      const elegido = candidatos[idx];
+      tipo = 'CANDIDATO';
+      candidaturaId = elegido.candidaturaId;
+      opcionKey = elegido.candidaturaId;
+    }
+
+    votosEmitidos.push({ eleccionId: eleccion.id, dignidadId, electorId });
+
+    const key = `${dignidadId}:${opcionKey}`;
+    const prev = conteoAcc.get(key);
+    if (prev) {
+      prev.total += 1;
+    } else {
+      conteoAcc.set(key, {
+        dignidadId,
+        candidaturaId,
+        tipo,
+        opcionKey,
+        total: 1,
+      });
+    }
+  }
+
+  const idsEstudiantes = ESTUDIANTES.map((e) => e.identificacion);
+  const idsDocentes = DOCENTES.map((e) => e.identificacion);
+
+  idsEstudiantes.forEach((ident, i) => {
+    if (i % 5 === 4) return; // ~20% abstencion
+    const electorId = electores.get(ident)!;
+    registrarVoto(dignPresidente.id, electorId, candPresidente, i);
+    registrarVoto(dignRepEstudiantes.id, electorId, candRepEst, i + 2);
+  });
+
+  idsDocentes.forEach((ident, i) => {
+    if (i % 6 === 5) return; // pequena abstencion docente
+    const electorId = electores.get(ident)!;
+    registrarVoto(dignRepDocentes.id, electorId, candRepDoc, i);
+  });
+
+  await prisma.votoEmitido.createMany({ data: votosEmitidos });
+  await prisma.conteoVoto.createMany({
+    data: [...conteoAcc.values()].map((c) => ({
+      eleccionId: eleccion.id,
+      dignidadId: c.dignidadId,
+      candidaturaId: c.candidaturaId,
+      tipo: c.tipo,
+      opcionKey: c.opcionKey,
+      total: c.total,
+    })),
+  });
+
+  // Jornada electoral en el paso 3 (Votacion iniciada, link activo, cronometro corriendo).
+  const fechaFinVotacion = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const jornada = await prisma.jornadaElectoral.create({
+    data: {
+      eleccionId: eleccion.id,
+      configBloqueada: true,
+      inicializadaAt: new Date('2026-06-30T07:30:00.000Z'),
+      puestaCeroAt: new Date('2026-06-30T07:45:00.000Z'),
+      votacionIniciadaAt: new Date('2026-06-30T08:00:00.000Z'),
+      fechaFinVotacion,
+      linkVotacionActivo: true,
+    },
+  });
+  await prisma.jornadaEvento.createMany({
+    data: [
+      {
+        jornadaId: jornada.id,
+        paso: 'INICIALIZACION',
+        reporte: 'Jornada inicializada. Configuracion bloqueada.',
+        usuario: 'seed',
+      },
+      {
+        jornadaId: jornada.id,
+        paso: 'PUESTA_A_CERO',
+        reporte: 'Puesta a cero verificada al inicio.',
+        usuario: 'seed',
+      },
+      {
+        jornadaId: jornada.id,
+        paso: 'INICIO_VOTACION',
+        reporte: 'Votacion iniciada. Link de votante habilitado.',
+        usuario: 'seed',
+      },
+    ],
+  });
+
+  // Electores que aun NO han votado (utiles para probar el portal del votante).
+  const noVotaron = [
+    ...idsEstudiantes.filter((_, i) => i % 5 === 4),
+    ...idsDocentes.filter((_, i) => i % 6 === 5),
+  ];
+
+  console.log(
+    `✅ Eleccion demo: ${electores.size} electores, 3 dignidades, ${
+      candPresidente.length + candRepEst.length + candRepDoc.length
+    } candidaturas, ${votosEmitidos.length} votos emitidos.`,
+  );
+  console.log(
+    `🔑 Credencial de votante para pruebas: clave = "${CLAVE_DEMO}" (para cualquier DNI del padron).`,
+  );
+  console.log(
+    `🗳️  DNIs que aun no votan (para probar el flujo): ${noVotaron.join(', ')}`,
+  );
 }
 
 main()

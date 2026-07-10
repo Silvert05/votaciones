@@ -1,0 +1,186 @@
+<div class="flex flex-col flex-auto p-6 sm:p-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Jornada electoral</div>
+      <p class="mt-2 text-secondary">Control del proceso: Voto Electronico No Presencial (VENP)</p>
+    </div>
+    <mat-form-field appearance="outline" class="w-full sm:w-96">
+      <mat-label>Eleccion</mat-label>
+      <mat-select [formControl]="selectedIdCtrl">
+        @for (eleccion of elecciones; track eleccion.id) {
+        <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="mt-6 rounded shadow bg-card overflow-hidden">
+    @if (loading || working) {
+    <mat-progress-bar [mode]="'indeterminate'" />
+    }
+
+    @if (estado) {
+    <!-- Cabecera del proceso -->
+    <div class="grid grid-cols-1 md:grid-cols-3 border-b divide-y md:divide-y-0 md:divide-x">
+      <div class="p-4">
+        <div class="text-xs uppercase text-secondary tracking-wide">Institucion</div>
+        <div class="mt-1 font-medium">{{ estado.eleccion.institucion || '—' }}</div>
+      </div>
+      <div class="p-4">
+        <div class="text-xs uppercase text-secondary tracking-wide">Proceso Electoral</div>
+        <div class="mt-1 font-medium">{{ estado.eleccion.nombre }}</div>
+      </div>
+      <div class="p-4">
+        <div class="text-xs uppercase text-secondary tracking-wide">Estado</div>
+        <div class="mt-1 font-medium">{{ estado.eleccion.estado }}</div>
+      </div>
+    </div>
+
+    <!-- Stepper -->
+    <div class="p-6 flex flex-col xl:flex-row xl:items-center gap-6">
+      <div class="flex-auto flex flex-wrap items-start gap-2">
+        @for (paso of pasos; track paso.numero) {
+        <div class="flex items-center gap-2">
+          <div class="flex flex-col items-center text-center w-28">
+            <div
+              class="w-11 h-11 rounded-full flex items-center justify-center border-2 font-bold"
+              [class.bg-primary]="paso.numero === pasoActual"
+              [class.text-on-primary]="paso.numero === pasoActual"
+              [class.border-primary]="paso.numero === pasoActual"
+              [class.bg-green-600]="pasoCompletado(paso.numero)"
+              [class.text-white]="pasoCompletado(paso.numero)"
+              [class.border-green-600]="pasoCompletado(paso.numero)"
+              [class.text-secondary]="paso.numero > pasoActual"
+            >
+              @if (pasoCompletado(paso.numero)) {
+              <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:check'" />
+              } @else {
+              {{ paso.numero }}
+              }
+            </div>
+            <div class="mt-2 text-xs leading-tight">{{ paso.titulo }}</div>
+          </div>
+          @if (paso.numero < 5) {
+          <div class="hidden sm:block w-8 h-px bg-gray-300"></div>
+          }
+        </div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2 xl:w-64">
+        @if (estado.jornada.linkVotacionActivo && countdown) {
+        <div class="rounded bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-center">
+          <div class="text-xs text-secondary">Tiempo restante</div>
+          <div class="text-2xl font-bold tabular-nums">{{ countdown }}</div>
+        </div>
+        }
+        <button matButton="tonal" type="button" [disabled]="working || !estado.jornada.votacionIniciadaAt || !!estado.jornada.votacionCerradaAt" (click)="reactivarLink()">
+          <mat-icon [svgIcon]="'heroicons_outline:link'" />
+          <span class="ml-1">Reactivar link</span>
+        </button>
+        <button matButton type="button" class="text-warn" [disabled]="working" (click)="reiniciar()">
+          <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" />
+          <span class="ml-1">Reiniciar jornada</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="px-6 pb-4 grid grid-cols-3 gap-3">
+      <div class="rounded border p-3 text-center">
+        <div class="text-2xl font-bold">{{ estado.resumen.padronHabilitado }}</div>
+        <div class="text-xs text-secondary">Electores habiles</div>
+      </div>
+      <div class="rounded border p-3 text-center">
+        <div class="text-2xl font-bold">{{ estado.resumen.votosEmitidos }}</div>
+        <div class="text-xs text-secondary">Votos emitidos</div>
+      </div>
+      <div class="rounded border p-3 text-center">
+        <div class="text-2xl font-bold">{{ estado.resumen.dignidades }}</div>
+        <div class="text-xs text-secondary">Cedulas / dignidades</div>
+      </div>
+    </div>
+
+    <!-- Accion del paso actual -->
+    <div class="px-6 py-4 border-t">
+      @switch (pasoActual) {
+      @case (1) {
+      <div class="text-2xl font-extrabold">1. INICIALIZAR JORNADA</div>
+      <p class="text-secondary mt-1">Bloquea la configuracion y habilita el proceso.</p>
+      <button matButton="filled" color="primary" class="mt-3" [disabled]="working" (click)="inicializar()">
+        <mat-icon [svgIcon]="'heroicons_solid:play'" /><span class="ml-1">Inicializar jornada</span>
+      </button>
+      }
+      @case (2) {
+      <div class="text-2xl font-extrabold">2. PUESTA A CERO</div>
+      <p class="text-secondary mt-1">Verifica que no existan votos previos registrados.</p>
+      <button matButton="filled" color="primary" class="mt-3" [disabled]="working" (click)="puestaCero()">
+        <mat-icon [svgIcon]="'heroicons_solid:scale'" /><span class="ml-1">Ejecutar puesta a cero</span>
+      </button>
+      }
+      @case (3) {
+      <div class="text-2xl font-extrabold">3. INICIAR VOTACION</div>
+      <p class="text-secondary mt-1">Habilita el link de votacion para los electores.</p>
+      <mat-form-field appearance="outline" class="mt-3 w-full sm:w-96">
+        <mat-label>Fecha y hora de cierre (cronometro)</mat-label>
+        <input matInput type="datetime-local" [formControl]="fechaFinCtrl">
+      </mat-form-field>
+      <div>
+        <button matButton="filled" color="primary" [disabled]="working" (click)="iniciarVotacion()">
+          <mat-icon [svgIcon]="'heroicons_solid:cursor-arrow-rays'" /><span class="ml-1">Iniciar votacion</span>
+        </button>
+      </div>
+      }
+      @case (4) {
+      <div class="text-2xl font-extrabold">4. CIERRE DE VOTACION</div>
+      <p class="text-secondary mt-1">Detiene la jornada. Los electores ya no podran votar.</p>
+      <button matButton="filled" color="warn" class="mt-3" [disabled]="working" (click)="cerrarVotacion()">
+        <mat-icon [svgIcon]="'heroicons_solid:lock-closed'" /><span class="ml-1">Cerrar votacion</span>
+      </button>
+      }
+      @case (5) {
+      <div class="text-2xl font-extrabold">5. RESULTADOS ELECTORALES</div>
+      <p class="text-secondary mt-1">Publica los resultados electorales.</p>
+      <button matButton="filled" color="primary" class="mt-3" [disabled]="working || !!estado.jornada.resultadosAt" (click)="generarResultados()">
+        <mat-icon [svgIcon]="'heroicons_solid:chart-bar'" />
+        <span class="ml-1">{{ estado.jornada.resultadosAt ? 'Resultados publicados' : 'Publicar resultados' }}</span>
+      </button>
+      }
+      }
+    </div>
+
+    <!-- Detalle / bitacora -->
+    <div class="px-6 pb-6">
+      <div class="font-medium mb-2">Detalle de la jornada</div>
+      <div class="overflow-x-auto rounded border">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-100 dark:bg-gray-800 text-left">
+            <tr>
+              <th class="p-3">N°</th>
+              <th class="p-3">Paso</th>
+              <th class="p-3">Fecha</th>
+              <th class="p-3">Reporte</th>
+              <th class="p-3">Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ev of estado.jornada.eventos; track ev.id; let i = $index) {
+            <tr class="border-t">
+              <td class="p-3">{{ i + 1 }}</td>
+              <td class="p-3">{{ ev.paso }}</td>
+              <td class="p-3">{{ ev.createdAt | date: 'short' }}</td>
+              <td class="p-3">{{ ev.reporte }}</td>
+              <td class="p-3">{{ ev.usuario }}</td>
+            </tr>
+            } @empty {
+            <tr><td colspan="5" class="p-4 text-center text-secondary">No se encontraron registros</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    } @else {
+    <div class="p-8 text-center text-secondary">Selecciona una eleccion para gestionar su jornada.</div>
+    }
+  </div>
+</div>

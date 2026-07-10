@@ -61,6 +61,35 @@ export interface CronogramaElectoral {
   updatedAt: string;
 }
 
+export interface ConfiguracionEleccion {
+  id: string;
+  eleccionId: string;
+  nombreInstitucion: string | null;
+  logoUrl: string | null;
+  escudoUrl: string | null;
+  videoUrl: string | null;
+  colorPrimario: string | null;
+  colorSecundario: string | null;
+  colorAcento: string | null;
+  mensajeBienvenida: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UpsertConfiguracionPayload = Partial<
+  Pick<
+    ConfiguracionEleccion,
+    | 'nombreInstitucion'
+    | 'logoUrl'
+    | 'escudoUrl'
+    | 'videoUrl'
+    | 'colorPrimario'
+    | 'colorSecundario'
+    | 'colorAcento'
+    | 'mensajeBienvenida'
+  >
+>;
+
 export interface Dignidad {
   id: string;
   eleccionId: string;
@@ -86,6 +115,7 @@ export interface HistorialEstadoEleccion {
 }
 
 export interface EleccionDetalle extends Eleccion {
+  configuracion: ConfiguracionEleccion | null;
   cronograma: CronogramaElectoral | null;
   dignidades: Dignidad[];
   historialEstados: HistorialEstadoEleccion[];

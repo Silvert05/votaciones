@@ -1,1 +1,164 @@
-<p>resultados works!</p>
+<div class="min-h-full bg-gray-50 dark:bg-gray-900">
+
+  <!-- Cabecera del proceso -->
+  <div class="bg-gradient-to-r from-[#1d4ed8] to-[#0ea5e9] text-white print:bg-[#1d4ed8]">
+    <div class="max-w-6xl mx-auto px-6 py-8 text-center">
+      <h1 class="text-2xl sm:text-3xl font-bold">
+        {{ resultados?.eleccion?.nombre || 'Resultados electorales' }}
+      </h1>
+      <p class="mt-1 text-white/80 text-sm">Voto Electrónico No Presencial (VENP)</p>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- Título de estado + acciones -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <h2 class="text-lg sm:text-xl font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+        Resultados electorales
+        @if (resultados?.fechaFin) {
+        <span class="text-secondary font-semibold">
+          — Finalizado el {{ resultados?.fechaFin | date: 'dd/MM/yyyy' }} a las
+          {{ resultados?.fechaFin | date: 'HH:mm' }} hrs.
+        </span>
+        }
+      </h2>
+      <div class="flex gap-2 print:hidden">
+        <button
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+          type="button" (click)="exportarPdf()">
+          <mat-icon class="icon-size-5 text-red-600" [svgIcon]="'heroicons_outline:document-arrow-down'" />
+          Exportar a PDF
+        </button>
+        <button
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+          type="button" (click)="imprimir()">
+          <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:printer'" /> Imprimir
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector de cédula -->
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 print:hidden">
+      <div class="rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 p-4">
+        <label class="block text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Proceso electoral</label>
+        <select class="w-full rounded-lg border border-blue-200 dark:border-blue-800 px-3 py-2 bg-white dark:bg-gray-800"
+          [formControl]="eleccionCtrl">
+          @for (e of elecciones; track e.id) {
+          <option [value]="e.id">{{ e.nombre }}</option>
+          }
+        </select>
+      </div>
+      @if (resultados) {
+      <div class="rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 p-4">
+        <label class="block text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Seleccione la cédula de
+          votación</label>
+        <select class="w-full rounded-lg border border-blue-200 dark:border-blue-800 px-3 py-2 bg-white dark:bg-gray-800"
+          [formControl]="dignidadCtrl">
+          @for (d of resultados.dignidades; track d.id) {
+          <option [value]="d.id">{{ d.nombre }}</option>
+          }
+        </select>
+      </div>
+      }
+    </div>
+
+    @if (loading) {
+    <div class="mt-8 text-center text-secondary p-10">Cargando resultados…</div>
+    }
+
+    @if (!elecciones.length && !loading) {
+    <div class="mt-8 text-center text-secondary p-10 bg-card rounded-xl shadow-sm border">
+      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:chart-bar'" />
+      <p class="font-medium">Aún no hay resultados publicados.</p>
+      <p class="text-sm mt-1">Los resultados aparecen cuando la jornada de votación se cierra y se generan.</p>
+    </div>
+    }
+
+    @if (resultados && dignidadSel) {
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+      <div class="lg:col-span-3 flex flex-col gap-6">
+
+        <!-- Tiles -->
+        <div class="grid grid-cols-2 md:grid-cols-4 rounded-xl overflow-hidden bg-card border shadow-sm">
+          <div class="p-4 border-r border-b md:border-b-0">
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Cédula</div>
+            <div class="font-bold mt-1 leading-tight text-sm">{{ dignidadSel.nombre }}</div>
+          </div>
+          <div class="p-4 border-r border-b md:border-b-0 text-center">
+            <div class="text-3xl font-extrabold text-[#1d4ed8]">{{ resultados.padronHabilitado }}</div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Electores hábiles</div>
+          </div>
+          <div class="p-4 border-r text-center">
+            <div class="text-3xl font-extrabold text-[#1d4ed8]">{{ emitidosDignidad }}</div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Participación</div>
+          </div>
+          <div class="p-4 text-center">
+            <div class="text-3xl font-extrabold text-[#0ea5e9]">{{ porcentajeParticipacion | number: '1.0-2' }}%</div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">(%) Participación</div>
+          </div>
+        </div>
+
+        <!-- Gráfico ApexCharts -->
+        <div class="bg-card border rounded-xl p-4 sm:p-6 shadow-sm">
+          <div class="text-center font-bold text-gray-600 dark:text-gray-300 mb-2 uppercase text-sm tracking-wide">
+            Resultados — {{ dignidadSel.nombre | uppercase }}
+          </div>
+          <apx-chart [series]="series" [chart]="chart" [colors]="colors" [plotOptions]="plotOptions"
+            [dataLabels]="dataLabels" [xaxis]="xaxis" [yaxis]="yaxis" [grid]="grid" [legend]="legend" [fill]="fill"
+            [tooltip]="tooltip" />
+
+          <!-- Leyenda con fotos -->
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            @for (f of filas; track f.etiqueta) {
+            <div class="flex items-center gap-3 rounded-lg border px-3 py-2">
+              @if (f.fotoUrl) {
+              <img [src]="f.fotoUrl" [alt]="f.etiqueta" class="w-10 h-10 rounded-full object-cover">
+              } @else {
+              <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                [style.background]="f.color">—</span>
+              }
+              <div class="flex-auto min-w-0">
+                <div class="font-semibold text-sm truncate">{{ f.etiqueta }}</div>
+                @if (f.detalle) {
+                <div class="text-[11px] text-secondary truncate">{{ f.detalle }}</div>
+                }
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-sm" [style.color]="f.color">{{ f.porcentaje | number: '1.0-2' }}%</div>
+                <div class="text-[11px] text-secondary">{{ f.total }} votos</div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel lateral -->
+      <div class="bg-card border rounded-xl p-5 h-fit shadow-sm">
+        <div class="border-l-4 border-[#1d4ed8] pl-4 flex flex-col gap-4">
+          <div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha inicio</div>
+            <div class="font-medium text-sm">{{ resultados.fechaInicio ? (resultados.fechaInicio | date: 'medium') :
+              '—' }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha fin</div>
+            <div class="font-medium text-sm">{{ resultados.fechaFin ? (resultados.fechaFin | date: 'medium') : '—' }}
+            </div>
+          </div>
+          <div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Estado</div>
+            <div class="font-medium text-sm">{{ resultados.eleccion.estado }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha consulta</div>
+            <div class="font-medium text-sm">{{ consultadoAt | date: 'medium' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>

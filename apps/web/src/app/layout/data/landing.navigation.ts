@@ -34,10 +34,10 @@ export const DataNavigation: Navigation = {
       link: '/resultados'
     },
     {
-      id: 'contacto',
-      title: 'CONTACTOS',
+      id: 'instructivo',
+      title: 'INSTRUCTIVO',
       type: 'basic',
-      link: '/contacto'
+      link: '/instructivo'
     }, {
       id: 'divider-1',
       type: 'divider'
@@ -84,6 +84,12 @@ export const DataNavigation: Navigation = {
       title: 'RESULTADOS',
       type: 'basic',
       link: '/resultados'
+    },
+    {
+      id: 'instructivo',
+      title: 'INSTRUCTIVO',
+      type: 'basic',
+      link: '/instructivo'
     }
 
   ]

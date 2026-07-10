@@ -17,6 +17,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthUser } from '../auth/entities/auth.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { UpsertConfiguracionEleccionDto } from './dto/configuracion.dto';
 import { UpsertCronogramaDto } from './dto/cronograma.dto';
 import {
   CambiarEstadoEleccionDto,
@@ -80,6 +81,23 @@ export class EleccionesController {
     @Ip() ip: string,
   ) {
     return this.eleccionesService.cambiarEstado(id, dto, { user, ip });
+  }
+
+  @Get(':id/configuracion')
+  @ApiOperation({ summary: 'Obtener configuracion institucional de la eleccion' })
+  getConfiguracion(@Param('id', ParseUUIDPipe) id: string) {
+    return this.eleccionesService.getConfiguracion(id);
+  }
+
+  @Patch(':id/configuracion')
+  @ApiOperation({ summary: 'Crear o actualizar configuracion institucional' })
+  upsertConfiguracion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpsertConfiguracionEleccionDto,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.eleccionesService.upsertConfiguracion(id, dto, { user, ip });
   }
 
   @Patch(':id/cronograma')

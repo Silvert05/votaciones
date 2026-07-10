@@ -47,3 +47,24 @@ export class TarjetonQueryDto {
   @IsString()
   identificacion?: string;
 }
+
+export class VotanteLoginDto {
+  @ApiProperty({ example: '0102030405', description: 'DNI / identificacion del elector' })
+  @IsString()
+  @IsNotEmpty()
+  identificacion: string;
+
+  @ApiProperty({ example: 'AB12CD34' })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}
+
+export class EmitirVotanteDto {
+  @ApiProperty({ type: [VotoSeleccionDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => VotoSeleccionDto)
+  votos: VotoSeleccionDto[];
+}
