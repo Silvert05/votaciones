@@ -68,23 +68,17 @@
         <textarea matInput rows="3" formControlName="mensajeBienvenida"></textarea>
       </mat-form-field>
 
-      <div class="md:col-span-2 flex flex-wrap items-center gap-4 p-4 rounded border">
-        <span class="text-sm text-secondary">Vista previa:</span>
-        <span class="inline-flex items-center gap-2">
-          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorPrimario"></span>
-          <span class="text-sm">Primario</span>
-        </span>
-        <span class="inline-flex items-center gap-2">
-          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorSecundario"></span>
-          <span class="text-sm">Secundario</span>
-        </span>
-        <span class="inline-flex items-center gap-2">
-          <span class="w-8 h-8 rounded-full border" [style.background]="form.value.colorAcento"></span>
-          <span class="text-sm">Acento</span>
-        </span>
-        @if (form.value.logoUrl) {
-        <img [src]="form.value.logoUrl" alt="logo" class="h-10 w-auto object-contain ml-auto">
-        }
+      <div class="md:col-span-2 overflow-hidden rounded-2xl border shadow-sm">
+        <div class="px-6 py-8 text-center text-white" [style.background]="'linear-gradient(120deg, ' + (form.value.colorPrimario || '#1d4ed8') + ', ' + (form.value.colorSecundario || '#0ea5e9') + ')'">
+          <div class="flex items-center justify-center gap-4">
+            @if (form.value.escudoUrl) { <img [src]="form.value.escudoUrl" alt="Escudo" class="h-16 w-16 rounded-xl bg-white p-1 object-contain"> }
+            @if (form.value.logoUrl) { <img [src]="form.value.logoUrl" alt="Logo" class="h-12 max-w-48 rounded-lg bg-white px-2 object-contain"> }
+          </div>
+          <h3 class="mt-5 text-2xl font-extrabold">{{ form.value.nombreInstitucion || 'Instituto Superior Tecnologico Yavirac' }}</h3>
+          <p class="mx-auto mt-2 max-w-xl text-sm text-white/85">{{ form.value.mensajeBienvenida || 'El mensaje de bienvenida aparecera en este espacio.' }}</p>
+          <span class="mt-5 inline-flex rounded-full px-4 py-2 text-sm font-bold text-slate-950" [style.background]="form.value.colorAcento || '#f59e0b'">Vista previa publica</span>
+        </div>
+        <div class="bg-slate-50 px-5 py-3 text-xs text-secondary">Los cambios se aplican en el encabezado, portada, botones, cronograma, candidatos, participacion y resultados.</div>
       </div>
     </form>
     } @else {

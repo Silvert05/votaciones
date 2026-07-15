@@ -17,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Dignidad, Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import { PadronElectoralItem } from '../../../padron/models/padron.model';
@@ -53,6 +54,7 @@ export default class CandidaturasComponent implements OnInit {
   private _padronService = inject(PadronService);
   private _candidaturasService = inject(CandidaturasService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = ['dignidad', 'candidato', 'lista', 'estado', 'acciones'];
@@ -211,13 +213,20 @@ export default class CandidaturasComponent implements OnInit {
   cerrarCalificacion(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    if (!confirm('¿Cerrar calificacion y pasar a candidaturas calificadas?')) return;
-    this._candidaturasService.cerrarCalificacion(eleccionId).subscribe({
-      next: () => {
-        this._notify('Calificacion de candidaturas cerrada.');
-        this.loadElecciones();
-      },
-      error: (err) => this._notify(this.errorMessage(err, 'No se pudo cerrar la calificacion.')),
+    this._institutionalDialog.confirm({
+      title: 'Cerrar calificación',
+      message: 'Las candidaturas inscritas pasarán a la etapa de candidaturas calificadas.',
+      confirmText: 'Cerrar calificación',
+      icon: 'heroicons_outline:check-badge',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this._candidaturasService.cerrarCalificacion(eleccionId).subscribe({
+        next: () => {
+          this._notify('Calificación de candidaturas cerrada.');
+          this.loadElecciones();
+        },
+        error: (err) => this._notify(this.errorMessage(err, 'No se pudo cerrar la calificación.')),
+      });
     });
   }
 
@@ -274,17 +283,25 @@ export default class CandidaturasComponent implements OnInit {
   calificar(candidatura: Candidatura, estado: EstadoCandidatura): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    const observacion = prompt(`Observacion para ${this.label(estado)}:`, candidatura.observacion ?? '');
-    if (observacion === null) return;
-    this._candidaturasService
-      .calificar(eleccionId, candidatura.id, { estado, observacion: observacion || null })
-      .subscribe({
-        next: () => {
-          this._notify(`Candidatura marcada como ${this.label(estado)}.`);
-          this.load();
-        },
-        error: (err) => this._notify(this.errorMessage(err, 'No se pudo calificar.')),
-      });
+    this._institutionalDialog.prompt({
+      title: `${this.label(estado)} candidatura`,
+      message: 'Registre la observación correspondiente para la candidatura seleccionada.',
+      inputLabel: 'Observación de calificación',
+      initialValue: candidatura.observacion ?? '',
+      confirmText: 'Guardar calificación',
+      icon: 'heroicons_outline:clipboard-document-check',
+    }).subscribe((observacion) => {
+      if (observacion === null) return;
+      this._candidaturasService
+        .calificar(eleccionId, candidatura.id, { estado, observacion: observacion || null })
+        .subscribe({
+          next: () => {
+            this._notify(`Candidatura marcada como ${this.label(estado)}.`);
+            this.load();
+          },
+          error: (err) => this._notify(this.errorMessage(err, 'No se pudo calificar.')),
+        });
+    });
   }
 
   label(value: string | null | undefined): string {

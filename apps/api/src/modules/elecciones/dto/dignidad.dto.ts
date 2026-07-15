@@ -14,7 +14,7 @@ import {
 import { TipoElector } from 'prisma/generated/enums';
 
 export class CreateDignidadDto {
-  @ApiProperty({ example: 'Representante estudiantil al OCS' })
+  @ApiProperty({ example: 'Representante estudiantil del Instituto' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(160)
@@ -53,7 +53,7 @@ export class CreateDignidadDto {
 }
 
 export class UpdateDignidadDto {
-  @ApiPropertyOptional({ example: 'Representante estudiantil al OCS' })
+  @ApiPropertyOptional({ example: 'Representante estudiantil del Instituto' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()

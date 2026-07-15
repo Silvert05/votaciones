@@ -15,6 +15,7 @@ import {
   UpsertConfiguracionPayload,
   UpsertCronogramaPayload,
   CronogramaElectoral,
+  DashboardResumen,
 } from '../models/election.model';
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,10 @@ export class ElectionsService {
     if (query.tipo) params = params.set('tipo', query.tipo);
     if (query.estado) params = params.set('estado', query.estado);
     return this._http.get<EleccionesPaginated>('/elecciones', { params });
+  }
+
+  dashboard(): Observable<DashboardResumen> {
+    return this._http.get<DashboardResumen>('/elecciones/resumen/dashboard');
   }
 
   get(id: string): Observable<EleccionDetalle> {

@@ -1,105 +1,88 @@
-<div class="flex flex-col flex-auto p-6 sm:p-10">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="flex w-full flex-auto flex-col p-6 sm:p-10">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
     <div>
-      <div class="text-4xl font-extrabold tracking-tight leading-tight">Cronograma electoral</div>
-      <p class="mt-2 text-secondary">Fechas oficiales del proceso seleccionado</p>
+      <div class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700">
+        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:calendar-days'" />
+        Publicacion ciudadana
+      </div>
+      <h1 class="mt-3 text-4xl font-extrabold leading-tight tracking-tight">Cronograma electoral</h1>
+      <p class="mt-2 max-w-2xl text-secondary">Configura solo las fechas que el usuario necesita conocer. La vista previa muestra exactamente lo que se publicara.</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selected">
-      <mat-icon [svgIcon]="'heroicons_solid:calendar-days'" />
-      <span class="ml-1">Guardar cronograma</span>
+      <mat-icon [svgIcon]="'heroicons_solid:cloud-arrow-up'" />
+      <span class="ml-1">Guardar y publicar</span>
     </button>
   </div>
 
-  <div class="mt-6 rounded shadow bg-card overflow-hidden">
-    @if (loading) {
-    <mat-progress-bar [mode]="'indeterminate'" />
-    }
-
-    <div class="p-4 border-b">
-      <mat-form-field appearance="outline" class="w-full md:w-160">
-        <mat-label>Eleccion</mat-label>
+  <div class="mt-7 overflow-hidden rounded-2xl border bg-card shadow-sm">
+    @if (loading) { <mat-progress-bar [mode]="'indeterminate'" /> }
+    <div class="border-b bg-slate-50 p-5 dark:bg-gray-900">
+      <mat-form-field appearance="outline" class="w-full lg:w-160">
+        <mat-label>Proceso electoral</mat-label>
         <mat-select [formControl]="selectedIdCtrl">
           @for (eleccion of elecciones; track eleccion.id) {
-          <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
+            <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     </div>
 
     @if (selected) {
-    <form class="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" [formGroup]="form">
-      <mat-form-field appearance="outline">
-        <mat-label>Convocatoria</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaConvocatoria">
-      </mat-form-field>
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.65fr)]">
+        <form class="p-5 sm:p-7" [formGroup]="form">
+          <section>
+            <div class="mb-4 flex items-center gap-3">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700"><mat-icon [svgIcon]="'heroicons_outline:flag'" /></span>
+              <div><h2 class="font-bold">Preparacion</h2><p class="text-sm text-secondary">Inicio oficial y publicacion del padron.</p></div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <mat-form-field appearance="outline"><mat-label>Convocatoria</mat-label><input matInput type="datetime-local" formControlName="fechaConvocatoria"><mat-icon matPrefix [svgIcon]="'heroicons_outline:megaphone'" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Publicacion del padron</mat-label><input matInput type="datetime-local" formControlName="fechaPublicacionPadron"><mat-icon matPrefix [svgIcon]="'heroicons_outline:users'" /></mat-form-field>
+            </div>
+          </section>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Publicacion padron</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaPublicacionPadron">
-      </mat-form-field>
+          <section class="mt-5 border-t pt-5">
+            <div class="mb-4 flex items-center gap-3">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><mat-icon [svgIcon]="'heroicons_outline:user-group'" /></span>
+              <div><h2 class="font-bold">Candidaturas</h2><p class="text-sm text-secondary">Periodo disponible para registrar participantes.</p></div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <mat-form-field appearance="outline"><mat-label>Apertura de candidaturas</mat-label><input matInput type="datetime-local" formControlName="fechaInicioInscripcion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:user-plus'" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Cierre de candidaturas</mat-label><input matInput type="datetime-local" formControlName="fechaFinInscripcion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:lock-closed'" /></mat-form-field>
+            </div>
+          </section>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Inicio inscripcion</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaInicioInscripcion">
-      </mat-form-field>
+          <section class="mt-5 border-t pt-5">
+            <div class="mb-4 flex items-center gap-3">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"><mat-icon [svgIcon]="'heroicons_outline:check-badge'" /></span>
+              <div><h2 class="font-bold">Jornada y resultados</h2><p class="text-sm text-secondary">Estas son las fechas principales que vera el elector.</p></div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <mat-form-field appearance="outline"><mat-label>Inicio de la votacion</mat-label><input matInput type="datetime-local" formControlName="fechaInicioVotacion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:cursor-arrow-rays'" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Cierre de la votacion</mat-label><input matInput type="datetime-local" formControlName="fechaFinVotacion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:clock'" /></mat-form-field>
+              <mat-form-field appearance="outline" class="md:col-span-2"><mat-label>Publicacion de resultados</mat-label><input matInput type="datetime-local" formControlName="fechaPublicacionResultados"><mat-icon matPrefix [svgIcon]="'heroicons_outline:chart-bar'" /></mat-form-field>
+            </div>
+          </section>
+        </form>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Fin inscripcion</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaFinInscripcion">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Inicio impugnacion candidaturas</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaInicioImpugnacionCandidaturas">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Fin impugnacion candidaturas</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaFinImpugnacionCandidaturas">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Publicacion candidaturas</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaPublicacionCandidaturas">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Inicio campania</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaInicioCampania">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Fin campania</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaFinCampania">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Inicio votacion</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaInicioVotacion">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Fin votacion</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaFinVotacion">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Publicacion resultados</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaPublicacionResultados">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Fin impugnacion resultados</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaFinImpugnacionResultados">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Resultados finales</mat-label>
-        <input matInput type="datetime-local" formControlName="fechaResultadosFinales">
-      </mat-form-field>
-    </form>
+        <aside class="border-t bg-slate-950 p-6 text-white xl:border-l xl:border-t-0">
+          <div class="sticky top-20">
+            <div class="flex items-center justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Vista publica</p><h2 class="mt-1 text-xl font-extrabold">Fechas importantes</h2></div><span class="rounded-full bg-white/10 px-3 py-1 text-xs">{{ previewEvents.length }} hitos</span></div>
+            <p class="mt-2 text-sm text-slate-300">{{ selected.nombre }}</p>
+            <ol class="mt-6 space-y-3">
+              @for (evento of previewEvents; track evento.field; let i = $index) {
+                <li class="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-3" [class.opacity-50]="!evento.value">
+                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-300"><mat-icon class="icon-size-5" [svgIcon]="evento.icon" /></span>
+                  <div class="min-w-0"><p class="text-sm font-semibold">{{ evento.label }}</p><p class="mt-0.5 text-xs text-slate-300">{{ evento.formatted }}</p></div>
+                </li>
+              }
+            </ol>
+            <div class="mt-6 rounded-xl bg-cyan-400/10 p-4 text-xs leading-relaxed text-cyan-100">Al guardar, estos hitos se actualizan inmediatamente en <strong>Calendario actividades</strong>.</div>
+          </div>
+        </aside>
+      </div>
     } @else {
-    <div class="p-8 text-center text-secondary">No hay una eleccion seleccionada.</div>
+      <div class="p-10 text-center text-secondary">No hay un proceso electoral seleccionado.</div>
     }
   </div>
 </div>

@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import {
@@ -34,6 +35,7 @@ export default class ImpugnacionesComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _escrutinioService = inject(EscrutinioService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
   resumen: EscrutinioResumen | null = null;
@@ -123,26 +125,31 @@ export default class ImpugnacionesComponent implements OnInit {
     impugnacion: ImpugnacionResultado,
     estado: Exclude<EstadoImpugnacionResultado, 'PENDIENTE'>,
   ): void {
-    const resolucion = prompt('Resolucion de la impugnacion', impugnacion.resolucion ?? '');
-    if (!resolucion?.trim()) return;
-
-    this.saving = true;
-    this._escrutinioService
-      .resolverImpugnacion(impugnacion.id, {
-        estado,
-        resolucion: resolucion.trim(),
-      })
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: () => {
-          this._notify('Impugnacion resuelta.');
-          this.loadResumen();
-        },
-        error: (err) =>
-          this._notify(
-            this.errorMessage(err, 'No se pudo resolver la impugnacion.'),
-          ),
-      });
+    this._institutionalDialog.prompt({
+      title: 'Resolver impugnación',
+      message: `La impugnación será marcada como ${estado.toLowerCase()}.`,
+      inputLabel: 'Resolución de la impugnación',
+      initialValue: impugnacion.resolucion ?? '',
+      confirmText: 'Guardar resolución',
+      required: true,
+      icon: 'heroicons_outline:scale',
+    }).subscribe((resolucion) => {
+      if (!resolucion) return;
+      this.saving = true;
+      this._escrutinioService
+        .resolverImpugnacion(impugnacion.id, { estado, resolucion })
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: () => {
+            this._notify('Impugnación resuelta.');
+            this.loadResumen();
+          },
+          error: (err) =>
+            this._notify(
+              this.errorMessage(err, 'No se pudo resolver la impugnación.'),
+            ),
+        });
+    });
   }
 
   label(value: string | null | undefined): string {

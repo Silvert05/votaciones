@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import {
@@ -32,6 +33,7 @@ export default class EscrutinioComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _escrutinioService = inject(EscrutinioService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
   resumen: EscrutinioResumen | null = null;
@@ -93,77 +95,109 @@ export default class EscrutinioComponent implements OnInit {
   }
 
   cerrarActa(acta: ActaEscrutinio): void {
-    const observacion = prompt('Observacion del acta', acta.observacion ?? '') ?? null;
-    this.saving = true;
-    this._escrutinioService
-      .cerrarActa(acta.id, { observacion })
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: () => {
-          this._notify('Acta cerrada.');
-          this.loadResumen();
-        },
-        error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo cerrar el acta.')),
-      });
+    this._institutionalDialog.prompt({
+      title: 'Cerrar acta de escrutinio',
+      message: 'Registre una observación antes de cerrar el acta.',
+      inputLabel: 'Observación del acta',
+      initialValue: acta.observacion ?? '',
+      confirmText: 'Cerrar acta',
+      icon: 'heroicons_outline:document-check',
+    }).subscribe((observacion) => {
+      if (observacion === null) return;
+      this.saving = true;
+      this._escrutinioService
+        .cerrarActa(acta.id, { observacion: observacion || null })
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: () => {
+            this._notify('Acta cerrada.');
+            this.loadResumen();
+          },
+          error: (err) =>
+            this._notify(this.errorMessage(err, 'No se pudo cerrar el acta.')),
+        });
+    });
   }
 
   aprobarActa(acta: ActaEscrutinio): void {
-    const observacion = prompt('Observacion de aprobacion', acta.observacion ?? '') ?? null;
-    this.saving = true;
-    this._escrutinioService
-      .aprobarActa(acta.id, { observacion })
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: () => {
-          this._notify('Acta aprobada.');
-          this.loadResumen();
-        },
-        error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo aprobar el acta.')),
-      });
+    this._institutionalDialog.prompt({
+      title: 'Aprobar acta de escrutinio',
+      message: 'Confirme la revisión del acta y agregue una observación si corresponde.',
+      inputLabel: 'Observación de aprobación',
+      initialValue: acta.observacion ?? '',
+      confirmText: 'Aprobar acta',
+      icon: 'heroicons_outline:check-badge',
+    }).subscribe((observacion) => {
+      if (observacion === null) return;
+      this.saving = true;
+      this._escrutinioService
+        .aprobarActa(acta.id, { observacion: observacion || null })
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: () => {
+            this._notify('Acta aprobada.');
+            this.loadResumen();
+          },
+          error: (err) =>
+            this._notify(this.errorMessage(err, 'No se pudo aprobar el acta.')),
+        });
+    });
   }
 
   publicarProvisionales(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    if (!confirm('Publicar resultados provisionales?')) return;
-    this.saving = true;
-    this._escrutinioService
-      .publicarProvisionales(eleccionId)
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: (res) => {
-          this.resumen = res;
-          this._notify('Resultados provisionales publicados.');
-          this.loadElecciones();
-        },
-        error: (err) =>
-          this._notify(
-            this.errorMessage(err, 'No se pudieron publicar provisionales.'),
-          ),
-      });
+    this._institutionalDialog.confirm({
+      title: 'Publicar resultados provisionales',
+      message: 'Los resultados se mostrarán al público con carácter provisional.',
+      confirmText: 'Publicar provisionales',
+      icon: 'heroicons_outline:chart-bar-square',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.saving = true;
+      this._escrutinioService
+        .publicarProvisionales(eleccionId)
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: (res) => {
+            this.resumen = res;
+            this._notify('Resultados provisionales publicados.');
+            this.loadElecciones();
+          },
+          error: (err) =>
+            this._notify(
+              this.errorMessage(err, 'No se pudieron publicar provisionales.'),
+            ),
+        });
+    });
   }
 
   publicarDefinitivos(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    if (!confirm('Publicar resultados definitivos?')) return;
-    this.saving = true;
-    this._escrutinioService
-      .publicarDefinitivos(eleccionId)
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: (res) => {
-          this.resumen = res;
-          this._notify('Resultados definitivos publicados.');
-          this.loadElecciones();
-        },
-        error: (err) =>
-          this._notify(
-            this.errorMessage(err, 'No se pudieron publicar definitivos.'),
-          ),
-      });
+    this._institutionalDialog.confirm({
+      title: 'Publicar resultados definitivos',
+      message: 'Los resultados quedarán visibles como información oficial del proceso electoral.',
+      confirmText: 'Publicar definitivos',
+      icon: 'heroicons_outline:check-circle',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.saving = true;
+      this._escrutinioService
+        .publicarDefinitivos(eleccionId)
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: (res) => {
+            this.resumen = res;
+            this._notify('Resultados definitivos publicados.');
+            this.loadElecciones();
+          },
+          error: (err) =>
+            this._notify(
+              this.errorMessage(err, 'No se pudieron publicar definitivos.'),
+            ),
+        });
+    });
   }
 
   opcionLabel(detalle: DetalleActaEscrutinio): string {

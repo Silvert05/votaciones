@@ -1,185 +1,244 @@
-<div class="flex flex-col flex-auto min-w-0">
 
-  <section class="relative flex items-center min-h-[520px] md:min-h-[600px] overflow-hidden"
-    [style.background]="'linear-gradient(135deg, ' + colorPrimario + ' 0%, ' + colorSecundario + ' 100%)'">
+<div class="flex w-full min-w-0 flex-auto flex-col">
 
-    <div class="absolute inset-0 bg-cover bg-center opacity-10" style="background-image: url('/img/hero.jpg')"></div>
+  <!-- HERO -->
+  <section class="relative flex min-h-[560px] items-center overflow-hidden">
 
-    <div class="relative w-full mx-auto max-w-screen-xl px-6 md:px-10 lg:px-12 py-16 md:py-20">
+    <!-- Imagen de fondo -->
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/img/hero.jpg');"></div>
+
+    <!-- Degradado sobre la imagen -->
+    <div
+  class="absolute inset-0"
+  style="
+    background: linear-gradient(
+      135deg,
+      rgba(14, 46, 97, 0.75) 0%,
+      rgba(245, 75, 10, 0.75) 100%
+     
+    );
+  "
+></div>
+
+
+    <!-- Patrón decorativo -->
+    <div class="absolute inset-0 opacity-10" style="
+        background-image: radial-gradient(
+          circle at 20% 20%,
+          white 0 2px,
+          transparent 3px
+        );
+        background-size: 32px 32px;
+      "></div>
+
+    <!-- Contenido del hero -->
+    <div class="relative z-10 mx-auto w-full max-w-screen-xl px-6 py-16 text-center md:px-10 lg:px-12">
 
       @if (cargando) {
-      <div class="text-center text-white/80 text-lg">Cargando proceso electoral…</div>
-      }
 
-      @else if (eleccion) {
-      <div class="max-w-3xl mx-auto text-center text-white">
+      <div class="text-lg text-white/80">
+        Cargando proceso electoral...
+      </div>
 
-        @if (config?.escudoUrl) {
-        <img [src]="config?.escudoUrl" alt="Escudo institucional"
-          class="h-24 w-24 mx-auto mb-6 object-contain rounded-xl bg-white/95 p-2 shadow-lg">
+      } @else if (eleccion) {
+
+      <div class="mx-auto max-w-4xl text-white">
+
+        @if (theme().escudoUrl) {
+        <img [src]="theme().escudoUrl" (error)="onImageError($event)" alt="Escudo institucional"
+          class="mx-auto mb-6 h-24 w-24 rounded-2xl bg-white p-2 object-contain shadow-2xl">
         }
 
-        <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+        <p class="mb-3 text-sm font-bold uppercase tracking-[.25em] text-white/75">
+          Portal electoral institucional
+        </p>
+
+        <h1 class="text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
           {{ eleccion.nombre }}
         </h1>
 
-        @if (config?.nombreInstitucion) {
-        <p class="text-lg md:text-xl font-semibold text-white/90 mb-2">{{ config?.nombreInstitucion }}</p>
-        }
-
-        <p class="text-xs md:text-sm text-white/70 mb-8 uppercase tracking-widest">
-          Voto Electrónico No Presencial (VENP)
+        <p class="mt-4 text-lg font-semibold text-white/90">
+          {{ theme().nombreInstitucion }}
         </p>
 
-        <div class="flex flex-col items-center gap-6">
+        @if (theme().mensajeBienvenida) {
+        <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
+          {{ theme().mensajeBienvenida }}
+        </p>
+        }
+
+        <div class="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
 
           @if (eleccion.votarDisponible && !votacionFinalizada) {
-          <a [routerLink]="'/votar'" [queryParams]="{ eleccion: eleccion.id }"
-            class="inline-flex items-center gap-3 px-10 py-4 rounded-full bg-white text-[#183f84] font-extrabold text-lg hover:bg-amber-50 active:scale-95 transition-all duration-200 shadow-xl">
+          <a routerLink="/votar" [queryParams]="{ eleccion: eleccion.id }"
+            class="inline-flex items-center gap-3 rounded-full bg-white px-10 py-4 text-lg font-extrabold shadow-xl transition hover:-translate-y-0.5"
+            [style.color]="colorPrimario">
             <mat-icon class="icon-size-7" [svgIcon]="'heroicons_outline:finger-print'"></mat-icon>
-            VOTAR
+
+            VOTAR AHORA
           </a>
           }
 
-          <div class="flex flex-wrap items-center justify-center gap-4">
-            @if (eleccion.resultadosDisponibles) {
-            <a [routerLink]="'/resultados'"
-              class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white/15 text-white font-semibold border border-white/30 hover:bg-white/25 transition-colors duration-200">
-              Ver Resultados
-              <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
-            </a>
-            }
+          <a routerLink="/actividades"
+            class="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-7 py-3.5 font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+            <mat-icon [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
 
-            @if (countdown && eleccion.votarDisponible) {
-            <div class="bg-white/95 text-gray-900 rounded-xl px-6 py-3 text-center shadow-lg min-w-[180px]">
-              <div class="text-2xl md:text-3xl font-extrabold tabular-nums leading-none">{{ countdown }}</div>
-              @if (eleccion.fechaFinVotacion && !votacionFinalizada) {
-              <div class="text-xs text-gray-500 mt-1">
-                Finaliza el {{ eleccion.fechaFinVotacion | date: 'dd/MM/yyyy' }} a las
-                {{ eleccion.fechaFinVotacion | date: 'HH:mm' }} hrs.
-              </div>
-              } @else if (votacionFinalizada) {
-              <div class="text-xs text-red-500 mt-1 font-semibold">Votación finalizada</div>
-              }
-            </div>
-            }
+            Ver cronograma
+          </a>
+
+        </div>
+
+        @if (countdown && eleccion.votarDisponible) {
+        <div class="mx-auto mt-7 w-fit rounded-2xl bg-slate-950/35 px-7 py-4 backdrop-blur">
+          <div class="text-3xl font-black tabular-nums">
+            {{ countdown }}
           </div>
 
-          <a [routerLink]="'/candidatos'" class="text-white/80 text-sm font-medium hover:text-white hover:underline">
-            Ver candidatos participantes →
-          </a>
+          <div class="mt-1 text-xs text-white/75">
+            Tiempo restante de la jornada
+          </div>
         </div>
+        }
+
       </div>
+
+      } @else {
+
+      <div class="mx-auto max-w-2xl text-white">
+
+        <mat-icon class="mx-auto mb-4 icon-size-16 text-white/70"
+          [svgIcon]="'heroicons_outline:information-circle'"></mat-icon>
+
+        <h1 class="text-4xl font-extrabold">
+          No hay procesos electorales activos
+        </h1>
+
+        <p class="mt-3 text-white/80">
+          Cuando el administrador publique una elección, su información
+          aparecerá aquí.
+        </p>
+
+      </div>
+
       }
 
-      @else {
-      <div class="max-w-2xl mx-auto text-center text-white">
-        <mat-icon class="icon-size-16 mx-auto mb-4 text-white/70"
-          [svgIcon]="'heroicons_outline:information-circle'"></mat-icon>
-        <h1 class="text-3xl md:text-4xl font-extrabold mb-3">No hay procesos electorales activos</h1>
-        <p class="text-white/80">
-          En este momento no existe una votación abierta. Vuelva a consultar durante la jornada electoral.
-        </p>
-      </div>
-      }
     </div>
+
   </section>
 
+  <!-- INFORMACIÓN ELECTORAL -->
+  <section class="bg-white px-6 py-16 dark:bg-transparent md:px-10 lg:px-12">
 
-  <section class="py-16 md:py-20 px-6 md:px-10 lg:px-12 bg-white dark:bg-transparent">
     <div class="mx-auto max-w-screen-xl">
 
-      <div class="text-center mb-12">
-        <h2 class="text-2xl md:text-3xl font-bold text-[#183f84] mb-3">
-          {{ eleccion?.nombre || 'Proceso Electoral' }}
-        </h2>
-        <p class="text-secondary max-w-xl mx-auto text-sm md:text-base">
-          Información sobre el proceso electoral de
-          <strong>{{ config?.nombreInstitucion || 'la institución' }}</strong>.
+      <div class="mb-10 text-center">
+
+        <p class="text-sm font-bold uppercase tracking-[.2em]" [style.color]="colorSecundario">
+          Información electoral
         </p>
+
+        <h2 class="mt-2 text-3xl font-extrabold" [style.color]="colorPrimario">
+          Todo el proceso en un solo lugar
+        </h2>
+
       </div>
 
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Tarjetas -->
+      <div class="grid gap-6 md:grid-cols-3">
 
-        <!-- Card: Verificar -->
-        <div
-          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200">
-          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-[#183f84]/10 mb-5">
-            <mat-icon class="icon-size-7 text-[#183f84]" [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
-          </div>
-          <h3 class="font-bold text-base mb-2">Participación</h3>
-          <p class="text-secondary text-sm leading-relaxed">
-            Consulte en tiempo real el nivel de participación electoral durante la jornada de votación.
+        <!-- Participación -->
+        <a routerLink="/participacion"
+          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+
+          <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-white"
+            [style.background]="colorPrimario">
+            <mat-icon [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
+          </span>
+
+          <h3 class="mt-5 text-xl font-bold">
+            Participación
+          </h3>
+
+          <p class="mt-2 text-sm leading-relaxed text-secondary">
+            Consulta el avance de la jornada electoral en tiempo real.
           </p>
-          <a [routerLink]="'/participacion'" class="mt-5 text-[#183f84] text-sm font-semibold hover:underline">
-            Consultar →
-          </a>
-        </div>
 
-        <!-- Card: Candidatos -->
-        <div
-          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200">
-          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-[#183f84]/10 mb-5">
-            <mat-icon class="icon-size-7 text-[#183f84]" [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
-          </div>
-          <h3 class="font-bold text-base mb-2">Candidatos</h3>
-          <p class="text-secondary text-sm leading-relaxed">
-            Conozca los candidatos que participan en las elecciones del instituto yavirac.
+        </a>
+
+        <!-- Candidatos -->
+        <a routerLink="/candidatos"
+          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+
+          <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-white"
+            [style.background]="colorSecundario">
+            <mat-icon [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+          </span>
+
+          <h3 class="mt-5 text-xl font-bold">
+            Candidatos
+          </h3>
+
+          <p class="mt-2 text-sm leading-relaxed text-secondary">
+            Conoce las listas, candidatos y fotografías publicadas.
           </p>
-          <a [routerLink]="'/candidatos'" class="mt-5 text-[#183f84] text-sm font-semibold hover:underline">
-            Ver candidatos →
-          </a>
-        </div>
 
-        <!-- Card: Resultados -->
-        <div
-          class="flex flex-col items-center text-center p-8 rounded-xl border bg-card hover:shadow-md transition-shadow duration-200 sm:col-span-2 lg:col-span-1">
-          <div class="flex items-center justify-center w-14 h-14 rounded-full bg-[#183f84]/10 mb-5">
-            <mat-icon class="icon-size-7 text-[#183f84]" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
-          </div>
-          <h3 class="font-bold text-base mb-2">Resultados</h3>
-          <p class="text-secondary text-sm leading-relaxed">
-            Acceda a los resultados del proceso electoral una vez concluida la jornada de votación.
+        </a>
+
+        <!-- Resultados -->
+        <a routerLink="/resultados"
+          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+
+          <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-slate-950"
+            [style.background]="colorAcento">
+            <mat-icon [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+          </span>
+
+          <h3 class="mt-5 text-xl font-bold">
+            Resultados
+          </h3>
+
+          <p class="mt-2 text-sm leading-relaxed text-secondary">
+            Revisa los resultados oficiales una vez cerrada la votación.
           </p>
-          <a [routerLink]="'/resultados'" class="mt-5 text-[#183f84] text-sm font-semibold hover:underline">
-            Ver resultados →
-          </a>
-        </div>
+
+        </a>
 
       </div>
-    </div>
-  </section>
-  <div class="flex-auto p-6 sm:px-20 sm:pb-20">
-    <div class="pb-6 pt-2">
-      <div class="flex flex-col items-center">
-        <div
-          class="mt-1 text-2xl sm:text-3xl pb-3 font-extrabold tracking-tight text-[#183f84] leading-tight text-center">
-          CRONOGRAMA DE ACTIVIDADES DEL PROCESO ELECTORAL DEl INSTITUTO YAVIRAC
-        </div>
-        <iframe [src]="path" frameborder="0" class="w-full h-140"></iframe>
-      </div>
-    </div>
 
+      <!-- Video institucional -->
+      @if (videoPath) {
 
-    <div class="flex flex-col items-center">
-      <div class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#183f84] leading-tight text-center">
-        TRIBUNAL ELECTORAL YAVIRAC 2026
-      </div>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full min-w-0 pt-6">
-      @for (team of teams; track $index) {
-      <div
-        class="flex flex-col flex-auto items-center bg-card shadow rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-150 ease-in-out">
-        <div class="flex flex-col flex-auto w-full p-4 text-center">
-          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden dark:bg-card">
-            <img class="w-full h-full object-cover" [src]="team.photo" [alt]="team.name">
+      <div class="mt-14 overflow-hidden rounded-3xl border bg-slate-950 shadow-xl">
+
+        <div class="grid lg:grid-cols-[.7fr_1.3fr]">
+
+          <div class="flex flex-col justify-center p-8 text-white lg:p-10">
+
+            <p class="text-sm font-bold uppercase tracking-[.2em] text-cyan-300">
+              Contenido institucional
+            </p>
+
+            <h2 class="mt-3 text-3xl font-extrabold">
+              Conoce el proceso de votación
+            </h2>
+
+            <p class="mt-3 text-slate-300">
+              Este video es administrado desde la configuración del proceso
+              electoral.
+            </p>
+
           </div>
-          <div class="mt-2 font-medium">{{team.name}}</div>
-          <div class="text-secondary">{{team.position}}</div>
+
+          <iframe [src]="videoPath" class="aspect-video h-full min-h-72 w-full" title="Video institucional"
+            allowfullscreen></iframe>
+
         </div>
+
       </div>
+
       }
-    </div>
-  </div>
 
-</div>
+    </div>
+
+  </section>
+

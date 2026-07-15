@@ -6,7 +6,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -18,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import {
   ESTADOS_ELECCION,
   ESTADO_TRANSICIONES,
@@ -44,7 +44,6 @@ import { ElectionsService } from '../../services/elections.service';
     MatMenuModule,
     MatTooltipModule,
     MatProgressBarModule,
-    MatCheckboxModule,
   ],
   templateUrl: './elections-list.component.html',
 })
@@ -52,6 +51,7 @@ export default class ElectionsListComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _electionsService = inject(ElectionsService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = [
@@ -78,9 +78,8 @@ export default class ElectionsListComponent implements OnInit {
   form = this._fb.group({
     nombre: ['', [Validators.required, Validators.maxLength(180)]],
     descripcion: [''],
-    tipo: ['OCS' as TipoEleccion, Validators.required],
+    tipo: ['INSTITUCIONAL' as TipoEleccion, Validators.required],
     fechaConvocatoria: [''],
-    aprobadaPorOcs: [false],
     vueltaActual: [1, [Validators.required, Validators.min(1), Validators.max(99)]],
   });
 
@@ -144,9 +143,8 @@ export default class ElectionsListComponent implements OnInit {
     this.form.reset({
       nombre: '',
       descripcion: '',
-      tipo: 'OCS',
+      tipo: 'INSTITUCIONAL',
       fechaConvocatoria: '',
-      aprobadaPorOcs: false,
       vueltaActual: 1,
     });
   }
@@ -160,7 +158,6 @@ export default class ElectionsListComponent implements OnInit {
           descripcion: detalle.descripcion ?? '',
           tipo: detalle.tipo,
           fechaConvocatoria: this.toLocalDateTime(detalle.fechaConvocatoria),
-          aprobadaPorOcs: detalle.aprobadaPorOcs,
           vueltaActual: detalle.vueltaActual,
         });
       },
@@ -180,7 +177,6 @@ export default class ElectionsListComponent implements OnInit {
       descripcion: raw.descripcion || null,
       tipo: raw.tipo!,
       fechaConvocatoria: this.toIsoDateTime(raw.fechaConvocatoria),
-      aprobadaPorOcs: !!raw.aprobadaPorOcs,
       ...(this.selected
         ? { vueltaActual: Number(raw.vueltaActual ?? 1) }
         : {}),
@@ -208,28 +204,26 @@ export default class ElectionsListComponent implements OnInit {
   }
 
   cambiarEstado(eleccion: Eleccion, estado: EstadoEleccion): void {
-    const comentario = prompt(
-      `Comentario para pasar de ${this.label(eleccion.estado)} a ${this.label(
-        estado,
-      )}:`,
-    );
-    if (comentario === null) {
-      return;
-    }
-
-    this._electionsService
-      .cambiarEstado(eleccion.id, { estado, comentario: comentario || null })
-      .subscribe({
-        next: (detalle) => {
-          if (this.selected?.id === detalle.id) {
-            this.selected = detalle;
-          }
-          this._notify(`Estado actualizado a ${this.label(detalle.estado)}.`);
-          this.load();
-        },
-        error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo cambiar el estado.')),
-      });
+    this._institutionalDialog.prompt({
+      title: 'Cambiar etapa de la elección',
+      message: `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`,
+      inputLabel: 'Comentario del cambio',
+      confirmText: 'Cambiar etapa',
+      icon: 'heroicons_outline:arrow-path-rounded-square',
+    }).subscribe((comentario) => {
+      if (comentario === null) return;
+      this._electionsService
+        .cambiarEstado(eleccion.id, { estado, comentario: comentario || null })
+        .subscribe({
+          next: (detalle) => {
+            if (this.selected?.id === detalle.id) this.selected = detalle;
+            this._notify(`Estado actualizado a ${this.label(detalle.estado)}.`);
+            this.load();
+          },
+          error: (err) =>
+            this._notify(this.errorMessage(err, 'No se pudo cambiar el estado.')),
+        });
+    });
   }
 
   label(value: string | null | undefined): string {

@@ -17,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import {
@@ -49,6 +50,7 @@ export default class ListasComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _candidaturasService = inject(CandidaturasService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = ['codigo', 'nombre', 'estado', 'candidaturas', 'acciones'];
@@ -231,17 +233,25 @@ export default class ListasComponent implements OnInit {
   cambiarEstado(lista: ListaElectoral, estado: EstadoListaElectoral): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    const observacion = prompt(`Observacion para ${this.label(estado)}:`, lista.observacion ?? '');
-    if (observacion === null) return;
-    this._candidaturasService
-      .updateLista(eleccionId, lista.id, { estado, observacion: observacion || null })
-      .subscribe({
-        next: () => {
-          this._notify(`Lista marcada como ${this.label(estado)}.`);
-          this.load();
-        },
-        error: (err) => this._notify(this.errorMessage(err, 'No se pudo cambiar el estado.')),
-      });
+    this._institutionalDialog.prompt({
+      title: `${this.label(estado)} lista`,
+      message: `Registre una observación para la lista ${lista.nombre}.`,
+      inputLabel: 'Observación del cambio de estado',
+      initialValue: lista.observacion ?? '',
+      confirmText: 'Guardar cambio',
+      icon: 'heroicons_outline:clipboard-document-check',
+    }).subscribe((observacion) => {
+      if (observacion === null) return;
+      this._candidaturasService
+        .updateLista(eleccionId, lista.id, { estado, observacion: observacion || null })
+        .subscribe({
+          next: () => {
+            this._notify(`Lista marcada como ${this.label(estado)}.`);
+            this.load();
+          },
+          error: (err) => this._notify(this.errorMessage(err, 'No se pudo cambiar el estado.')),
+        });
+    });
   }
 
   label(value: string | null | undefined): string {

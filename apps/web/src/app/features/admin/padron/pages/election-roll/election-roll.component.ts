@@ -17,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import {
   Eleccion,
   TIPOS_ELECTOR,
@@ -54,6 +55,7 @@ export default class ElectionRollComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _padronService = inject(PadronService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = ['identificacion', 'nombre', 'tipo', 'estado', 'publicado', 'acciones'];
@@ -211,18 +213,22 @@ export default class ElectionRollComponent implements OnInit {
       this._notify('Selecciona una eleccion.');
       return;
     }
-    if (!confirm('¿Publicar el padron electoral de esta eleccion?')) {
-      return;
-    }
-
-    this._padronService.publicar(eleccionId).subscribe({
-      next: (res) => {
-        this._notify(`Padron publicado con ${res.habilitados} electores habilitados.`);
-        this.loadPadron();
-        this.loadElecciones();
-      },
-      error: (err) =>
-        this._notify(this.errorMessage(err, 'No se pudo publicar el padron.')),
+    this._institutionalDialog.confirm({
+      title: 'Publicar padrón electoral',
+      message: 'Los electores habilitados quedarán disponibles para este proceso electoral.',
+      confirmText: 'Publicar padrón',
+      icon: 'heroicons_outline:user-group',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this._padronService.publicar(eleccionId).subscribe({
+        next: (res) => {
+          this._notify(`Padrón publicado con ${res.habilitados} electores habilitados.`);
+          this.loadPadron();
+          this.loadElecciones();
+        },
+        error: (err) =>
+          this._notify(this.errorMessage(err, 'No se pudo publicar el padrón.')),
+      });
     });
   }
 

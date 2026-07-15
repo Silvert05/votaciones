@@ -142,16 +142,10 @@
           <input matInput type="datetime-local" formControlName="fechaConvocatoria">
         </mat-form-field>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <mat-form-field appearance="outline">
-            <mat-label>Vuelta</mat-label>
-            <input matInput type="number" min="1" max="99" formControlName="vueltaActual">
-          </mat-form-field>
-
-          <label class="flex items-center min-h-14">
-            <mat-checkbox formControlName="aprobadaPorOcs">Aprobada por OCS</mat-checkbox>
-          </label>
-        </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Vuelta</mat-label>
+          <input matInput type="number" min="1" max="99" formControlName="vueltaActual">
+        </mat-form-field>
       </form>
 
       @if (selected) {

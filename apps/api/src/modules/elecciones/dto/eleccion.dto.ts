@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -14,7 +13,7 @@ import {
 import { EstadoEleccion, TipoEleccion } from 'prisma/generated/enums';
 
 export class CreateEleccionDto {
-  @ApiProperty({ example: 'Eleccion de representantes al OCS 2026' })
+  @ApiProperty({ example: 'Eleccion institucional Yavirac 2026' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(180)
@@ -34,14 +33,10 @@ export class CreateEleccionDto {
   @IsString()
   fechaConvocatoria?: string;
 
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  aprobadaPorOcs?: boolean;
 }
 
 export class UpdateEleccionDto {
-  @ApiPropertyOptional({ example: 'Eleccion de representantes al OCS 2026' })
+  @ApiPropertyOptional({ example: 'Eleccion institucional Yavirac 2026' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
@@ -62,11 +57,6 @@ export class UpdateEleccionDto {
   @IsOptional()
   @IsString()
   fechaConvocatoria?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  aprobadaPorOcs?: boolean;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()

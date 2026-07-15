@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Rol } from '../../../auth/models/auth.model';
 import { Perfil } from '../../../security/models/security.model';
 import { SecurityService } from '../../../security/services/security.service';
@@ -46,6 +47,7 @@ export default class UsersListComponent implements OnInit {
   private _securityService = inject(SecurityService);
   private _dialog = inject(MatDialog);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = [
@@ -152,21 +154,24 @@ export default class UsersListComponent implements OnInit {
 
   toggleActivo(user: User): void {
     const accion = user.activo ? 'desactivar' : 'activar';
-    if (!confirm(`¿Seguro que deseas ${accion} a "${user.usuario}"?`)) {
-      return;
-    }
-    this._usersService.setActivo(user.id, !user.activo).subscribe({
-      next: (updated) => {
-        user.activo = updated.activo;
-        this._notify(
-          `Usuario ${updated.activo ? 'activado' : 'desactivado'}.`,
-        );
-      },
-      error: (err) => {
-        const message =
-          err?.error?.message || 'No se pudo cambiar el estado.';
-        this._notify(Array.isArray(message) ? message.join(' ') : message);
-      },
+    this._institutionalDialog.confirm({
+      title: `${user.activo ? 'Desactivar' : 'Activar'} usuario`,
+      message: `Se va a ${accion} la cuenta “${user.usuario}”.`,
+      confirmText: user.activo ? 'Desactivar' : 'Activar',
+      danger: user.activo,
+      icon: 'heroicons_outline:user-circle',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this._usersService.setActivo(user.id, !user.activo).subscribe({
+        next: (updated) => {
+          user.activo = updated.activo;
+          this._notify(`Usuario ${updated.activo ? 'activado' : 'desactivado'}.`);
+        },
+        error: (err) => {
+          const message = err?.error?.message || 'No se pudo cambiar el estado.';
+          this._notify(Array.isArray(message) ? message.join(' ') : message);
+        },
+      });
     });
   }
 

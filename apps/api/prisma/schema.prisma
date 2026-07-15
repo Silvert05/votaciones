@@ -22,7 +22,7 @@ enum TipoOpcion {
 }
 
 enum TipoEleccion {
-  OCS
+  INSTITUCIONAL
   CONSEJO_ESTUDIANTIL
   PRESIDENTES_CURSO
   OTRO
@@ -178,7 +178,6 @@ model Eleccion {
   tipo              TipoEleccion
   estado            EstadoEleccion @default(BORRADOR)
   fechaConvocatoria DateTime?      @map("fecha_convocatoria")
-  aprobadaPorOcs    Boolean        @default(false) @map("aprobada_por_ocs")
   vueltaActual      Int            @default(1) @map("vuelta_actual")
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
@@ -221,6 +220,34 @@ model ConfiguracionEleccion {
   @@map("configuraciones_eleccion")
 }
 
+model Carrera {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String   @unique @db.VarChar(160)
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  electores Elector[]
+
+  @@index([activo, orden])
+  @@map("carreras")
+}
+
+model Nivel {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String   @unique @db.VarChar(30)
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  electores Elector[]
+
+  @@index([activo, orden])
+  @@map("niveles")
+}
+
 model Elector {
   id             String      @id @default(uuid()) @db.Uuid
   identificacion String      @unique @db.VarChar(20)
@@ -230,8 +257,8 @@ model Elector {
   fotoUrl        String?     @map("foto_url") @db.Text
   tipo           TipoElector
   facultad       String?     @db.VarChar(160)
-  carrera        String?     @db.VarChar(160)
-  curso          String?     @db.VarChar(80)
+  carreraId      String?     @map("carrera_id") @db.Uuid
+  nivelId        String?     @map("nivel_id") @db.Uuid
   activo         Boolean     @default(true)
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
@@ -239,26 +266,30 @@ model Elector {
   padrones      PadronElectoral[]
   candidaturas  Candidatura[]
   votosEmitidos VotoEmitido[]
+  carrera       Carrera?          @relation(fields: [carreraId], references: [id], onDelete: SetNull)
+  nivel         Nivel?            @relation(fields: [nivelId], references: [id], onDelete: SetNull)
 
   @@index([tipo])
   @@index([activo])
+  @@index([carreraId])
+  @@index([nivelId])
   @@map("electores")
 }
 
 model PadronElectoral {
-  id               String              @id @default(uuid()) @db.Uuid
-  eleccionId       String              @map("eleccion_id") @db.Uuid
-  electorId        String              @map("elector_id") @db.Uuid
-  estado             EstadoPadronElector @default(HABILITADO)
-  motivo             String?             @db.VarChar(255)
-  observacion        String?             @db.Text
-  publicado          Boolean             @default(false)
-  fechaPublicacion   DateTime?           @map("fecha_publicacion")
-  credencialHash     String?             @map("credencial_hash") @db.VarChar(255)
-  credencialTemporal String?             @map("credencial_temporal") @db.VarChar(60)
-  credencialGeneradaAt DateTime?         @map("credencial_generada_at")
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
+  id                   String              @id @default(uuid()) @db.Uuid
+  eleccionId           String              @map("eleccion_id") @db.Uuid
+  electorId            String              @map("elector_id") @db.Uuid
+  estado               EstadoPadronElector @default(HABILITADO)
+  motivo               String?             @db.VarChar(255)
+  observacion          String?             @db.Text
+  publicado            Boolean             @default(false)
+  fechaPublicacion     DateTime?           @map("fecha_publicacion")
+  credencialHash       String?             @map("credencial_hash") @db.VarChar(255)
+  credencialTemporal   String?             @map("credencial_temporal") @db.VarChar(60)
+  credencialGeneradaAt DateTime?           @map("credencial_generada_at")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
 
   eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
   elector  Elector  @relation(fields: [electorId], references: [id], onDelete: Restrict)

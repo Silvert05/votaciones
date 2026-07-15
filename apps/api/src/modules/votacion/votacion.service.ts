@@ -14,10 +14,7 @@ import {
   TipoVoto,
 } from 'prisma/generated/enums';
 import { PrismaService } from 'src/prisma';
-import {
-  AuditOperacion,
-  AuditTabla,
-} from '../auditoria/auditoria.constants';
+import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
 import {
@@ -113,7 +110,9 @@ export class VotacionService {
   async cerrarVotacion(eleccionId: string, actor: Actor) {
     const eleccion = await this.getEleccion(eleccionId);
     if (eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA) {
-      throw new BadRequestException('Solo se puede cerrar una votacion abierta.');
+      throw new BadRequestException(
+        'Solo se puede cerrar una votacion abierta.',
+      );
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -169,7 +168,10 @@ export class VotacionService {
     let elector: { id: string; identificacion: string } | null = null;
     let votosEmitidos: string[] = [];
     if (query.identificacion) {
-      elector = await this.findElectorHabilitado(eleccionId, query.identificacion);
+      elector = await this.findElectorHabilitado(
+        eleccionId,
+        query.identificacion,
+      );
       votosEmitidos = (
         await this.prisma.votoEmitido.findMany({
           where: { eleccionId, electorId: elector.id },
@@ -205,17 +207,23 @@ export class VotacionService {
     }
 
     const dignidadIds = new Set(dignidades.map((dignidad) => dignidad.id));
-    const votosPorDignidad = new Map(dto.votos.map((voto) => [voto.dignidadId, voto]));
+    const votosPorDignidad = new Map(
+      dto.votos.map((voto) => [voto.dignidadId, voto]),
+    );
     if (votosPorDignidad.size !== dto.votos.length) {
       throw new BadRequestException('Hay dignidades duplicadas en el voto.');
     }
     if (votosPorDignidad.size !== dignidadIds.size) {
-      throw new BadRequestException('Debe registrar una seleccion por cada dignidad activa.');
+      throw new BadRequestException(
+        'Debe registrar una seleccion por cada dignidad activa.',
+      );
     }
 
     for (const voto of dto.votos) {
       if (!dignidadIds.has(voto.dignidadId)) {
-        throw new BadRequestException('Una dignidad no pertenece a la eleccion.');
+        throw new BadRequestException(
+          'Una dignidad no pertenece a la eleccion.',
+        );
       }
       await this.validateSeleccion(eleccionId, voto);
     }
@@ -225,7 +233,9 @@ export class VotacionService {
       select: { id: true },
     });
     if (yaVoto) {
-      throw new BadRequestException('El elector ya registro su voto en esta eleccion.');
+      throw new BadRequestException(
+        'El elector ya registro su voto en esta eleccion.',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -260,14 +270,19 @@ export class VotacionService {
       }
     });
 
-    await this.audit(AuditTabla.VOTOS_EMITIDOS, AuditOperacion.CREATE, elector.id, {
-      datosNuevos: {
-        eleccionId,
-        electorId: elector.id,
-        dignidades: dto.votos.map((voto) => voto.dignidadId),
+    await this.audit(
+      AuditTabla.VOTOS_EMITIDOS,
+      AuditOperacion.CREATE,
+      elector.id,
+      {
+        datosNuevos: {
+          eleccionId,
+          electorId: elector.id,
+          dignidades: dto.votos.map((voto) => voto.dignidadId),
+        },
+        actor,
       },
-      actor,
-    });
+    );
 
     return { registrado: true, dignidades: dto.votos.length };
   }
@@ -305,6 +320,7 @@ export class VotacionService {
                 identificacion: true,
                 nombres: true,
                 apellidos: true,
+                fotoUrl: true,
               },
             },
             lista: {
@@ -470,10 +486,14 @@ export class VotacionService {
         estado: EstadoPadronElector.HABILITADO,
         electorId,
       },
-      select: { elector: { select: { id: true, tipo: true, identificacion: true } } },
+      select: {
+        elector: { select: { id: true, tipo: true, identificacion: true } },
+      },
     });
     if (!elector) {
-      throw new BadRequestException('El elector no esta habilitado en el padron.');
+      throw new BadRequestException(
+        'El elector no esta habilitado en el padron.',
+      );
     }
 
     const dignidades = await this.prisma.dignidad.findMany({
@@ -485,7 +505,9 @@ export class VotacionService {
       select: { id: true },
     });
     if (!dignidades.length) {
-      throw new BadRequestException('No hay dignidades disponibles para este elector.');
+      throw new BadRequestException(
+        'No hay dignidades disponibles para este elector.',
+      );
     }
 
     const dignidadIds = new Set(dignidades.map((d) => d.id));
@@ -494,11 +516,15 @@ export class VotacionService {
       throw new BadRequestException('Hay dignidades duplicadas en el voto.');
     }
     if (votosPorDignidad.size !== dignidadIds.size) {
-      throw new BadRequestException('Debe registrar una seleccion por cada cedula.');
+      throw new BadRequestException(
+        'Debe registrar una seleccion por cada cedula.',
+      );
     }
     for (const voto of dto.votos) {
       if (!dignidadIds.has(voto.dignidadId)) {
-        throw new BadRequestException('Una cedula no corresponde a este elector.');
+        throw new BadRequestException(
+          'Una cedula no corresponde a este elector.',
+        );
       }
       await this.validateSeleccion(eleccionId, voto);
     }
@@ -508,7 +534,9 @@ export class VotacionService {
       select: { id: true },
     });
     if (yaVoto) {
-      throw new BadRequestException('El elector ya registro su voto en esta eleccion.');
+      throw new BadRequestException(
+        'El elector ya registro su voto en esta eleccion.',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -631,7 +659,10 @@ export class VotacionService {
     }
   }
 
-  private async findElectorHabilitado(eleccionId: string, identificacion: string) {
+  private async findElectorHabilitado(
+    eleccionId: string,
+    identificacion: string,
+  ) {
     const padron = await this.prisma.padronElectoral.findFirst({
       where: {
         eleccionId,
@@ -652,7 +683,9 @@ export class VotacionService {
       },
     });
     if (!padron) {
-      throw new BadRequestException('El elector no esta habilitado en el padron publicado.');
+      throw new BadRequestException(
+        'El elector no esta habilitado en el padron publicado.',
+      );
     }
     return padron.elector;
   }
@@ -663,7 +696,9 @@ export class VotacionService {
   ) {
     if (voto.tipo === TipoVoto.CANDIDATO) {
       if (!voto.candidaturaId) {
-        throw new BadRequestException('El voto por candidato requiere candidatura.');
+        throw new BadRequestException(
+          'El voto por candidato requiere candidatura.',
+        );
       }
       const candidatura = await this.prisma.candidatura.findFirst({
         where: {
@@ -675,13 +710,17 @@ export class VotacionService {
         select: { id: true },
       });
       if (!candidatura) {
-        throw new BadRequestException('La candidatura seleccionada no esta calificada.');
+        throw new BadRequestException(
+          'La candidatura seleccionada no esta calificada.',
+        );
       }
       return;
     }
 
     if (voto.candidaturaId) {
-      throw new BadRequestException('El voto blanco o nulo no debe tener candidatura.');
+      throw new BadRequestException(
+        'El voto blanco o nulo no debe tener candidatura.',
+      );
     }
   }
 

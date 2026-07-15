@@ -41,7 +41,6 @@ const eleccionListSelect = {
   tipo: true,
   estado: true,
   fechaConvocatoria: true,
-  aprobadaPorOcs: true,
   vueltaActual: true,
   createdAt: true,
   updatedAt: true,
@@ -143,7 +142,6 @@ export class EleccionesService {
           descripcion: this.emptyToNull(dto.descripcion),
           tipo: dto.tipo,
           fechaConvocatoria: this.toDate(dto.fechaConvocatoria),
-          aprobadaPorOcs: dto.aprobadaPorOcs ?? false,
         },
         select: eleccionDetailSelect,
       });
@@ -182,9 +180,6 @@ export class EleccionesService {
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
         ...(dto.fechaConvocatoria !== undefined
           ? { fechaConvocatoria: this.toDate(dto.fechaConvocatoria) }
-          : {}),
-        ...(dto.aprobadaPorOcs !== undefined
-          ? { aprobadaPorOcs: dto.aprobadaPorOcs }
           : {}),
         ...(dto.vueltaActual !== undefined
           ? { vueltaActual: dto.vueltaActual }
@@ -272,6 +267,111 @@ export class EleccionesService {
     });
 
     return cronograma;
+  }
+
+  async dashboard() {
+    const estadosFinales: EstadoEleccion[] = [
+      EstadoEleccion.POSESIONADA,
+      EstadoEleccion.ANULADA,
+    ];
+
+    const [
+      totalElecciones,
+      procesosActivos,
+      electores,
+      electoresActivos,
+      listas,
+      candidaturasCalificadas,
+      votosEmitidos,
+      procesoActual,
+      recientes,
+    ] = await Promise.all([
+      this.prisma.eleccion.count(),
+      this.prisma.eleccion.count({
+        where: { estado: { notIn: estadosFinales } },
+      }),
+      this.prisma.elector.count(),
+      this.prisma.elector.count({ where: { activo: true } }),
+      this.prisma.listaElectoral.count(),
+      this.prisma.candidatura.count({ where: { estado: 'CALIFICADA' } }),
+      this.prisma.votoEmitido.count(),
+      this.prisma.eleccion.findFirst({
+        where: { estado: { notIn: estadosFinales } },
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          nombre: true,
+          estado: true,
+          updatedAt: true,
+          cronograma: {
+            select: {
+              fechaInicioVotacion: true,
+              fechaFinVotacion: true,
+            },
+          },
+          _count: {
+            select: {
+              dignidades: true,
+              padron: true,
+              candidaturas: true,
+              votosEmitidos: true,
+            },
+          },
+        },
+      }),
+      this.prisma.eleccion.findMany({
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          nombre: true,
+          estado: true,
+          updatedAt: true,
+          _count: {
+            select: { padron: true, candidaturas: true, votosEmitidos: true },
+          },
+        },
+      }),
+    ]);
+
+    let participacion = { habilitados: 0, votantes: 0, porcentaje: 0 };
+    if (procesoActual) {
+      const [habilitados, votantesRows] = await Promise.all([
+        this.prisma.padronElectoral.count({
+          where: {
+            eleccionId: procesoActual.id,
+            estado: 'HABILITADO',
+          },
+        }),
+        this.prisma.votoEmitido.findMany({
+          where: { eleccionId: procesoActual.id },
+          distinct: ['electorId'],
+          select: { electorId: true },
+        }),
+      ]);
+      participacion = {
+        habilitados,
+        votantes: votantesRows.length,
+        porcentaje: habilitados
+          ? Math.round((votantesRows.length / habilitados) * 10000) / 100
+          : 0,
+      };
+    }
+
+    return {
+      resumen: {
+        totalElecciones,
+        procesosActivos,
+        electores,
+        electoresActivos,
+        listas,
+        candidaturasCalificadas,
+        votosEmitidos,
+      },
+      procesoActual,
+      participacion,
+      recientes,
+    };
   }
 
   async getConfiguracion(eleccionId: string) {

@@ -527,7 +527,7 @@ async function main() {
   const superAdmin = await prisma.usuario.upsert({
     where: { usuario: 'admin' },
     update: {
-      email: 'admin@fierpi.com',
+      email: 'admin@yavirac.edu.ec',
       nombre: 'Admin',
       perfilId: adminPerfil.id,
     },
@@ -535,7 +535,7 @@ async function main() {
       usuario: 'admin',
       password: passwordHash,
       nombre: 'Admin',
-      email: 'admin@fierpi.com',
+      email: 'admin@yavirac.edu.ec',
       rol: 'ADMIN',
       perfilId: adminPerfil.id,
       activo: true,
@@ -555,7 +555,7 @@ async function main() {
       usuario: 'operador',
       password: hashSync('temporal123', 12),
       nombre: 'Operador',
-      email: 'operador@fierpi.com',
+      email: 'operador@yavirac.edu.ec',
       rol: 'USER',
       perfilId: usuarioPerfil.id,
       activo: true,
@@ -578,10 +578,12 @@ interface ElectorSeed {
   apellidos: string;
   tipo: 'DOCENTE' | 'ESTUDIANTE';
   email: string;
-  facultad?: string;
-  carrera?: string;
-  curso?: string;
+  carreraId?: string;
+  nivelId?: string;
 }
+
+const CARRERA_SOFTWARE_ID = '10000000-0000-4000-8000-000000000002';
+const NIVEL_QUINTO_ID = '20000000-0000-4000-8000-000000000005';
 
 const ESTUDIANTES: ElectorSeed[] = [
   ['0102030401', 'Maria', 'Andrade'],
@@ -601,10 +603,9 @@ const ESTUDIANTES: ElectorSeed[] = [
   nombres,
   apellidos,
   tipo: 'ESTUDIANTE' as const,
-  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@estudiante.ejemplo.edu`,
-  facultad: 'Facultad de Ingenieria',
-  carrera: 'Ingenieria en Sistemas',
-  curso: 'Quinto Semestre',
+  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@estudiante.yavirac.edu.ec`,
+  carreraId: CARRERA_SOFTWARE_ID,
+  nivelId: NIVEL_QUINTO_ID,
 }));
 
 const DOCENTES: ElectorSeed[] = [
@@ -621,8 +622,7 @@ const DOCENTES: ElectorSeed[] = [
   nombres,
   apellidos,
   tipo: 'DOCENTE' as const,
-  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@docente.ejemplo.edu`,
-  facultad: 'Facultad de Ingenieria',
+  email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@yavirac.edu.ec`,
 }));
 
 async function seedProcesoElectoral() {
@@ -644,9 +644,8 @@ async function seedProcesoElectoral() {
         tipo: e.tipo,
         email: e.email,
         fotoUrl,
-        facultad: e.facultad ?? null,
-        carrera: e.carrera ?? null,
-        curso: e.curso ?? null,
+        carreraId: e.carreraId ?? null,
+        nivelId: e.nivelId ?? null,
         activo: true,
       },
       create: {
@@ -656,9 +655,8 @@ async function seedProcesoElectoral() {
         tipo: e.tipo,
         email: e.email,
         fotoUrl,
-        facultad: e.facultad ?? null,
-        carrera: e.carrera ?? null,
-        curso: e.curso ?? null,
+        carreraId: e.carreraId ?? null,
+        nivelId: e.nivelId ?? null,
         activo: true,
       },
     });
@@ -669,13 +667,12 @@ async function seedProcesoElectoral() {
   const eleccion = await prisma.eleccion.create({
     data: {
       id: ELECCION_DEMO_ID,
-      nombre: 'Eleccion de Representantes al OCS 2026 (Demo)',
+      nombre: 'Eleccion Institucional Yavirac 2026 (Demo)',
       descripcion:
         'Proceso de demostracion precargado para simular el voto electronico de principio a fin.',
-      tipo: 'OCS',
+      tipo: 'INSTITUCIONAL',
       estado: 'VOTACION_ABIERTA',
       fechaConvocatoria: new Date('2026-06-01T08:00:00.000Z'),
-      aprobadaPorOcs: true,
     },
   });
 
@@ -693,9 +690,9 @@ async function seedProcesoElectoral() {
   await prisma.configuracionEleccion.create({
     data: {
       eleccionId: eleccion.id,
-      nombreInstitucion: 'Universidad Nacional Ejemplo',
-      logoUrl: 'https://placehold.co/200x80/1d4ed8/ffffff?text=UNE',
-      escudoUrl: 'https://placehold.co/120x120/1d4ed8/ffffff?text=Escudo',
+      nombreInstitucion: 'Instituto Superior Tecnologico Yavirac',
+      logoUrl: '/img/logo.png',
+      escudoUrl: '/img/logo.png',
       videoUrl: 'https://www.youtube.com/embed/AnuLEj7suo8',
       colorPrimario: '#1d4ed8',
       colorSecundario: '#0ea5e9',
@@ -718,6 +715,7 @@ async function seedProcesoElectoral() {
       fechaFinCampania: new Date('2026-06-28T18:00:00.000Z'),
       fechaInicioVotacion: new Date('2026-06-30T08:00:00.000Z'),
       fechaFinVotacion: new Date('2026-06-30T18:00:00.000Z'),
+      fechaPublicacionResultados: new Date('2026-06-30T19:00:00.000Z'),
     },
   });
 
@@ -756,7 +754,7 @@ async function seedProcesoElectoral() {
   const dignRepEstudiantes = await prisma.dignidad.create({
     data: {
       eleccionId: eleccion.id,
-      nombre: 'Representantes Estudiantiles al OCS',
+      nombre: 'Representantes Estudiantiles del Instituto',
       tipoElectorPermitido: 'ESTUDIANTE',
       cantidadGanadores: 2,
       requiereLista: true,
@@ -766,7 +764,7 @@ async function seedProcesoElectoral() {
   const dignRepDocentes = await prisma.dignidad.create({
     data: {
       eleccionId: eleccion.id,
-      nombre: 'Representantes Docentes al OCS',
+      nombre: 'Representantes Docentes del Instituto',
       tipoElectorPermitido: 'DOCENTE',
       cantidadGanadores: 2,
       requiereLista: true,

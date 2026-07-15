@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -76,23 +77,15 @@ export class CreateElectorDto {
   @IsEnum(TipoElector)
   tipo: TipoElector;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
-  @IsString()
-  @MaxLength(160)
-  facultad?: string | null;
+  @IsUUID()
+  carreraId?: string | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
-  @IsString()
-  @MaxLength(160)
-  carrera?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  curso?: string | null;
+  @IsUUID()
+  nivelId?: string | null;
 }
 
 export class UpdateElectorDto {
@@ -128,23 +121,15 @@ export class UpdateElectorDto {
   @IsEnum(TipoElector)
   tipo?: TipoElector;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
-  @IsString()
-  @MaxLength(160)
-  facultad?: string | null;
+  @IsUUID()
+  carreraId?: string | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
-  @IsString()
-  @MaxLength(160)
-  carrera?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  curso?: string | null;
+  @IsUUID()
+  nivelId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

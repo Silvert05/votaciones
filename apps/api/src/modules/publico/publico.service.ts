@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from 'prisma/generated/client';
 import {
   EstadoCandidatura,
@@ -18,6 +22,7 @@ const RESULT_STATES: EstadoEleccion[] = [
 ];
 
 const VISIBLE_STATES: EstadoEleccion[] = [
+  EstadoEleccion.CONVOCADA,
   EstadoEleccion.PADRON_PUBLICADO,
   EstadoEleccion.CANDIDATURAS_ABIERTAS,
   EstadoEleccion.CANDIDATURAS_CALIFICADAS,
@@ -33,6 +38,7 @@ const publicSelect = {
   tipo: true,
   estado: true,
   configuracion: true,
+  cronograma: true,
   jornada: {
     select: {
       linkVotacionActivo: true,
@@ -72,7 +78,16 @@ export class PublicoService {
   async resultados(eleccionId: string) {
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
-      select: { estado: true, jornada: { select: { votacionIniciadaAt: true, votacionCerradaAt: true, fechaFinVotacion: true } } },
+      select: {
+        estado: true,
+        jornada: {
+          select: {
+            votacionIniciadaAt: true,
+            votacionCerradaAt: true,
+            fechaFinVotacion: true,
+          },
+        },
+      },
     });
     if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');
     if (!RESULT_STATES.includes(eleccion.estado)) {
@@ -212,6 +227,7 @@ export class PublicoService {
       tipo: e.tipo,
       estado: e.estado,
       configuracion: e.configuracion,
+      cronograma: e.cronograma,
       votarDisponible,
       resultadosDisponibles: RESULT_STATES.includes(e.estado),
       fechaFinVotacion: e.jornada?.fechaFinVotacion ?? null,

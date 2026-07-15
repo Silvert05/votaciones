@@ -1,7 +1,7 @@
 import { Paginated } from '../../users/models/user.model';
 
 export type TipoEleccion =
-  | 'OCS'
+  | 'INSTITUCIONAL'
   | 'CONSEJO_ESTUDIANTIL'
   | 'PRESIDENTES_CURSO'
   | 'OTRO';
@@ -31,7 +31,6 @@ export interface Eleccion {
   tipo: TipoEleccion;
   estado: EstadoEleccion;
   fechaConvocatoria: string | null;
-  aprobadaPorOcs: boolean;
   vueltaActual: number;
   createdAt: string;
   updatedAt: string;
@@ -136,7 +135,6 @@ export interface CreateEleccionPayload {
   descripcion?: string | null;
   tipo: TipoEleccion;
   fechaConvocatoria?: string | null;
-  aprobadaPorOcs?: boolean;
 }
 
 export interface UpdateEleccionPayload
@@ -184,7 +182,7 @@ export interface UpdateDignidadPayload
 }
 
 export const TIPOS_ELECCION: TipoEleccion[] = [
-  'OCS',
+  'INSTITUCIONAL',
   'CONSEJO_ESTUDIANTIL',
   'PRESIDENTES_CURSO',
   'OTRO',
@@ -233,3 +231,43 @@ export const ESTADO_TRANSICIONES: Record<EstadoEleccion, EstadoEleccion[]> = {
   POSESIONADA: [],
   ANULADA: [],
 };
+
+export interface DashboardResumen {
+  resumen: {
+    totalElecciones: number;
+    procesosActivos: number;
+    electores: number;
+    electoresActivos: number;
+    listas: number;
+    candidaturasCalificadas: number;
+    votosEmitidos: number;
+  };
+  procesoActual: {
+    id: string;
+    nombre: string;
+    estado: EstadoEleccion;
+    updatedAt: string;
+    cronograma: {
+      fechaInicioVotacion: string | null;
+      fechaFinVotacion: string | null;
+    } | null;
+    _count: {
+      dignidades: number;
+      padron: number;
+      candidaturas: number;
+      votosEmitidos: number;
+    };
+  } | null;
+  participacion: {
+    habilitados: number;
+    votantes: number;
+    porcentaje: number;
+  };
+  recientes: Array<{
+    id: string;
+    nombre: string;
+    estado: EstadoEleccion;
+    updatedAt: string;
+    _count: { padron: number; candidaturas: number; votosEmitidos: number };
+  }>;
+}

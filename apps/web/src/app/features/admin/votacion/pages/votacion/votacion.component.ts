@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import {
@@ -37,6 +38,7 @@ export default class VotacionComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _votacionService = inject(VotacionService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
   tarjeton: TarjetonResponse | null = null;
@@ -86,14 +88,21 @@ export default class VotacionComponent implements OnInit {
   cerrar(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    if (!confirm('¿Cerrar la jornada de votacion?')) return;
-    this._votacionService.cerrar(eleccionId).subscribe({
-      next: () => {
-        this._notify('Jornada de votacion cerrada.');
-        this.loadElecciones();
-      },
-      error: (err) =>
-        this._notify(this.errorMessage(err, 'No se pudo cerrar la votacion.')),
+    this._institutionalDialog.confirm({
+      title: 'Cerrar jornada de votación',
+      message: 'Después del cierre, los electores ya no podrán registrar su voto.',
+      confirmText: 'Cerrar jornada',
+      danger: true,
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this._votacionService.cerrar(eleccionId).subscribe({
+        next: () => {
+          this._notify('Jornada de votación cerrada.');
+          this.loadElecciones();
+        },
+        error: (err) =>
+          this._notify(this.errorMessage(err, 'No se pudo cerrar la votación.')),
+      });
     });
   }
 

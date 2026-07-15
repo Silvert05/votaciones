@@ -12,10 +12,7 @@ import {
   TipoElector,
 } from 'prisma/generated/enums';
 import { PrismaService } from 'src/prisma';
-import {
-  AuditOperacion,
-  AuditTabla,
-} from '../auditoria/auditoria.constants';
+import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
 import {
@@ -40,10 +37,12 @@ const electorSelect = {
   nombres: true,
   apellidos: true,
   email: true,
+  fotoUrl: true,
   tipo: true,
-  facultad: true,
-  carrera: true,
-  curso: true,
+  carreraId: true,
+  nivelId: true,
+  carrera: { select: { id: true, nombre: true, orden: true } },
+  nivel: { select: { id: true, nombre: true, orden: true } },
   activo: true,
   createdAt: true,
   updatedAt: true,
@@ -82,8 +81,16 @@ export class PadronesService {
         { nombres: { contains: search, mode: 'insensitive' } },
         { apellidos: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { facultad: { contains: search, mode: 'insensitive' } },
-        { carrera: { contains: search, mode: 'insensitive' } },
+        {
+          carrera: {
+            is: { nombre: { contains: search, mode: 'insensitive' } },
+          },
+        },
+        {
+          nivel: {
+            is: { nombre: { contains: search, mode: 'insensitive' } },
+          },
+        },
       ];
     }
 
@@ -108,6 +115,7 @@ export class PadronesService {
   }
 
   async createElector(dto: CreateElectorDto, actor: Actor) {
+    await this.validateCatalogos(dto.carreraId, dto.nivelId);
     const elector = await this.prisma.elector.create({
       data: this.toElectorData(dto),
       select: electorSelect,
@@ -123,6 +131,7 @@ export class PadronesService {
 
   async updateElector(id: string, dto: UpdateElectorDto, actor: Actor) {
     const before = await this.findElectorOrFail(id);
+    await this.validateCatalogos(dto.carreraId, dto.nivelId);
     const elector = await this.prisma.elector.update({
       where: { id },
       data: {
@@ -133,15 +142,12 @@ export class PadronesService {
         ...(dto.apellidos !== undefined
           ? { apellidos: dto.apellidos.trim() }
           : {}),
-        ...(dto.email !== undefined ? { email: this.emptyToNull(dto.email) } : {}),
+        ...(dto.email !== undefined
+          ? { email: this.emptyToNull(dto.email) }
+          : {}),
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
-        ...(dto.facultad !== undefined
-          ? { facultad: this.emptyToNull(dto.facultad) }
-          : {}),
-        ...(dto.carrera !== undefined
-          ? { carrera: this.emptyToNull(dto.carrera) }
-          : {}),
-        ...(dto.curso !== undefined ? { curso: this.emptyToNull(dto.curso) } : {}),
+        ...(dto.carreraId !== undefined ? { carreraId: dto.carreraId } : {}),
+        ...(dto.nivelId !== undefined ? { nivelId: dto.nivelId } : {}),
         ...(dto.activo !== undefined ? { activo: dto.activo } : {}),
       },
       select: electorSelect,
@@ -150,6 +156,57 @@ export class PadronesService {
     await this.audit(AuditTabla.ELECTORES, AuditOperacion.UPDATE, elector.id, {
       datosAnteriores: before,
       datosNuevos: elector,
+      actor,
+    });
+
+    return elector;
+  }
+
+  async updateFotoElector(
+    id: string,
+    foto: { buffer: Buffer; mimetype: string; size: number },
+    actor: Actor,
+  ) {
+    const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (!allowedTypes.has(foto.mimetype)) {
+      throw new BadRequestException('La foto debe ser JPG, PNG o WebP.');
+    }
+    if (!foto.size || foto.size > 2 * 1024 * 1024) {
+      throw new BadRequestException('La foto no puede superar los 2 MB.');
+    }
+
+    const before = await this.findElectorOrFail(id);
+    const fotoUrl = `data:${foto.mimetype};base64,${foto.buffer.toString('base64')}`;
+    const elector = await this.prisma.elector.update({
+      where: { id },
+      data: { fotoUrl },
+      select: electorSelect,
+    });
+
+    await this.audit(AuditTabla.ELECTORES, AuditOperacion.UPDATE, elector.id, {
+      datosAnteriores: { tieneFoto: !!before.fotoUrl },
+      datosNuevos: {
+        tieneFoto: true,
+        tipoArchivo: foto.mimetype,
+        tamanoBytes: foto.size,
+      },
+      actor,
+    });
+
+    return elector;
+  }
+
+  async deleteFotoElector(id: string, actor: Actor) {
+    const before = await this.findElectorOrFail(id);
+    const elector = await this.prisma.elector.update({
+      where: { id },
+      data: { fotoUrl: null },
+      select: electorSelect,
+    });
+
+    await this.audit(AuditTabla.ELECTORES, AuditOperacion.UPDATE, elector.id, {
+      datosAnteriores: { tieneFoto: !!before.fotoUrl },
+      datosNuevos: { tieneFoto: false },
       actor,
     });
 
@@ -170,8 +227,16 @@ export class PadronesService {
         { nombres: { contains: search, mode: 'insensitive' } },
         { apellidos: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { facultad: { contains: search, mode: 'insensitive' } },
-        { carrera: { contains: search, mode: 'insensitive' } },
+        {
+          carrera: {
+            is: { nombre: { contains: search, mode: 'insensitive' } },
+          },
+        },
+        {
+          nivel: {
+            is: { nombre: { contains: search, mode: 'insensitive' } },
+          },
+        },
       ];
     }
     if (Object.keys(electorWhere).length) {
@@ -257,7 +322,9 @@ export class PadronesService {
     });
 
     if (!electores.length) {
-      throw new BadRequestException('No hay electores activos para generar el padron.');
+      throw new BadRequestException(
+        'No hay electores activos para generar el padron.',
+      );
     }
 
     const result = await this.prisma.padronElectoral.createMany({
@@ -269,7 +336,10 @@ export class PadronesService {
     });
 
     await this.audit(AuditTabla.PADRONES, AuditOperacion.CREATE, eleccionId, {
-      datosNuevos: { autogenerados: result.count, totalElegibles: electores.length },
+      datosNuevos: {
+        autogenerados: result.count,
+        totalElegibles: electores.length,
+      },
       actor,
     });
 
@@ -326,7 +396,9 @@ export class PadronesService {
     });
 
     if (!habilitados) {
-      throw new BadRequestException('No hay electores habilitados para publicar.');
+      throw new BadRequestException(
+        'No hay electores habilitados para publicar.',
+      );
     }
 
     const now = new Date();
@@ -510,10 +582,45 @@ export class PadronesService {
       apellidos: dto.apellidos.trim(),
       email: this.emptyToNull(dto.email),
       tipo: dto.tipo,
-      facultad: this.emptyToNull(dto.facultad),
-      carrera: this.emptyToNull(dto.carrera),
-      curso: this.emptyToNull(dto.curso),
+      carreraId: dto.carreraId ?? null,
+      nivelId: dto.nivelId ?? null,
     };
+  }
+
+  async catalogos() {
+    const [carreras, niveles] = await Promise.all([
+      this.prisma.carrera.findMany({
+        where: { activo: true },
+        orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+        select: { id: true, nombre: true, orden: true },
+      }),
+      this.prisma.nivel.findMany({
+        where: { activo: true },
+        orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+        select: { id: true, nombre: true, orden: true },
+      }),
+    ]);
+    return { carreras, niveles };
+  }
+
+  private async validateCatalogos(
+    carreraId?: string | null,
+    nivelId?: string | null,
+  ) {
+    if (carreraId) {
+      const carrera = await this.prisma.carrera.findFirst({
+        where: { id: carreraId, activo: true },
+        select: { id: true },
+      });
+      if (!carrera) throw new BadRequestException('La carrera seleccionada no es valida.');
+    }
+    if (nivelId) {
+      const nivel = await this.prisma.nivel.findFirst({
+        where: { id: nivelId, activo: true },
+        select: { id: true },
+      });
+      if (!nivel) throw new BadRequestException('El nivel seleccionado no es valido.');
+    }
   }
 
   private emptyToNull(value?: string | null): string | null {

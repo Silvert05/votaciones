@@ -33,7 +33,7 @@ export class CreateUserDto {
   @MaxLength(200)
   nombre: string;
 
-  @ApiProperty({ example: 'jperez@fierpi.com' })
+  @ApiProperty({ example: 'jperez@yavirac.edu.ec' })
   @IsEmail({}, { message: 'El correo electrónico no es válido.' })
   @MaxLength(150)
   email: string;
@@ -63,7 +63,7 @@ export class UpdateUserDto {
   @MaxLength(200)
   nombre?: string;
 
-  @ApiPropertyOptional({ example: 'jperez@fierpi.com' })
+  @ApiPropertyOptional({ example: 'jperez@yavirac.edu.ec' })
   @IsOptional()
   @IsEmail({}, { message: 'El correo electrónico no es válido.' })
   @MaxLength(150)

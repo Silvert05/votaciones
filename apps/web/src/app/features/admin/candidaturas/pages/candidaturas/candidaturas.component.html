@@ -85,8 +85,14 @@
         <ng-container matColumnDef="candidato">
           <th mat-header-cell *matHeaderCellDef>Candidato</th>
           <td mat-cell *matCellDef="let c">
-            <div class="font-medium">{{ c.elector.apellidos }} {{ c.elector.nombres }}</div>
-            <div class="text-sm text-secondary">{{ c.elector.identificacion }} - {{ label(c.elector.tipo) }}</div>
+            <div class="flex items-center gap-3 py-2">
+              <img [src]="c.elector.fotoUrl || '/img/avatar-placeholder.svg'" [alt]="c.elector.apellidos"
+                class="h-10 w-10 shrink-0 rounded-full border object-cover">
+              <div>
+                <div class="font-medium">{{ c.elector.apellidos }} {{ c.elector.nombres }}</div>
+                <div class="text-sm text-secondary">{{ c.elector.identificacion }} - {{ label(c.elector.tipo) }}</div>
+              </div>
+            </div>
           </td>
         </ng-container>
 

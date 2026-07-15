@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,17 +21,20 @@ const CRONOGRAMA_FIELDS: Array<keyof UpsertCronogramaPayload> = [
   'fechaPublicacionPadron',
   'fechaInicioInscripcion',
   'fechaFinInscripcion',
-  'fechaInicioImpugnacionCandidaturas',
-  'fechaFinImpugnacionCandidaturas',
-  'fechaPublicacionCandidaturas',
-  'fechaInicioCampania',
-  'fechaFinCampania',
   'fechaInicioVotacion',
   'fechaFinVotacion',
   'fechaPublicacionResultados',
-  'fechaFinImpugnacionResultados',
-  'fechaResultadosFinales',
 ];
+
+const EVENTOS_PREVIEW = [
+  { field: 'fechaConvocatoria', label: 'Convocatoria del proceso', icon: 'heroicons_outline:megaphone' },
+  { field: 'fechaPublicacionPadron', label: 'Publicacion del padron', icon: 'heroicons_outline:users' },
+  { field: 'fechaInicioInscripcion', label: 'Apertura de candidaturas', icon: 'heroicons_outline:user-plus' },
+  { field: 'fechaFinInscripcion', label: 'Cierre de candidaturas', icon: 'heroicons_outline:user-group' },
+  { field: 'fechaInicioVotacion', label: 'Inicio de la votacion', icon: 'heroicons_outline:cursor-arrow-rays' },
+  { field: 'fechaFinVotacion', label: 'Cierre de la votacion', icon: 'heroicons_outline:lock-closed' },
+  { field: 'fechaPublicacionResultados', label: 'Publicacion de resultados', icon: 'heroicons_outline:chart-bar' },
+] as const;
 
 @Component({
   selector: 'admin-election-schedule',
@@ -62,16 +65,9 @@ export default class ElectionScheduleComponent implements OnInit {
     fechaPublicacionPadron: [''],
     fechaInicioInscripcion: [''],
     fechaFinInscripcion: [''],
-    fechaInicioImpugnacionCandidaturas: [''],
-    fechaFinImpugnacionCandidaturas: [''],
-    fechaPublicacionCandidaturas: [''],
-    fechaInicioCampania: [''],
-    fechaFinCampania: [''],
-    fechaInicioVotacion: [''],
-    fechaFinVotacion: [''],
+    fechaInicioVotacion: ['', Validators.required],
+    fechaFinVotacion: ['', Validators.required],
     fechaPublicacionResultados: [''],
-    fechaFinImpugnacionResultados: [''],
-    fechaResultadosFinales: [''],
   });
 
   ngOnInit(): void {
@@ -122,6 +118,19 @@ export default class ElectionScheduleComponent implements OnInit {
       return;
     }
 
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this._notify('Indica el inicio y el cierre de la votacion.');
+      return;
+    }
+
+    const raw = this.form.getRawValue();
+    if (raw.fechaInicioVotacion && raw.fechaFinVotacion &&
+        new Date(raw.fechaInicioVotacion) >= new Date(raw.fechaFinVotacion)) {
+      this._notify('El cierre de la votacion debe ser posterior al inicio.');
+      return;
+    }
+
     const payload = this.buildPayload();
     this.saving = true;
     this._electionsService
@@ -139,11 +148,27 @@ export default class ElectionScheduleComponent implements OnInit {
       });
   }
 
-  label(value: string): string {
-    return value
-      .replace(/^fecha/, '')
-      .replace(/([A-Z])/g, ' $1')
-      .trim();
+  get previewEvents() {
+    const raw = this.form.getRawValue();
+    return EVENTOS_PREVIEW.map((evento) => ({
+      ...evento,
+      value: raw[evento.field],
+      formatted: this.formatPreview(raw[evento.field]),
+    }));
+  }
+
+  private formatPreview(value?: string | null): string {
+    if (!value) return 'Fecha pendiente';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Fecha pendiente';
+    return new Intl.DateTimeFormat('es-EC', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
   }
 
   private patchCronograma(cronograma: CronogramaElectoral | null): void {

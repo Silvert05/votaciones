@@ -12,6 +12,54 @@
     --fuse-on-accent: #ffffff;
 }
 
+.venp-gradient {
+    background: linear-gradient(
+        120deg,
+        var(--venp-primary, #1d4ed8),
+        var(--venp-secondary, #0ea5e9)
+    );
+}
+
+.venp-bg-primary { background-color: var(--venp-primary, #1d4ed8) !important; }
+.venp-text-primary { color: var(--venp-primary, #1d4ed8) !important; }
+.venp-border-primary { border-color: var(--venp-primary, #1d4ed8) !important; }
+.venp-bg-accent { background-color: var(--venp-accent, #f59e0b) !important; }
+
+landing-layout {
+    display: flex;
+    min-height: 100%;
+    min-width: 0;
+    width: 100%;
+}
+
+landing-layout main > router-outlet + * {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+}
+
+.mat-mdc-snack-bar-container {
+    --mdc-snackbar-container-color: #0f172a;
+    --mdc-snackbar-supporting-text-color: #ffffff;
+    --mat-snack-bar-button-color: #7dd3fc;
+    margin: 16px !important;
+
+    .mat-mdc-snackbar-surface {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px !important;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.3) !important;
+    }
+
+    .mat-mdc-snack-bar-label { font-weight: 600; }
+    .mat-mdc-snack-bar-action { font-weight: 800; }
+}
+
+.institutional-dialog-panel .mat-mdc-dialog-surface {
+    border-radius: 20px !important;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3) !important;
+}
+
 /* ===================================================================== */
 /*  Form fields — etiquetas más pequeñas en todos los tipos              */
 /*  (input, select, textarea, autocomplete, datepicker)                  */

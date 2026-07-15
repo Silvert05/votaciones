@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -55,9 +55,9 @@ export default class ElectionConfigComponent implements OnInit {
     logoUrl: [''],
     escudoUrl: [''],
     videoUrl: [''],
-    colorPrimario: ['#1d4ed8'],
-    colorSecundario: ['#0ea5e9'],
-    colorAcento: ['#f59e0b'],
+    colorPrimario: ['#1d4ed8', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    colorSecundario: ['#0ea5e9', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    colorAcento: ['#f59e0b', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
     mensajeBienvenida: [''],
   });
 
@@ -104,6 +104,11 @@ export default class ElectionConfigComponent implements OnInit {
   save(): void {
     if (!this.selectedId) {
       this._notify('Selecciona una eleccion.');
+      return;
+    }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this._notify('Los colores deben tener formato hexadecimal, por ejemplo #1d4ed8.');
       return;
     }
 

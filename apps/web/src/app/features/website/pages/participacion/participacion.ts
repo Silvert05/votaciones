@@ -15,6 +15,7 @@ import {
 } from 'ng-apexcharts';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { ParticipacionPublica, VenpService } from '../../services/venp.service';
+import { PublicThemeService } from '../../services/public-theme.service';
 
 @Component({
   selector: 'app-participacion',
@@ -24,6 +25,7 @@ import { ParticipacionPublica, VenpService } from '../../services/venp.service';
 export default class ParticipacionComponent implements OnInit, OnDestroy {
   private _venp = inject(VenpService);
   private _cdr = inject(ChangeDetectorRef);
+  private _theme = inject(PublicThemeService);
   private _sub?: Subscription;
 
   cargando = true;
@@ -72,6 +74,16 @@ export default class ParticipacionComponent implements OnInit, OnDestroy {
           this._cdr.detectChanges();
           return;
         }
+        this._theme.apply(activa.configuracion);
+        const theme = this._theme.theme();
+        this.radialColors = [theme.colorPrimario];
+        this.radialFill = {
+          ...this.radialFill,
+          gradient: {
+            ...this.radialFill.gradient,
+            gradientToColors: [theme.colorSecundario],
+          },
+        };
         this._sub = interval(15000)
           .pipe(
             startWith(0),

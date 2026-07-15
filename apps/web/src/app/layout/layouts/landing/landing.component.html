@@ -5,20 +5,22 @@
   [navigation]="navigation.default" [opened]="false">
   <ng-container fuseVerticalNavigationContentHeader>
     <div class="flex h-14 items-center px-6 pt-4">
-      <img class="h-7" src="img/logo.png" alt="Logo">
+      <img class="h-7" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </div>
   </ng-container>
 </fuse-vertical-navigation>
 }
 
-<div class="flex w-full min-w-0 flex-auto flex-col bg-default">
+<div class="flex w-full min-w-0 flex-auto flex-col bg-default"
+  [style.--venp-primary]="theme().colorPrimario"
+  [style.--venp-secondary]="theme().colorSecundario"
+  [style.--venp-accent]="theme().colorAcento">
   <header
     class="sticky top-0 z-49 flex h-14 w-full flex-0 items-center justify-between bg-card backdrop-blur-md px-4 md:px-6 lg:px-12 border-b border-transparent shadow-sm transition-all duration-300 dark:border-b dark:bg-gray-900/90 dark:shadow-none print:hidden">
 
     @if (!isScreenSmall) {
     <a [routerLink]="'/inicio'" class="flex items-center shrink-0 mr-6">
-      <img class="h-8 dark:hidden" src="img/logo.png" alt="Logo FIERPI">
-      <img class="h-8 hidden dark:block" src="img/logo-dark.png" alt="Logo FIERPI">
+      <img class="h-9 object-contain" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </a>
     <div class="flex items-center gap-3 ml-4">
       <fuse-horizontal-navigation [name]="'mainNavigation'" [navigation]="navigation.horizontal">
@@ -35,7 +37,7 @@
       <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
     </button>
     <a [routerLink]="'/inicio'" class="absolute left-1/2 -translate-x-1/2">
-      <img class="h-8" src="img/logo.png" alt="Logo FIERPI">
+      <img class="h-8" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </a>
     <a [routerLink]="'admin/auth/login'" target="_blank"
       class="inline-flex items-center gap-1 px-3 h-8 rounded-md bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity duration-150">
@@ -45,7 +47,7 @@
     }
   </header>
 
-  <main class="flex flex-auto flex-col">
+  <main class="flex w-full min-w-0 flex-auto flex-col">
     @if (true) {
     <router-outlet></router-outlet>
     }
@@ -55,11 +57,10 @@
   <footer
     class="bg-card relative flex flex-0 flex-col items-center w-full border-t py-10 px-6 dark:bg-transparent print:hidden">
     <a [routerLink]="'/inicio'" class="mb-3">
-      <img class="dark:hidden h-12" src="img/logo.png" alt="Logo FIERPI">
-      <img class="hidden dark:flex h-12" src="img/logo-dark.png" alt="Logo FIERPI">
+      <img class="h-12 object-contain" [src]="theme().escudoUrl" (error)="onImageError($event)" alt="Escudo del Instituto Yavirac">
     </a>
     <p class="text-sm text-secondary text-center">
-      © {{ currentYear }} Tribunal Electoral YAVIRAC. Todos los derechos reservados.
+      © {{ currentYear }} {{ theme().nombreInstitucion }}. Todos los derechos reservados.
     </p>
   </footer>
 </div>

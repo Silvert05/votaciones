@@ -3,16 +3,29 @@ import { Paginated } from '../../users/models/user.model';
 
 export type EstadoPadronElector = 'HABILITADO' | 'INHABILITADO' | 'OBSERVADO';
 
+export interface CatalogoInstitucional {
+  id: string;
+  nombre: string;
+  orden: number;
+}
+
+export interface CatalogosElector {
+  carreras: CatalogoInstitucional[];
+  niveles: CatalogoInstitucional[];
+}
+
 export interface Elector {
   id: string;
   identificacion: string;
   nombres: string;
   apellidos: string;
   email: string | null;
+  fotoUrl: string | null;
   tipo: TipoElector;
-  facultad: string | null;
-  carrera: string | null;
-  curso: string | null;
+  carreraId: string | null;
+  nivelId: string | null;
+  carrera: CatalogoInstitucional | null;
+  nivel: CatalogoInstitucional | null;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -56,10 +69,10 @@ export interface CreateElectorPayload {
   nombres: string;
   apellidos: string;
   email?: string | null;
+  fotoUrl?: string | null;
   tipo: TipoElector;
-  facultad?: string | null;
-  carrera?: string | null;
-  curso?: string | null;
+  carreraId?: string | null;
+  nivelId?: string | null;
 }
 
 export interface UpdateElectorPayload extends Partial<CreateElectorPayload> {

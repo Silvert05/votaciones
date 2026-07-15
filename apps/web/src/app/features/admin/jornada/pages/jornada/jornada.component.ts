@@ -9,6 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import { JornadaEstado } from '../../models/jornada.model';
@@ -38,6 +39,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   private _electionsService = inject(ElectionsService);
   private _jornadaService = inject(JornadaService);
   private _snackBar = inject(MatSnackBar);
+  private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
   estado: JornadaEstado | null = null;
@@ -137,8 +139,15 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   cerrarVotacion(): void {
     if (!this.estado) return;
-    if (!confirm('Cerrar la votacion? Los electores ya no podran votar.')) return;
-    this._run(this._jornadaService.cerrarVotacion(this.estado.eleccion.id));
+    const eleccionId = this.estado.eleccion.id;
+    this._institutionalDialog.confirm({
+      title: 'Cerrar jornada de votación',
+      message: 'Los electores ya no podrán votar después de confirmar el cierre.',
+      confirmText: 'Cerrar votación',
+      danger: true,
+    }).subscribe((confirmed) => {
+      if (confirmed) this._run(this._jornadaService.cerrarVotacion(eleccionId));
+    });
   }
 
   generarResultados(): void {
@@ -153,9 +162,16 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   reiniciar(): void {
     if (!this.estado) return;
-    if (!confirm('Reiniciar la jornada BORRA todos los votos y reabre la configuracion. Continuar?'))
-      return;
-    this._run(this._jornadaService.reiniciar(this.estado.eleccion.id));
+    const eleccionId = this.estado.eleccion.id;
+    this._institutionalDialog.confirm({
+      title: 'Reiniciar jornada electoral',
+      message: 'Esta acción elimina todos los votos registrados y reabre la configuración. No se puede deshacer.',
+      confirmText: 'Reiniciar y borrar votos',
+      danger: true,
+      icon: 'heroicons_outline:exclamation-triangle',
+    }).subscribe((confirmed) => {
+      if (confirmed) this._run(this._jornadaService.reiniciar(eleccionId));
+    });
   }
 
   private applyEstado(estado: JornadaEstado): void {

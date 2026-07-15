@@ -1,104 +1,92 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { PublicThemeService } from '../../services/public-theme.service';
+import { CronogramaPublico, LandingEleccion, VenpService } from '../../services/venp.service';
+
+interface ActividadCronograma {
+  title: string;
+  responsable: string;
+  lugar: string | null;
+  hora: string;
+  fecha: Date;
+}
+
+interface GrupoActividad {
+  key: string;
+  fecha: string;
+  actividad: ActividadCronograma[];
+}
+
+type CampoCronograma = keyof CronogramaPublico;
+
+const EVENTOS: Array<{ campo: CampoCronograma; titulo: string }> = [
+  { campo: 'fechaConvocatoria', titulo: 'Convocatoria del proceso electoral' },
+  { campo: 'fechaPublicacionPadron', titulo: 'Publicacion del padron electoral' },
+  { campo: 'fechaInicioInscripcion', titulo: 'Apertura de candidaturas' },
+  { campo: 'fechaFinInscripcion', titulo: 'Cierre de candidaturas' },
+  { campo: 'fechaInicioVotacion', titulo: 'Inicio de la jornada de votacion' },
+  { campo: 'fechaFinVotacion', titulo: 'Cierre de la jornada de votacion' },
+  { campo: 'fechaPublicacionResultados', titulo: 'Publicacion de resultados' },
+];
 
 @Component({
   selector: 'app-actividades',
   imports: [MatIconModule],
   templateUrl: './actividades.html',
 })
-export default class ActividadesComponent {
+export default class ActividadesComponent implements OnInit {
+  private _venp = inject(VenpService);
+  private _cdr = inject(ChangeDetectorRef);
+  private _theme = inject(PublicThemeService);
 
-  actividad = [
-    {
-      fecha: '26/09/2022',
-      actividad: [
-        { title: 'Reunión de trabajo con los órganos del instituto yavirac', responsable: 'PRESIDENTE T.E ', lugar: 'INSTITUTO YAVIRAC' },
-        { title: 'Enviar oficios solicitando la base de datos del instituto para conformar el padrón electoral', responsable: 'SECRETARIO', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    /*{
-      fecha: '28/09/2022',
-      actividad: [
-        { title: 'Rueda de prensa con todos los medios alternativos de las iglesias de la FIERP', responsable: 'TRIBUNAL ELECTORAL', lugar: 'CASA FIERPI', hora: '17:30' }
-      ]
-    },*/
-    {
-      fecha: '03/10/2022',
-      actividad: [
-        { title: 'Recepción de la base de datos', responsable: 'SECRETARIA Y TRIBUNAL ELECTORAL', lugar: 'INSTITUTO YAVIRAC', hora: '19:00' }
-      ]
-    },
-    {
-      fecha: '05/10/2022',
-      actividad: [
-        { title: 'Enviar convocatorias para la Asamblea General, aprobación del Reglamento', responsable: 'PRESIDENTE TRIBUNAL' }
-      ]
-    },
-    {
-      fecha: '12/10/2022',
-      actividad: [
-        { title: 'Asamblea General REFORMA DEL REGLAMENTO', responsable: 'PRESIDENTE TRIBUNAL', lugar: 'INSTITUTO YAVIRAC', hora: '17:00' }
-      ]
-    },
-    {
-      fecha: '19/10/2022',
-      actividad: [
-        { title: 'Inscripciones de candidatos', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '24/10/2022',
-      actividad: [
-        { title: 'Calificación de los candidatos', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '26/10/2022',
-      actividad: [
-        { title: 'Asamblea General Presentar formalmente a  las listas y la socialización', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '27/10/2022 A 07/11/2022',
-      actividad: [
-        { title: 'Socialización de los candidatos – Cierre de campaña', responsable: 'CANDIDATOS' }
-      ]
-    },
-    {
-      fecha: '19/11/2022',
-      actividad: [
-        { title: 'CONGRESO Elección del Concilio de Pastores', responsable: 'TRIBUNAL' }
-      ]
-    },
-    {
-      fecha: '14/11/2022 A 25/11/2022',
-      actividad: [
-        { title: 'Conformación de las juntas receptoras de votos', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '27/11/2022',
-      actividad: [
-        { title: 'Elecciones y proclamación de las nuevas autoridades DECLARADO DÍA CÍVICO DL YAVIRAC', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '28/11/2022',
-      actividad: [
-        { title: 'Impugnaciones', responsable: 'TRIBUNAL', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '30/11/2022',
-      actividad: [
-        { title: 'Planificación del posicionamiento de las nuevas autoridades', responsable: 'TRIBUNAL Y LAS NUEVAS AUTORIDADES', lugar: 'INSTITUTO YAVIRAC' }
-      ]
-    },
-    {
-      fecha: '17/12/2022',
-      actividad: [
-        { title: 'Posicionamiento de las nuevas autoridades', responsable: 'TRIBUNAL Y LAS NUEVAS AUTORIDADES', lugar: 'PENDIENTE' }
-      ]
+  cargando = true;
+  eleccion: LandingEleccion | null = null;
+  actividad: GrupoActividad[] = [];
+
+  ngOnInit(): void {
+    this._venp.listElecciones().subscribe({
+      next: (elecciones) => {
+        this.eleccion = elecciones.find((item) => item.votarDisponible) ?? elecciones[0] ?? null;
+        this._theme.apply(this.eleccion?.configuracion);
+        this.actividad = this._crearCronograma(this.eleccion);
+        this.cargando = false;
+        this._cdr.detectChanges();
+      },
+      error: () => {
+        this.cargando = false;
+        this._cdr.detectChanges();
+      },
+    });
+  }
+
+  private _crearCronograma(eleccion: LandingEleccion | null): GrupoActividad[] {
+    if (!eleccion?.cronograma) return [];
+    const institucion = eleccion.configuracion?.nombreInstitucion ?? 'Instituto Yavirac';
+    const eventos = EVENTOS.flatMap(({ campo, titulo }) => {
+      const value = eleccion.cronograma?.[campo];
+      if (!value) return [];
+      const fecha = new Date(value);
+      if (Number.isNaN(fecha.getTime())) return [];
+      return [{
+        title: titulo,
+        responsable: 'Comision Electoral',
+        lugar: institucion,
+        hora: new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }).format(fecha),
+        fecha,
+      }];
+    }).sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+
+    const grupos = new Map<string, GrupoActividad>();
+    for (const evento of eventos) {
+      const key = `${evento.fecha.getFullYear()}-${evento.fecha.getMonth()}-${evento.fecha.getDate()}`;
+      const grupo = grupos.get(key) ?? {
+        key,
+        fecha: new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }).format(evento.fecha),
+        actividad: [],
+      };
+      grupo.actividad.push(evento);
+      grupos.set(key, grupo);
     }
-  ];
+    return Array.from(grupos.values());
+  }
 }

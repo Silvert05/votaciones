@@ -45,6 +45,12 @@ export class EleccionesController {
     return this.eleccionesService.findAll(query);
   }
 
+  @Get('resumen/dashboard')
+  @ApiOperation({ summary: 'Resumen operativo del panel administrativo' })
+  dashboard() {
+    return this.eleccionesService.dashboard();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener una eleccion con cronograma y dignidades' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {

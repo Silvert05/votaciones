@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Ip,
   Param,
@@ -8,9 +10,18 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Rol } from 'prisma/generated/enums';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -37,6 +48,12 @@ import { PadronesService } from './padrones.service';
 @Controller('padrones')
 export class PadronesController {
   constructor(private readonly padronesService: PadronesService) {}
+
+  @Get('catalogos')
+  @ApiOperation({ summary: 'Listar carreras y niveles institucionales' })
+  catalogos() {
+    return this.padronesService.catalogos();
+  }
 
   @Get('electores')
   @ApiOperation({ summary: 'Listar electores institucionales' })
@@ -65,6 +82,42 @@ export class PadronesController {
     return this.padronesService.updateElector(id, dto, { user, ip });
   }
 
+  @Post('electores/:id/foto')
+  @UseInterceptors(
+    FileInterceptor('foto', { limits: { fileSize: 2 * 1024 * 1024 } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['foto'],
+      properties: { foto: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOperation({ summary: 'Cargar o reemplazar la foto de un elector' })
+  uploadFotoElector(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile()
+    foto: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    if (!foto) {
+      throw new BadRequestException('Debe seleccionar una imagen.');
+    }
+    return this.padronesService.updateFotoElector(id, foto, { user, ip });
+  }
+
+  @Delete('electores/:id/foto')
+  @ApiOperation({ summary: 'Eliminar la foto de un elector' })
+  deleteFotoElector(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.padronesService.deleteFotoElector(id, { user, ip });
+  }
+
   @Patch('electores/:id/estado')
   @ApiOperation({ summary: 'Activar o desactivar elector institucional' })
   setElectorActivo(
@@ -73,7 +126,11 @@ export class PadronesController {
     @CurrentUser() user: AuthUser,
     @Ip() ip: string,
   ) {
-    return this.padronesService.updateElector(id, { activo: dto.activo }, { user, ip });
+    return this.padronesService.updateElector(
+      id,
+      { activo: dto.activo },
+      { user, ip },
+    );
   }
 
   @Get('elecciones/:eleccionId')
@@ -132,7 +189,9 @@ export class PadronesController {
   }
 
   @Get('elecciones/:eleccionId/credenciales')
-  @ApiOperation({ summary: 'Listar credenciales de votacion generadas (DNI + clave)' })
+  @ApiOperation({
+    summary: 'Listar credenciales de votacion generadas (DNI + clave)',
+  })
   listCredenciales(@Param('eleccionId', ParseUUIDPipe) eleccionId: string) {
     return this.padronesService.listCredenciales(eleccionId);
   }
