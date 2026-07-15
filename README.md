@@ -63,6 +63,10 @@ pnpm -C apps/api db:generate
 pnpm -C apps/api db:migrate
 ```
 
+## Manual operativo
+
+Puedes seguir el flujo completo del sistema en [docs/manual-flujo-completo.md](docs/manual-flujo-completo.md).
+
 ## Créditos 👨🏻‍💻
 
 - [Jhon Guacho](https://github.com/guachodev) (Desarrollador)

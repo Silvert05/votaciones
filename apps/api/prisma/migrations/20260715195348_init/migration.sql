@@ -1,8 +1,11 @@
 -- CreateEnum
+CREATE TYPE "Rol" AS ENUM ('ADMIN', 'USER');
+
+-- CreateEnum
 CREATE TYPE "TipoOpcion" AS ENUM ('GRUPO', 'PANTALLA');
 
 -- CreateEnum
-CREATE TYPE "TipoEleccion" AS ENUM ('OCS', 'CONSEJO_ESTUDIANTIL', 'PRESIDENTES_CURSO', 'OTRO');
+CREATE TYPE "TipoEleccion" AS ENUM ('INSTITUCIONAL', 'CONSEJO_ESTUDIANTIL', 'PRESIDENTES_CURSO', 'OTRO');
 
 -- CreateEnum
 CREATE TYPE "EstadoEleccion" AS ENUM ('BORRADOR', 'CONVOCADA', 'PADRON_PUBLICADO', 'CANDIDATURAS_ABIERTAS', 'CANDIDATURAS_CALIFICADAS', 'CAMPANIA', 'VOTACION_ABIERTA', 'VOTACION_CERRADA', 'ESCRUTINIO', 'RESULTADOS_PROVISIONALES', 'IMPUGNACION_RESULTADOS', 'RESULTADOS_DEFINITIVOS', 'POSESIONADA', 'ANULADA');
@@ -28,8 +31,26 @@ CREATE TYPE "EstadoActaEscrutinio" AS ENUM ('BORRADOR', 'CERRADA', 'APROBADA');
 -- CreateEnum
 CREATE TYPE "EstadoImpugnacionResultado" AS ENUM ('PENDIENTE', 'ACEPTADA', 'RECHAZADA');
 
--- AlterTable
-ALTER TABLE "usuarios" ADD COLUMN     "perfil_id" UUID;
+-- CreateEnum
+CREATE TYPE "PasoJornada" AS ENUM ('INICIALIZACION', 'PUESTA_A_CERO', 'INICIO_VOTACION', 'CIERRE_VOTACION', 'RESULTADOS');
+
+-- CreateTable
+CREATE TABLE "usuarios" (
+    "id" UUID NOT NULL,
+    "usuario" VARCHAR(150) NOT NULL,
+    "nombre" VARCHAR(200) NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
+    "rol" "Rol" NOT NULL DEFAULT 'USER',
+    "perfil_id" UUID,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
+    "email" VARCHAR(150) NOT NULL,
+    "cambiar_password" BOOLEAN NOT NULL DEFAULT false,
+    "fecha_caducidad" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "usuarios_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "perfiles" (
@@ -78,12 +99,53 @@ CREATE TABLE "elecciones" (
     "tipo" "TipoEleccion" NOT NULL,
     "estado" "EstadoEleccion" NOT NULL DEFAULT 'BORRADOR',
     "fecha_convocatoria" TIMESTAMP(3),
-    "aprobada_por_ocs" BOOLEAN NOT NULL DEFAULT false,
     "vuelta_actual" INTEGER NOT NULL DEFAULT 1,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "elecciones_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "configuraciones_eleccion" (
+    "id" UUID NOT NULL,
+    "eleccion_id" UUID NOT NULL,
+    "nombre_institucion" VARCHAR(200),
+    "logo_url" TEXT,
+    "escudo_url" TEXT,
+    "video_url" TEXT,
+    "color_primario" VARCHAR(20),
+    "color_secundario" VARCHAR(20),
+    "color_acento" VARCHAR(20),
+    "mensaje_bienvenida" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "configuraciones_eleccion_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "carreras" (
+    "id" UUID NOT NULL,
+    "nombre" VARCHAR(160) NOT NULL,
+    "orden" INTEGER NOT NULL DEFAULT 0,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "carreras_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "niveles" (
+    "id" UUID NOT NULL,
+    "nombre" VARCHAR(30) NOT NULL,
+    "orden" INTEGER NOT NULL DEFAULT 0,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "niveles_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -93,10 +155,11 @@ CREATE TABLE "electores" (
     "nombres" VARCHAR(120) NOT NULL,
     "apellidos" VARCHAR(120) NOT NULL,
     "email" VARCHAR(180),
+    "foto_url" TEXT,
     "tipo" "TipoElector" NOT NULL,
     "facultad" VARCHAR(160),
-    "carrera" VARCHAR(160),
-    "curso" VARCHAR(80),
+    "carrera_id" UUID,
+    "nivel_id" UUID,
     "activo" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -114,6 +177,9 @@ CREATE TABLE "padrones_electorales" (
     "observacion" TEXT,
     "publicado" BOOLEAN NOT NULL DEFAULT false,
     "fecha_publicacion" TIMESTAMP(3),
+    "credencial_hash" VARCHAR(255),
+    "credencial_temporal" VARCHAR(60),
+    "credencial_generada_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -251,6 +317,36 @@ CREATE TABLE "impugnaciones_resultados" (
 );
 
 -- CreateTable
+CREATE TABLE "jornadas_electorales" (
+    "id" UUID NOT NULL,
+    "eleccion_id" UUID NOT NULL,
+    "config_bloqueada" BOOLEAN NOT NULL DEFAULT false,
+    "inicializada_at" TIMESTAMP(3),
+    "puesta_cero_at" TIMESTAMP(3),
+    "votacion_iniciada_at" TIMESTAMP(3),
+    "votacion_cerrada_at" TIMESTAMP(3),
+    "resultados_at" TIMESTAMP(3),
+    "fecha_fin_votacion" TIMESTAMP(3),
+    "link_votacion_activo" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "jornadas_electorales_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "jornada_eventos" (
+    "id" UUID NOT NULL,
+    "jornada_id" UUID NOT NULL,
+    "paso" "PasoJornada" NOT NULL,
+    "reporte" TEXT,
+    "usuario" VARCHAR(100),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "jornada_eventos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "cronogramas_electorales" (
     "id" UUID NOT NULL,
     "eleccion_id" UUID NOT NULL,
@@ -287,6 +383,30 @@ CREATE TABLE "historial_estados_eleccion" (
     CONSTRAINT "historial_estados_eleccion_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "auditoria" (
+    "id" SERIAL NOT NULL,
+    "tabla" VARCHAR(80) NOT NULL,
+    "registro_id" UUID,
+    "operacion" VARCHAR(10) NOT NULL,
+    "datos_anteriores" JSONB,
+    "datos_nuevos" JSONB,
+    "usuario" VARCHAR(100),
+    "ip" INET,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "auditoria_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "usuarios_usuario_key" ON "usuarios"("usuario");
+
+-- CreateIndex
+CREATE INDEX "usuarios_usuario_idx" ON "usuarios"("usuario");
+
+-- CreateIndex
+CREATE INDEX "usuarios_perfil_id_idx" ON "usuarios"("perfil_id");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "perfiles_nombre_key" ON "perfiles"("nombre");
 
@@ -321,6 +441,21 @@ CREATE INDEX "elecciones_tipo_idx" ON "elecciones"("tipo");
 CREATE INDEX "elecciones_fecha_convocatoria_idx" ON "elecciones"("fecha_convocatoria");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "configuraciones_eleccion_eleccion_id_key" ON "configuraciones_eleccion"("eleccion_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "carreras_nombre_key" ON "carreras"("nombre");
+
+-- CreateIndex
+CREATE INDEX "carreras_activo_orden_idx" ON "carreras"("activo", "orden");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "niveles_nombre_key" ON "niveles"("nombre");
+
+-- CreateIndex
+CREATE INDEX "niveles_activo_orden_idx" ON "niveles"("activo", "orden");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "electores_identificacion_key" ON "electores"("identificacion");
 
 -- CreateIndex
@@ -328,6 +463,12 @@ CREATE INDEX "electores_tipo_idx" ON "electores"("tipo");
 
 -- CreateIndex
 CREATE INDEX "electores_activo_idx" ON "electores"("activo");
+
+-- CreateIndex
+CREATE INDEX "electores_carrera_id_idx" ON "electores"("carrera_id");
+
+-- CreateIndex
+CREATE INDEX "electores_nivel_id_idx" ON "electores"("nivel_id");
 
 -- CreateIndex
 CREATE INDEX "padrones_electorales_eleccion_id_idx" ON "padrones_electorales"("eleccion_id");
@@ -435,13 +576,22 @@ CREATE INDEX "impugnaciones_resultados_acta_id_idx" ON "impugnaciones_resultados
 CREATE INDEX "impugnaciones_resultados_estado_idx" ON "impugnaciones_resultados"("estado");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "jornadas_electorales_eleccion_id_key" ON "jornadas_electorales"("eleccion_id");
+
+-- CreateIndex
+CREATE INDEX "jornada_eventos_jornada_id_idx" ON "jornada_eventos"("jornada_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "cronogramas_electorales_eleccion_id_key" ON "cronogramas_electorales"("eleccion_id");
 
 -- CreateIndex
 CREATE INDEX "historial_estados_eleccion_eleccion_id_created_at_idx" ON "historial_estados_eleccion"("eleccion_id", "created_at" DESC);
 
 -- CreateIndex
-CREATE INDEX "usuarios_perfil_id_idx" ON "usuarios"("perfil_id");
+CREATE INDEX "auditoria_tabla_created_at_idx" ON "auditoria"("tabla", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "auditoria_registro_id_idx" ON "auditoria"("registro_id");
 
 -- AddForeignKey
 ALTER TABLE "usuarios" ADD CONSTRAINT "usuarios_perfil_id_fkey" FOREIGN KEY ("perfil_id") REFERENCES "perfiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -454,6 +604,15 @@ ALTER TABLE "perfiles_opciones" ADD CONSTRAINT "perfiles_opciones_perfil_id_fkey
 
 -- AddForeignKey
 ALTER TABLE "perfiles_opciones" ADD CONSTRAINT "perfiles_opciones_opcion_id_fkey" FOREIGN KEY ("opcion_id") REFERENCES "opciones"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "configuraciones_eleccion" ADD CONSTRAINT "configuraciones_eleccion_eleccion_id_fkey" FOREIGN KEY ("eleccion_id") REFERENCES "elecciones"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "electores" ADD CONSTRAINT "electores_carrera_id_fkey" FOREIGN KEY ("carrera_id") REFERENCES "carreras"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "electores" ADD CONSTRAINT "electores_nivel_id_fkey" FOREIGN KEY ("nivel_id") REFERENCES "niveles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "padrones_electorales" ADD CONSTRAINT "padrones_electorales_eleccion_id_fkey" FOREIGN KEY ("eleccion_id") REFERENCES "elecciones"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -517,6 +676,12 @@ ALTER TABLE "impugnaciones_resultados" ADD CONSTRAINT "impugnaciones_resultados_
 
 -- AddForeignKey
 ALTER TABLE "impugnaciones_resultados" ADD CONSTRAINT "impugnaciones_resultados_acta_id_fkey" FOREIGN KEY ("acta_id") REFERENCES "actas_escrutinio"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "jornadas_electorales" ADD CONSTRAINT "jornadas_electorales_eleccion_id_fkey" FOREIGN KEY ("eleccion_id") REFERENCES "elecciones"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "jornada_eventos" ADD CONSTRAINT "jornada_eventos_jornada_id_fkey" FOREIGN KEY ("jornada_id") REFERENCES "jornadas_electorales"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "cronogramas_electorales" ADD CONSTRAINT "cronogramas_electorales_eleccion_id_fkey" FOREIGN KEY ("eleccion_id") REFERENCES "elecciones"("id") ON DELETE CASCADE ON UPDATE CASCADE;
