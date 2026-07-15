@@ -86,6 +86,16 @@ export class CreateElectorDto {
   @IsOptional()
   @IsUUID()
   nivelId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  paraleloId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  jornadaId?: string | null;
 }
 
 export class UpdateElectorDto {
@@ -130,6 +140,16 @@ export class UpdateElectorDto {
   @IsOptional()
   @IsUUID()
   nivelId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  paraleloId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  jornadaId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

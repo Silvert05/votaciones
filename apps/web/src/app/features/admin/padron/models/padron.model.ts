@@ -12,6 +12,8 @@ export interface CatalogoInstitucional {
 export interface CatalogosElector {
   carreras: CatalogoInstitucional[];
   niveles: CatalogoInstitucional[];
+  paralelos: CatalogoInstitucional[];
+  jornadas: CatalogoInstitucional[];
 }
 
 export interface Elector {
@@ -24,8 +26,12 @@ export interface Elector {
   tipo: TipoElector;
   carreraId: string | null;
   nivelId: string | null;
+  paraleloId: string | null;
+  jornadaId: string | null;
   carrera: CatalogoInstitucional | null;
   nivel: CatalogoInstitucional | null;
+  paralelo: CatalogoInstitucional | null;
+  jornada: CatalogoInstitucional | null;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +79,8 @@ export interface CreateElectorPayload {
   tipo: TipoElector;
   carreraId?: string | null;
   nivelId?: string | null;
+  paraleloId?: string | null;
+  jornadaId?: string | null;
 }
 
 export interface UpdateElectorPayload extends Partial<CreateElectorPayload> {

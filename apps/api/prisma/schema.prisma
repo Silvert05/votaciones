@@ -248,6 +248,36 @@ model Nivel {
   @@map("niveles")
 }
 
+model Paralelo {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String   @unique @db.VarChar(10)
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  electores Elector[]
+
+  @@index([activo, orden])
+  @@map("paralelos")
+}
+
+// Jornada academica del elector (INTENSIVA, MATUTINA, VESPERTINA, NOCTURNA...).
+// No confundir con JornadaElectoral, que es la jornada del dia de votacion.
+model Jornada {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String   @unique @db.VarChar(30)
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  electores Elector[]
+
+  @@index([activo, orden])
+  @@map("jornadas")
+}
+
 model Elector {
   id             String      @id @default(uuid()) @db.Uuid
   identificacion String      @unique @db.VarChar(20)
@@ -259,6 +289,8 @@ model Elector {
   facultad       String?     @db.VarChar(160)
   carreraId      String?     @map("carrera_id") @db.Uuid
   nivelId        String?     @map("nivel_id") @db.Uuid
+  paraleloId     String?     @map("paralelo_id") @db.Uuid
+  jornadaId      String?     @map("jornada_id") @db.Uuid
   activo         Boolean     @default(true)
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
@@ -268,11 +300,15 @@ model Elector {
   votosEmitidos VotoEmitido[]
   carrera       Carrera?          @relation(fields: [carreraId], references: [id], onDelete: SetNull)
   nivel         Nivel?            @relation(fields: [nivelId], references: [id], onDelete: SetNull)
+  paralelo      Paralelo?         @relation(fields: [paraleloId], references: [id], onDelete: SetNull)
+  jornada       Jornada?          @relation(fields: [jornadaId], references: [id], onDelete: SetNull)
 
   @@index([tipo])
   @@index([activo])
   @@index([carreraId])
   @@index([nivelId])
+  @@index([paraleloId])
+  @@index([jornadaId])
   @@map("electores")
 }
 

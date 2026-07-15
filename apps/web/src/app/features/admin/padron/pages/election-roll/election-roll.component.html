@@ -90,6 +90,8 @@
             <div class="text-sm text-secondary">
               {{ p.elector.carrera?.nombre ?? 'Sin carrera' }}
               @if (p.elector.nivel?.nombre) { · Nivel {{ p.elector.nivel?.nombre }} }
+              @if (p.elector.paralelo?.nombre) { · Par. {{ p.elector.paralelo?.nombre }} }
+              @if (p.elector.jornada?.nombre) { · {{ p.elector.jornada?.nombre }} }
             </div>
           </td>
         </ng-container>

@@ -70,6 +70,8 @@ export default class ElectoresListComponent implements OnInit {
     electores: Elector[] = [];
     carreras: CatalogoInstitucional[] = [];
     niveles: CatalogoInstitucional[] = [];
+    paralelos: CatalogoInstitucional[] = [];
+    jornadas: CatalogoInstitucional[] = [];
     selected: Elector | null = null;
     total = 0;
     loading = false;
@@ -89,6 +91,8 @@ export default class ElectoresListComponent implements OnInit {
         tipo: ['ESTUDIANTE' as TipoElector, Validators.required],
         carreraId: [''],
         nivelId: [''],
+        paraleloId: [''],
+        jornadaId: [''],
     });
 
     private _query: ElectoresQuery = { page: 1, limit: 10 };
@@ -98,9 +102,11 @@ export default class ElectoresListComponent implements OnInit {
             next: (catalogos) => {
                 this.carreras = catalogos.carreras;
                 this.niveles = catalogos.niveles;
+                this.paralelos = catalogos.paralelos;
+                this.jornadas = catalogos.jornadas;
                 this._changeDetectorRef.detectChanges();
             },
-            error: () => this._notify('No se pudieron cargar carreras y niveles.'),
+            error: () => this._notify('No se pudieron cargar los catalogos.'),
         });
         this.searchCtrl.valueChanges
             .pipe(debounceTime(350), distinctUntilChanged())
@@ -169,6 +175,8 @@ export default class ElectoresListComponent implements OnInit {
             tipo: 'ESTUDIANTE',
             carreraId: '',
             nivelId: '',
+            paraleloId: '',
+            jornadaId: '',
         });
     }
 
@@ -184,6 +192,8 @@ export default class ElectoresListComponent implements OnInit {
             tipo: elector.tipo,
             carreraId: elector.carreraId ?? '',
             nivelId: elector.nivelId ?? '',
+            paraleloId: elector.paraleloId ?? '',
+            jornadaId: elector.jornadaId ?? '',
         });
     }
 
@@ -202,6 +212,8 @@ export default class ElectoresListComponent implements OnInit {
             tipo: raw.tipo!,
             carreraId: raw.carreraId || null,
             nivelId: raw.nivelId || null,
+            paraleloId: raw.paraleloId || null,
+            jornadaId: raw.jornadaId || null,
         };
 
         const isEdit = !!this.selected;

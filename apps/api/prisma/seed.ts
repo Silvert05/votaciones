@@ -564,7 +564,8 @@ async function main() {
   });
   console.log(`✅ Usuario: ${operador.usuario} (debe cambiar contraseña)`);
 
-  await seedProcesoElectoral();
+  const catalogos = await seedCatalogos();
+  await seedProcesoElectoral(catalogos);
 
   console.log('🌱 Seed completo');
 }
@@ -572,18 +573,19 @@ async function main() {
 // UUID fijo para poder re-sembrar de forma idempotente (borra y recrea).
 const ELECCION_DEMO_ID = '11111111-1111-4111-8111-111111111111';
 
+// Clasificacion academica de los estudiantes demo (nombres del catalogo).
+const DEMO_CARRERA = 'DESARROLLO DE SOFTWARE';
+const DEMO_NIVEL = 'QUINTO';
+const DEMO_PARALELO = 'A';
+const DEMO_JORNADA = 'INTENSIVA';
+
 interface ElectorSeed {
   identificacion: string;
   nombres: string;
   apellidos: string;
   tipo: 'DOCENTE' | 'ESTUDIANTE';
   email: string;
-  carreraId?: string;
-  nivelId?: string;
 }
-
-const CARRERA_SOFTWARE_ID = '10000000-0000-4000-8000-000000000002';
-const NIVEL_QUINTO_ID = '20000000-0000-4000-8000-000000000005';
 
 const ESTUDIANTES: ElectorSeed[] = [
   ['0102030401', 'Maria', 'Andrade'],
@@ -604,8 +606,6 @@ const ESTUDIANTES: ElectorSeed[] = [
   apellidos,
   tipo: 'ESTUDIANTE' as const,
   email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@estudiante.yavirac.edu.ec`,
-  carreraId: CARRERA_SOFTWARE_ID,
-  nivelId: NIVEL_QUINTO_ID,
 }));
 
 const DOCENTES: ElectorSeed[] = [
@@ -625,17 +625,131 @@ const DOCENTES: ElectorSeed[] = [
   email: `${nombres.toLowerCase()}.${apellidos.toLowerCase()}@yavirac.edu.ec`,
 }));
 
-async function seedProcesoElectoral() {
+// ---------------------------------------------------------------------------
+// Catalogos academicos. Fuente: docs/MAESTRO DE PARALELOS.xls (periodo 2026-1P).
+// Nombres en MAYUSCULAS tal como el maestro institucional. Sirven para
+// clasificar al elector (carrera / nivel / paralelo / jornada) en reportes.
+// ---------------------------------------------------------------------------
+const CARRERAS = [
+  'ARTE CULINARIO ECUATORIANO',
+  'CENTRO DE IDIOMAS YAVIRAC',
+  'DESARROLLO DE SOFTWARE',
+  'DISEÑO DE MODAS',
+  'DISEÑO DE MODAS CON NIVEL EQUIVALENTE A TECNOLOGIA SUPERIOR',
+  'GUIA NACIONAL DE TURISMO',
+  'GUIA NACIONAL DE TURISMO CON NIVEL EQUIVALENTE A TECNOLOGIA SUPERIOR',
+  'IMPULSAT V01 VIRTUAL',
+  'MARKETING DIGITAL',
+  'TECNOLOGIA EN MARKETING',
+  'TECNOLOGIA SUPERIOR EN DESARROLLO DE SOFTWARE',
+  'TECNOLOGIA SUPERIOR EN MARKETING',
+];
+
+// Nivel academico con su orden natural.
+const NIVELES: Array<[string, number]> = [
+  ['PRIMERO', 1],
+  ['SEGUNDO', 2],
+  ['TERCERO', 3],
+  ['CUARTO', 4],
+  ['QUINTO', 5],
+  ['SEXTO', 6],
+];
+
+const PARALELOS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'T', 'Z'];
+
+// Jornada academica del elector. NOAPLICAJORNADA es el marcador "sin jornada".
+const JORNADAS: Array<[string, number]> = [
+  ['MATUTINA', 1],
+  ['VESPERTINA', 2],
+  ['NOCTURNA', 3],
+  ['INTENSIVA', 4],
+  ['NOAPLICAJORNADA', 9],
+];
+
+interface Catalogos {
+  carreras: Map<string, string>;
+  niveles: Map<string, string>;
+  paralelos: Map<string, string>;
+  jornadas: Map<string, string>;
+}
+
+async function seedCatalogos(): Promise<Catalogos> {
+  console.log(
+    '📚 Sembrando catalogos academicos (carrera, nivel, paralelo, jornada)...',
+  );
+
+  const carreras = new Map<string, string>();
+  for (let i = 0; i < CARRERAS.length; i++) {
+    const nombre = CARRERAS[i];
+    const row = await prisma.carrera.upsert({
+      where: { nombre },
+      update: { orden: i + 1, activo: true },
+      create: { nombre, orden: i + 1, activo: true },
+    });
+    carreras.set(nombre, row.id);
+  }
+
+  const niveles = new Map<string, string>();
+  for (const [nombre, orden] of NIVELES) {
+    const row = await prisma.nivel.upsert({
+      where: { nombre },
+      update: { orden, activo: true },
+      create: { nombre, orden, activo: true },
+    });
+    niveles.set(nombre, row.id);
+  }
+
+  const paralelos = new Map<string, string>();
+  for (let i = 0; i < PARALELOS.length; i++) {
+    const nombre = PARALELOS[i];
+    const row = await prisma.paralelo.upsert({
+      where: { nombre },
+      update: { orden: i + 1, activo: true },
+      create: { nombre, orden: i + 1, activo: true },
+    });
+    paralelos.set(nombre, row.id);
+  }
+
+  const jornadas = new Map<string, string>();
+  for (const [nombre, orden] of JORNADAS) {
+    const row = await prisma.jornada.upsert({
+      where: { nombre },
+      update: { orden, activo: true },
+      create: { nombre, orden, activo: true },
+    });
+    jornadas.set(nombre, row.id);
+  }
+
+  console.log(
+    `✅ Catalogos: ${carreras.size} carreras, ${niveles.size} niveles, ${paralelos.size} paralelos, ${jornadas.size} jornadas.`,
+  );
+  return { carreras, niveles, paralelos, jornadas };
+}
+
+async function seedProcesoElectoral(catalogos: Catalogos) {
   console.log('🗳️  Sembrando proceso electoral de demostracion...');
 
   // Idempotencia: borrar la eleccion demo (cascade limpia dignidades,
   // listas, candidaturas, padron, votos, conteos y configuracion).
   await prisma.eleccion.deleteMany({ where: { id: ELECCION_DEMO_ID } });
 
+  // Clasificacion academica demo (resuelta desde el catalogo por nombre).
+  // Solo aplica a estudiantes; los docentes no llevan carrera/nivel/paralelo.
+  const claseEstudiante = {
+    carreraId: catalogos.carreras.get(DEMO_CARRERA) ?? null,
+    nivelId: catalogos.niveles.get(DEMO_NIVEL) ?? null,
+    paraleloId: catalogos.paralelos.get(DEMO_PARALELO) ?? null,
+    jornadaId: catalogos.jornadas.get(DEMO_JORNADA) ?? null,
+  };
+
   // Electores (globales) via upsert por identificacion.
   const electores = new Map<string, string>();
   for (const e of [...ESTUDIANTES, ...DOCENTES]) {
     const fotoUrl = `https://i.pravatar.cc/150?u=${e.identificacion}`;
+    const clase =
+      e.tipo === 'ESTUDIANTE'
+        ? claseEstudiante
+        : { carreraId: null, nivelId: null, paraleloId: null, jornadaId: null };
     const elector = await prisma.elector.upsert({
       where: { identificacion: e.identificacion },
       update: {
@@ -644,8 +758,7 @@ async function seedProcesoElectoral() {
         tipo: e.tipo,
         email: e.email,
         fotoUrl,
-        carreraId: e.carreraId ?? null,
-        nivelId: e.nivelId ?? null,
+        ...clase,
         activo: true,
       },
       create: {
@@ -655,8 +768,7 @@ async function seedProcesoElectoral() {
         tipo: e.tipo,
         email: e.email,
         fotoUrl,
-        carreraId: e.carreraId ?? null,
-        nivelId: e.nivelId ?? null,
+        ...clase,
         activo: true,
       },
     });

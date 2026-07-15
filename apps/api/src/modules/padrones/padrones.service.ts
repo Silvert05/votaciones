@@ -41,8 +41,12 @@ const electorSelect = {
   tipo: true,
   carreraId: true,
   nivelId: true,
+  paraleloId: true,
+  jornadaId: true,
   carrera: { select: { id: true, nombre: true, orden: true } },
   nivel: { select: { id: true, nombre: true, orden: true } },
+  paralelo: { select: { id: true, nombre: true, orden: true } },
+  jornada: { select: { id: true, nombre: true, orden: true } },
   activo: true,
   createdAt: true,
   updatedAt: true,
@@ -115,7 +119,7 @@ export class PadronesService {
   }
 
   async createElector(dto: CreateElectorDto, actor: Actor) {
-    await this.validateCatalogos(dto.carreraId, dto.nivelId);
+    await this.validateCatalogos(dto);
     const elector = await this.prisma.elector.create({
       data: this.toElectorData(dto),
       select: electorSelect,
@@ -131,7 +135,7 @@ export class PadronesService {
 
   async updateElector(id: string, dto: UpdateElectorDto, actor: Actor) {
     const before = await this.findElectorOrFail(id);
-    await this.validateCatalogos(dto.carreraId, dto.nivelId);
+    await this.validateCatalogos(dto);
     const elector = await this.prisma.elector.update({
       where: { id },
       data: {
@@ -148,6 +152,10 @@ export class PadronesService {
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
         ...(dto.carreraId !== undefined ? { carreraId: dto.carreraId } : {}),
         ...(dto.nivelId !== undefined ? { nivelId: dto.nivelId } : {}),
+        ...(dto.paraleloId !== undefined
+          ? { paraleloId: dto.paraleloId }
+          : {}),
+        ...(dto.jornadaId !== undefined ? { jornadaId: dto.jornadaId } : {}),
         ...(dto.activo !== undefined ? { activo: dto.activo } : {}),
       },
       select: electorSelect,
@@ -584,42 +592,56 @@ export class PadronesService {
       tipo: dto.tipo,
       carreraId: dto.carreraId ?? null,
       nivelId: dto.nivelId ?? null,
+      paraleloId: dto.paraleloId ?? null,
+      jornadaId: dto.jornadaId ?? null,
     };
   }
 
   async catalogos() {
-    const [carreras, niveles] = await Promise.all([
-      this.prisma.carrera.findMany({
-        where: { activo: true },
-        orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-        select: { id: true, nombre: true, orden: true },
-      }),
-      this.prisma.nivel.findMany({
-        where: { activo: true },
-        orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-        select: { id: true, nombre: true, orden: true },
-      }),
+    const orderBy = [{ orden: 'asc' as const }, { nombre: 'asc' as const }];
+    const select = { id: true, nombre: true, orden: true };
+    const [carreras, niveles, paralelos, jornadas] = await Promise.all([
+      this.prisma.carrera.findMany({ where: { activo: true }, orderBy, select }),
+      this.prisma.nivel.findMany({ where: { activo: true }, orderBy, select }),
+      this.prisma.paralelo.findMany({ where: { activo: true }, orderBy, select }),
+      this.prisma.jornada.findMany({ where: { activo: true }, orderBy, select }),
     ]);
-    return { carreras, niveles };
+    return { carreras, niveles, paralelos, jornadas };
   }
 
-  private async validateCatalogos(
-    carreraId?: string | null,
-    nivelId?: string | null,
-  ) {
-    if (carreraId) {
+  private async validateCatalogos(dto: {
+    carreraId?: string | null;
+    nivelId?: string | null;
+    paraleloId?: string | null;
+    jornadaId?: string | null;
+  }) {
+    if (dto.carreraId) {
       const carrera = await this.prisma.carrera.findFirst({
-        where: { id: carreraId, activo: true },
+        where: { id: dto.carreraId, activo: true },
         select: { id: true },
       });
       if (!carrera) throw new BadRequestException('La carrera seleccionada no es valida.');
     }
-    if (nivelId) {
+    if (dto.nivelId) {
       const nivel = await this.prisma.nivel.findFirst({
-        where: { id: nivelId, activo: true },
+        where: { id: dto.nivelId, activo: true },
         select: { id: true },
       });
       if (!nivel) throw new BadRequestException('El nivel seleccionado no es valido.');
+    }
+    if (dto.paraleloId) {
+      const paralelo = await this.prisma.paralelo.findFirst({
+        where: { id: dto.paraleloId, activo: true },
+        select: { id: true },
+      });
+      if (!paralelo) throw new BadRequestException('El paralelo seleccionado no es valido.');
+    }
+    if (dto.jornadaId) {
+      const jornada = await this.prisma.jornada.findFirst({
+        where: { id: dto.jornadaId, activo: true },
+        select: { id: true },
+      });
+      if (!jornada) throw new BadRequestException('La jornada seleccionada no es valida.');
     }
   }
 

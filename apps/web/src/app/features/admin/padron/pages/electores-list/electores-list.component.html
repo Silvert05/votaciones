@@ -117,6 +117,12 @@
                         <div>{{ e.carrera?.nombre ?? 'Sin carrera' }}</div>
                         <div class="text-secondary text-sm">
                             {{ e.nivel?.nombre ? 'Nivel ' + e.nivel.nombre : 'Sin nivel' }}
+                            @if (e.paralelo?.nombre) {
+                                <span> · Par. {{ e.paralelo.nombre }}</span>
+                            }
+                            @if (e.jornada?.nombre) {
+                                <span> · {{ label(e.jornada.nombre) }}</span>
+                            }
                         </div>
                     </td>
                 </ng-container>
@@ -330,6 +336,26 @@
                         <mat-option value="">Sin asignar</mat-option>
                         @for (nivel of niveles; track nivel.id) {
                             <mat-option [value]="nivel.id">{{ nivel.nombre }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Paralelo</mat-label>
+                    <mat-select formControlName="paraleloId">
+                        <mat-option value="">Sin asignar</mat-option>
+                        @for (paralelo of paralelos; track paralelo.id) {
+                            <mat-option [value]="paralelo.id">{{ paralelo.nombre }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Jornada</mat-label>
+                    <mat-select formControlName="jornadaId">
+                        <mat-option value="">Sin asignar</mat-option>
+                        @for (jornada of jornadas; track jornada.id) {
+                            <mat-option [value]="jornada.id">{{ jornada.nombre }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
