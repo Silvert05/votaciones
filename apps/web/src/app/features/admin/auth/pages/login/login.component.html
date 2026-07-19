@@ -1,64 +1,60 @@
-<div class="flex flex-col flex-auto items-center justify-center min-w-0">
-  <div class="w-full sm:w-auto py-6 px-10 sm:p-8 sm:rounded-2xl sm:shadow sm:bg-card">
-    <div class="w-full max-w-100 sm:w-96 mx-auto sm:mx-0">
-      <div class="flex -mx-8 -mt-8 rounded items-center justify-center">
-        <img class="w-auto rounded-t-2xl" src="img/electoral1.png">
-      </div>
-      <div class="mt-4 text-2xl font-bold tracking-tight text-center leading-tight">ELECCIONES YAVIRAC</div>
-      <div class="flex justify-center items-center mt-1 text-md text-secondary">
-        <div>Inicia sesión para acceder al sistema</div>
-      </div>
-      @if (showAlert) {
-      <fuse-alert class="my-2" [appearance]="'outline'" [showIcon]="false" [type]="alert.type"
-        [@shake]="alert.type === 'error'">
-        {{ alert.message }}
-      </fuse-alert>
-      }
-      <form class="mt-4 space-y-3" [formGroup]="loginForm" #loginNgForm="ngForm">
-
-        <mat-form-field class="w-full">
-          <input id="email" matInput [formControlName]="'username'" placeholder="Usuario">
-          <mat-icon class="icon-size-5" [svgIcon]="'mat_solid:email'" />
-          @if (loginForm.get('username').hasError('required')) {
-          <mat-error>
-            Usuario es requerido
-          </mat-error>
-          }
-        </mat-form-field>
-
-
-        <mat-form-field class="w-full">
-          <input id="password" matInput [type]="showPassword ? 'text' : 'password'" [formControlName]="'password'"
-            placeholder="Contraseña">
-          <button mat-icon-button type="button" (click)="showPassword = !showPassword" matSuffix>
-            @if (!showPassword) {
-            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:eye'" />
-            }@else {
-            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:eye-slash'" />
-            }
-          </button>
-          <mat-error>
-            Contraseña es requerido
-          </mat-error>
-        </mat-form-field>
-        <button class="w-full" color="primary" matButton="filled" (click)="login()" [disabled]="loginForm.disabled">
-          @if (!loginForm.disabled) {
-          <span>
-            INGRESAR
-          </span>
-          }
-          @if (loginForm.disabled) {
-          <mat-progress-spinner [diameter]="24" [mode]="'indeterminate'" />
-          }
-        </button>
-        <div class="flex-auto mt-3 border-t"></div>
-
-        <div class="flex items-center mt-4">
-          <div class="flex-auto mt-px border-t"></div>
-          <div class="mx-2 text-sm text-secondary">© 2022 All rights reserved</div>
-          <div class="flex-auto mt-px border-t"></div>
+<div class="min-h-screen w-full bg-animate flex items-center justify-center p-4">
+    
+    <!-- Tarjeta Principal -->
+    <div class="reveal-card flex w-full max-w-6xl h-[85vh] bg-white rounded-[3rem] shadow-2xl overflow-hidden">
+        
+        <!-- Panel Izquierdo: Branding y Logo Circular -->
+        <div class="hidden lg:flex w-2/5 bg-[var(--fuse-primary)] relative overflow-hidden items-center justify-center">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            
+            <div class="relative z-10 text-center text-white p-12">
+                <!-- Logo Circular -->
+                <div class="w-40 h-40 mx-auto mb-8 rounded-full border-4 border-[var(--fuse-accent)] shadow-2xl overflow-hidden bg-white p-2 animate-bounce-slow">
+                    <img src="img/logo.png" alt="Logo Yavirac" class="w-full h-full object-contain">
+                </div>
+                
+                <h1 class="text-5xl font-black mb-4">SISTEMA <br> <span class="text-[var(--fuse-accent)]">ELECTORAL</span></h1>
+                <p class="text-white/60 text-lg">Plataforma tecnológica de votación profesional</p>
+            </div>
+            
+            <!-- Curva de impacto -->
+            <div class="absolute top-0 right-0 h-full w-24 bg-white" style="clip-path: polygon(100% 0, 0% 0, 100% 100%);"></div>
         </div>
-      </form>
+
+        <!-- Panel Derecho: Formulario Estilizado -->
+        <div class="w-full lg:w-3/5 flex flex-col justify-center items-center p-12 bg-slate-50 relative overflow-hidden">
+            <div class="absolute -top-16 -right-16 w-32 h-32 bg-[var(--fuse-accent)]/10 rounded-full blur-2xl"></div>
+
+            <div class="w-full max-w-md relative z-10">
+                <div class="mb-10 text-left">
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">Acceso al Sistema</h2>
+                    <div class="h-1.5 w-20 bg-[var(--fuse-accent)] rounded-full mb-4"></div>
+                    <p class="text-slate-500 font-medium">Ingresa tus credenciales institucionales para continuar.</p>
+                </div>
+
+                <form class="space-y-6" [formGroup]="loginForm">
+                    <mat-form-field class="w-full" appearance="outline">
+                        <mat-label>Usuario Institucional</mat-label>
+                        <input matInput [formControlName]="'username'">
+                        <mat-icon matSuffix class="text-blue-600">badge</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full" appearance="outline">
+                        <mat-label>Contraseña</mat-label>
+                        <input matInput [type]="'password'" [formControlName]="'password'">
+                        <mat-icon matSuffix class="text-blue-600">lock_outline</mat-icon>
+                    </mat-form-field>
+
+                    <button class="w-full h-16 rounded-2xl bg-slate-900 text-white font-black text-xl hover:bg-[var(--fuse-accent)] transition-all duration-300 shadow-xl shadow-orange-500/20 active:scale-[0.98]" 
+                            mat-flat-button (click)="login()">
+                        INICIAR SESIÓN
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-xs text-slate-400">© 2026 Instituto Yavirac - Gestión de Elecciones</p>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>

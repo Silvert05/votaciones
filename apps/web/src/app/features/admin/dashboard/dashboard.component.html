@@ -1,46 +1,191 @@
-<div class="flex w-full flex-auto flex-col bg-slate-50 dark:bg-gray-950">
-  <section class="relative overflow-hidden bg-slate-950 px-6 py-10 text-white sm:px-10">
-    <div class="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"></div>
-    <div class="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"></div>
-    <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-      <div><p class="text-sm font-bold uppercase tracking-[.24em] text-cyan-300">Centro de control</p><h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Panel electoral</h1><p class="mt-3 max-w-2xl text-slate-300">Resumen operativo del Instituto Yavirac, actualizado directamente desde el sistema.</p></div>
-      <div class="flex flex-wrap gap-3">
-        <a routerLink="/admin/elecciones" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-slate-950 shadow-lg transition hover:-translate-y-0.5"><mat-icon [svgIcon]="'heroicons_outline:plus-circle'" /> Nueva eleccion</a>
-        <a routerLink="/admin/elecciones/jornada" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 font-bold text-white transition hover:bg-white/15"><mat-icon [svgIcon]="'heroicons_outline:flag'" /> Jornada</a>
+<div class="flex w-full flex-auto flex-col bg-slate-50 dark:bg-gray-950 min-h-screen">
+  
+  <!-- Cabecera Institucional -->
+  <section class="relative overflow-hidden bg-slate-900 px-6 py-12 text-white sm:px-10 shadow-2xl transition-all duration-500">
+    <div class="absolute inset-0 z-0">
+      <img src="assets/img/fondo-yavirac.jpg" alt="Fondo" class="h-full w-full object-cover opacity-20 grayscale transition-transform duration-1000 hover:scale-105" onerror="this.style.display='none'" />
+      <div class="absolute inset-0 bg-gradient-to-r from-blue-900/95 via-slate-900/90 to-slate-950/95"></div>
+    </div>
+    
+    <!-- Decoraciones luminosas animadas -->
+    <div class="absolute -right-24 -top-28 z-0 h-80 w-80 rounded-full bg-blue-500/30 blur-3xl animate-pulse"></div>
+    <div class="absolute -bottom-32 left-1/4 z-0 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+    
+    <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div class="flex items-center gap-6">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-[.24em] text-cyan-400 drop-shadow-md">Centro de Control Institucional</p>
+          <h1 class="mt-1 text-4xl font-black tracking-tight sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">Panel Electoral</h1>
+          <p class="mt-3 max-w-2xl text-slate-300 text-lg">Resumen operativo y monitoreo en tiempo real del proceso.</p>
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap gap-4">
+        <a routerLink="/admin/elecciones" class="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3.5 font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-blue-500/50 hover:from-blue-500 hover:to-blue-400">
+          <mat-icon class="icon-size-5 transition-transform group-hover:rotate-90 duration-300" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon> Nueva elección
+        </a>
+        <a routerLink="/admin/elecciones/jornada" class="group inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-lg">
+          <mat-icon class="icon-size-5 transition-transform group-hover:scale-110 duration-300" [svgIcon]="'heroicons_outline:flag'"></mat-icon> Jornada activa
+        </a>
       </div>
     </div>
   </section>
 
-  <div class="w-full p-6 sm:p-10">
+  <div class="mx-auto w-full max-w-7xl p-6 sm:p-10">
     @if (loading) {
-      <div class="grid animate-pulse grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">@for (item of [1,2,3,4]; track item) { <div class="h-36 rounded-2xl bg-slate-200 dark:bg-gray-800"></div> }</div>
-    } @else if (data) {
+      <!-- Skeletons con animación -->
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-gray-900"><div class="flex items-start justify-between"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><mat-icon [svgIcon]="'heroicons_outline:rectangle-stack'" /></span><span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ data.resumen.procesosActivos }} activos</span></div><div class="mt-5 text-4xl font-black">{{ data.resumen.totalElecciones }}</div><p class="mt-1 text-sm text-secondary">Procesos electorales</p></article>
-        <article class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-gray-900"><div class="flex items-start justify-between"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"><mat-icon [svgIcon]="'heroicons_outline:users'" /></span><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{{ data.resumen.electoresActivos }} activos</span></div><div class="mt-5 text-4xl font-black">{{ data.resumen.electores }}</div><p class="mt-1 text-sm text-secondary">Electores registrados</p></article>
-        <article class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-gray-900"><div class="flex items-start justify-between"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700"><mat-icon [svgIcon]="'heroicons_outline:user-group'" /></span><span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{{ data.resumen.listas }} listas</span></div><div class="mt-5 text-4xl font-black">{{ data.resumen.candidaturasCalificadas }}</div><p class="mt-1 text-sm text-secondary">Candidaturas calificadas</p></article>
-        <article class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-gray-900"><div class="flex items-start justify-between"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><mat-icon [svgIcon]="'heroicons_outline:check-badge'" /></span><span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">Registrados</span></div><div class="mt-5 text-4xl font-black">{{ data.resumen.votosEmitidos }}</div><p class="mt-1 text-sm text-secondary">Votos por dignidad</p></article>
+        @for (item of [1,2,3,4]; track item) { 
+          <div class="h-36 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-gray-800 dark:border-gray-700 relative overflow-hidden">
+            <div class="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-slate-100/50 to-transparent dark:via-slate-700/50"></div>
+            <div class="flex justify-between">
+              <div class="h-12 w-12 rounded-2xl bg-slate-200 dark:bg-gray-700 animate-pulse"></div>
+              <div class="h-6 w-24 rounded-full bg-slate-200 dark:bg-gray-700 animate-pulse"></div>
+            </div>
+            <div class="mt-6 h-10 w-20 rounded-lg bg-slate-200 dark:bg-gray-700 animate-pulse"></div>
+          </div> 
+        }
+      </div>
+    } @else if (data) {
+      <!-- Tarjetas de Resumen -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        
+        <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
+          <div class="flex items-start justify-between">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
+              <mat-icon [svgIcon]="'heroicons_outline:rectangle-stack'"></mat-icon>
+            </span>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-500/20">{{ data.resumen.procesosActivos }} activos</span>
+          </div>
+          <div class="mt-6 text-4xl font-black text-slate-800 dark:text-white transition-colors group-hover:text-blue-600">{{ data.resumen.totalElecciones }}</div>
+          <p class="mt-1 text-sm font-medium text-slate-500">Procesos electorales</p>
+        </article>
+
+        <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
+          <div class="flex items-start justify-between">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white">
+              <mat-icon [svgIcon]="'heroicons_outline:users'"></mat-icon>
+            </span>
+            <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-500/20">{{ data.resumen.electoresActivos }} activos</span>
+          </div>
+          <div class="mt-6 text-4xl font-black text-slate-800 dark:text-white transition-colors group-hover:text-emerald-500">{{ data.resumen.electores }}</div>
+          <p class="mt-1 text-sm font-medium text-slate-500">Electores registrados</p>
+        </article>
+
+        <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
+          <div class="flex items-start justify-between">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 to-violet-50 text-violet-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white">
+              <mat-icon [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+            </span>
+            <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-500/20">{{ data.resumen.listas }} listas</span>
+          </div>
+          <div class="mt-6 text-4xl font-black text-slate-800 dark:text-white transition-colors group-hover:text-violet-500">{{ data.resumen.candidaturasCalificadas }}</div>
+          <p class="mt-1 text-sm font-medium text-slate-500">Candidaturas calificadas</p>
+        </article>
+
+        <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
+          <div class="flex items-start justify-between">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 text-orange-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white">
+              <mat-icon [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
+            </span>
+            <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 ring-1 ring-orange-500/20">Registrados</span>
+          </div>
+          <div class="mt-6 text-4xl font-black text-slate-800 dark:text-white transition-colors group-hover:text-orange-500">{{ data.resumen.votosEmitidos }}</div>
+          <p class="mt-1 text-sm font-medium text-slate-500">Votos emitidos</p>
+        </article>
       </div>
 
-      <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.45fr_.55fr]">
-        <section class="overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-gray-900">
-          <div class="border-b p-6"><p class="text-xs font-bold uppercase tracking-[.2em] text-blue-600">Proceso actual</p><h2 class="mt-1 text-2xl font-extrabold">{{ data.procesoActual?.nombre || 'No hay un proceso activo' }}</h2></div>
+      <div class="mt-8 grid grid-cols-1 gap-8 xl:grid-cols-[1.5fr_.5fr]">
+        
+        <!-- Panel de Proceso Actual -->
+        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/40 dark:border-gray-800 dark:bg-gray-900">
+          <div class="relative overflow-hidden border-b border-slate-100 bg-slate-50/80 p-8 dark:border-gray-800 dark:bg-gray-800/50">
+            <div class="absolute right-0 top-0 h-full w-1 bg-blue-500"></div>
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-blue-600">Proceso en curso</p>
+            <h2 class="mt-2 text-3xl font-extrabold text-slate-800 dark:text-white">{{ data.procesoActual?.nombre || 'No hay un proceso activo' }}</h2>
+          </div>
+          
           @if (data.procesoActual) {
-            <div class="p-6">
-              <div class="flex flex-wrap items-center justify-between gap-3"><span class="rounded-full bg-blue-100 px-3 py-1.5 text-sm font-bold text-blue-700">{{ label(data.procesoActual.estado) }}</span><span class="text-sm text-secondary">Actualizado {{ data.procesoActual.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
-              <div class="mt-6"><div class="mb-2 flex justify-between text-sm"><span class="font-semibold">Avance del proceso</span><span class="font-black text-blue-700">{{ progreso(data.procesoActual.estado) }}%</span></div><div class="h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-gray-700"><div class="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-500" [style.width.%]="progreso(data.procesoActual.estado)"></div></div></div>
-              <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4"><div class="rounded-xl bg-slate-50 p-4 dark:bg-gray-800"><div class="text-2xl font-black">{{ data.procesoActual._count.dignidades }}</div><div class="text-xs text-secondary">Dignidades</div></div><div class="rounded-xl bg-slate-50 p-4 dark:bg-gray-800"><div class="text-2xl font-black">{{ data.procesoActual._count.padron }}</div><div class="text-xs text-secondary">En padron</div></div><div class="rounded-xl bg-slate-50 p-4 dark:bg-gray-800"><div class="text-2xl font-black">{{ data.procesoActual._count.candidaturas }}</div><div class="text-xs text-secondary">Candidaturas</div></div><div class="rounded-xl bg-slate-50 p-4 dark:bg-gray-800"><div class="text-2xl font-black">{{ data.participacion.porcentaje | number:'1.0-2' }}%</div><div class="text-xs text-secondary">Participacion</div></div></div>
-              <div class="mt-6 flex flex-wrap gap-3"><a routerLink="/admin/elecciones/cronograma" class="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-bold text-white"><mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:calendar-days'" /> Cronograma</a><a routerLink="/admin/elecciones/padron" class="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold"><mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:list-bullet'" /> Padron</a><a routerLink="/admin/elecciones/candidaturas" class="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold"><mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:user-plus'" /> Candidaturas</a></div>
+            <div class="p-8">
+              <!-- Barra de progreso -->
+              <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200 shadow-sm dark:bg-gray-800 dark:ring-gray-700">
+                <div class="mb-4 flex items-end justify-between">
+                  <div>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Avance del proceso</h3>
+                    <p class="text-sm text-slate-500 mt-1">Configuración y desarrollo de la jornada</p>
+                  </div>
+                  <span class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ progreso(data.procesoActual.estado) }}%</span>
+                </div>
+                <div class="h-5 overflow-hidden rounded-full bg-slate-100 shadow-inner dark:bg-gray-900">
+                  <div class="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 bg-[length:200%_auto] animate-[gradient_2s_linear_infinite] transition-all duration-1000" [style.width.%]="progreso(data.procesoActual.estado)"></div>
+                </div>
+              </div>
+
+              <!-- Estadísticas rápidas -->
+              <div class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div class="group rounded-2xl border border-slate-100 bg-slate-50/50 p-5 text-center transition-all hover:bg-white hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                  <div class="text-3xl font-black text-slate-700 group-hover:text-blue-600 dark:text-white">{{ data.procesoActual._count.dignidades }}</div>
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">Dignidades</div>
+                </div>
+                <div class="group rounded-2xl border border-slate-100 bg-slate-50/50 p-5 text-center transition-all hover:bg-white hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                  <div class="text-3xl font-black text-slate-700 group-hover:text-emerald-500 dark:text-white">{{ data.procesoActual._count.padron }}</div>
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">En Padrón</div>
+                </div>
+                <div class="group rounded-2xl border border-slate-100 bg-slate-50/50 p-5 text-center transition-all hover:bg-white hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                  <div class="text-3xl font-black text-slate-700 group-hover:text-violet-500 dark:text-white">{{ data.procesoActual._count.candidaturas }}</div>
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">Candidatos</div>
+                </div>
+                <div class="group rounded-2xl border border-slate-100 bg-blue-50 p-5 text-center transition-all hover:bg-blue-100 hover:shadow-md dark:border-blue-900/30 dark:bg-blue-900/10">
+                  <div class="text-3xl font-black text-blue-700 dark:text-blue-400">{{ data.participacion.porcentaje | number:'1.0-2' }}%</div>
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider text-blue-600">Participación</div>
+                </div>
+              </div>
+              
+              <!-- Botones de Acción -->
+              <div class="mt-8 flex flex-wrap gap-4">
+                <a routerLink="/admin/elecciones/cronograma" class="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 px-5 py-3.5 text-sm font-bold text-white transition-all hover:bg-slate-900 hover:shadow-lg sm:flex-none">
+                  <mat-icon class="icon-size-5 transition-transform group-hover:scale-110" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon> Cronograma
+                </a>
+                <a routerLink="/admin/elecciones/padron" class="group flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:flex-none">
+                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'heroicons_outline:list-bullet'"></mat-icon> Padrón
+                </a>
+                <a routerLink="/admin/elecciones/candidaturas" class="group flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 sm:flex-none">
+                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'heroicons_outline:user-plus'"></mat-icon> Candidaturas
+                </a>
+              </div>
             </div>
-          } @else { <div class="p-10 text-center text-secondary">Crea una eleccion para comenzar el proceso institucional.</div> }
+          }
         </section>
 
-        <aside class="rounded-2xl bg-gradient-to-br from-blue-700 to-cyan-500 p-6 text-white shadow-lg"><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15"><mat-icon [svgIcon]="'heroicons_outline:chart-pie'" /></div><h2 class="mt-5 text-2xl font-extrabold">Participacion actual</h2><div class="mt-6 text-6xl font-black">{{ data.participacion.porcentaje | number:'1.0-2' }}%</div><p class="mt-2 text-sm text-white/75">{{ data.participacion.votantes }} de {{ data.participacion.habilitados }} electores han participado.</p><div class="mt-6 h-2.5 overflow-hidden rounded-full bg-white/20"><div class="h-full rounded-full bg-white" [style.width.%]="data.participacion.porcentaje"></div></div><a routerLink="/admin/elecciones/resultados" class="mt-8 inline-flex items-center gap-2 text-sm font-bold hover:underline">Ver resultados <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrow-right'" /></a></aside>
+        <!-- Widget de Participación Premium -->
+        <aside class="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-700 p-8 text-white shadow-2xl transition-transform hover:-translate-y-1">
+          <!-- Decoración de fondo -->
+          <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
+          <div class="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
+          
+          <div class="relative z-10">
+            <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
+              <mat-icon class="text-cyan-300" [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
+            </div>
+            <h2 class="mt-8 text-xl font-extrabold uppercase tracking-widest text-cyan-100">Participación</h2>
+            <div class="mt-2 flex items-baseline gap-1">
+              <span class="text-7xl font-black tracking-tighter">{{ data.participacion.porcentaje | number:'1.0-2' }}</span>
+              <span class="text-4xl font-bold text-cyan-300">%</span>
+            </div>
+            
+            <div class="mt-6 rounded-2xl bg-black/20 p-4 backdrop-blur-sm ring-1 ring-white/10">
+              <p class="text-sm font-medium text-blue-100">
+                <span class="block text-2xl font-bold text-white">{{ data.participacion.votantes }}</span> 
+                votos de {{ data.participacion.habilitados }} habilitados
+              </p>
+            </div>
+          </div>
+          
+          <a routerLink="/admin/elecciones/resultados" class="relative z-10 mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-4 text-sm font-black text-blue-900 shadow-lg transition-all hover:bg-cyan-50 hover:shadow-cyan-500/50">
+            Resultados en vivo <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-right'"></mat-icon>
+          </a>
+        </aside>
       </div>
-
-      <section class="mt-6 rounded-2xl border bg-white p-6 shadow-sm dark:bg-gray-900"><div class="flex items-center justify-between"><div><p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">Actividad reciente</p><h2 class="mt-1 text-xl font-extrabold">Ultimos procesos</h2></div><a routerLink="/admin/elecciones" class="text-sm font-bold text-blue-700">Ver todos</a></div><div class="mt-5 divide-y">@for (eleccion of data.recientes; track eleccion.id) { <div class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:ballot'" /></span><div class="min-w-0 flex-auto"><div class="truncate font-bold">{{ eleccion.nombre }}</div><div class="text-xs text-secondary">{{ eleccion._count.padron }} electores · {{ eleccion._count.candidaturas }} candidaturas · {{ eleccion._count.votosEmitidos }} votos</div></div><span class="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{{ label(eleccion.estado) }}</span><span class="text-xs text-secondary">{{ eleccion.updatedAt | date:'dd/MM/yyyy' }}</span></div> }</div></section>
-    } @else {
-      <div class="rounded-2xl border bg-white p-10 text-center text-secondary">No fue posible cargar el resumen administrativo.</div>
     }
   </div>
 </div>

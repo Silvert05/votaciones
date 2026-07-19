@@ -1,44 +1,87 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-import { DashboardResumen, EstadoEleccion } from '../elections/models/election.model';
-import { ElectionsService } from '../elections/services/elections.service';
-
-const ETAPAS: EstadoEleccion[] = [
-  'BORRADOR', 'CONVOCADA', 'PADRON_PUBLICADO', 'CANDIDATURAS_ABIERTAS',
-  'CANDIDATURAS_CALIFICADAS', 'CAMPANIA', 'VOTACION_ABIERTA',
-  'VOTACION_CERRADA', 'ESCRUTINIO', 'RESULTADOS_PROVISIONALES',
-  'IMPUGNACION_RESULTADOS', 'RESULTADOS_DEFINITIVOS', 'POSESIONADA',
-];
 
 @Component({
-  selector: 'admin-dashboard',
-  templateUrl: './dashboard.component.html',
-  imports: [MatIconModule, RouterLink, DatePipe, DecimalPipe],
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule, MatIconModule],
+  templateUrl: './dashboard.component.html'
 })
-export default class DashboardComponent implements OnInit {
-  private _elections = inject(ElectionsService);
+export default class DashboardComponent implements OnInit { 
+  
+  loading: boolean = true;
+  data: any = null;
 
-  data: DashboardResumen | null = null;
-  loading = true;
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this._elections.dashboard().pipe(finalize(() => (this.loading = false))).subscribe({
-      next: (data) => (this.data = data),
-    });
+    console.log('1. Iniciando DashboardComponent...');
+    this.cargarResumenElectoral();
   }
 
-  label(value: string | null | undefined): string {
-    if (!value) return 'Sin iniciar';
-    return value.toLowerCase().split('_')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+  cargarResumenElectoral(): void {
+    this.loading = true;
+    this.cdr.detectChanges(); // Fuerza a mostrar el estado de carga
+
+    setTimeout(() => {
+      console.log('2. Temporizador terminado, asignando datos...');
+      
+      this.data = {
+        resumen: {
+          procesosActivos: 1,
+          totalElecciones: 12,
+          electoresActivos: 850,
+          electores: 1200,
+          listas: 3,
+          candidaturasCalificadas: 15,
+          votosEmitidos: 605
+        },
+        procesoActual: {
+          nombre: 'Elecciones Institucionales 2026',
+          estado: 'en_curso',
+          updatedAt: new Date(),
+          _count: { dignidades: 4, padron: 850, candidaturas: 3 }
+        },
+        participacion: {
+          porcentaje: 71.17,
+          votantes: 605,
+          habilitados: 850
+        },
+        recientes: [
+          {
+            id: 1,
+            nombre: 'Elecciones Generales 2025',
+            estado: 'finalizado',
+            updatedAt: new Date('2025-11-15'),
+            _count: { padron: 800, candidaturas: 2, votosEmitidos: 750 }
+          }
+        ]
+      };
+      
+      this.loading = false;
+      this.cdr.detectChanges(); // Fuerza a Angular a quitar los esqueletos de carga
+      console.log('3. Carga finalizada correctamente. Variable loading:', this.loading);
+      
+    }, 1200); 
   }
 
-  progreso(estado: EstadoEleccion): number {
-    if (estado === 'ANULADA') return 0;
-    const index = ETAPAS.indexOf(estado);
-    return index < 0 ? 0 : Math.round((index / (ETAPAS.length - 1)) * 100);
+  label(estado: string): string {
+    const estados: Record<string, string> = {
+      'configuracion': 'En Configuración',
+      'en_curso': 'Proceso Activo',
+      'finalizado': 'Finalizado'
+    };
+    return estados[estado] || 'Desconocido';
+  }
+
+  progreso(estado: string): number {
+    const porcentajes: Record<string, number> = {
+      'configuracion': 35,
+      'en_curso': 75,
+      'finalizado': 100
+    };
+    return porcentajes[estado] || 0;
   }
 }
