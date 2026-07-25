@@ -46,6 +46,10 @@ export interface PadronElectoralItem {
   observacion: string | null;
   publicado: boolean;
   fechaPublicacion: string | null;
+  credencialGeneradaAt: string | null;
+  credencialEnviadaAt: string | null;
+  credencialRevocadaAt: string | null;
+  credencialEnvioError: string | null;
   createdAt: string;
   updatedAt: string;
   elector: Elector;
@@ -91,6 +95,35 @@ export interface UpdatePadronElectorPayload {
   estado: EstadoPadronElector;
   motivo?: string | null;
   observacion?: string | null;
+}
+
+export interface PublicarPadronResponse {
+  publicado: boolean;
+  habilitados: number;
+  enviadas: number;
+  fallidas: number;
+}
+
+export interface ReenvioCredencialesResponse {
+  pendientes: number;
+  sinCorreo: number;
+  enviadas: number;
+  fallidas: number;
+}
+
+export interface EstadoCorreo {
+  modo: 'preview' | 'smtp';
+  configurado: boolean;
+}
+
+export interface CorreoPrueba {
+  id: string;
+  email: string;
+  usuario: string;
+  clave: string;
+  eleccionNombre: string;
+  accesoUrl: string;
+  createdAt: string;
 }
 
 export const ESTADOS_PADRON: EstadoPadronElector[] = [

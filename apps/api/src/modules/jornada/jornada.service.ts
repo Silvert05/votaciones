@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from 'prisma/generated/client';
 import { EstadoEleccion, EstadoPadronElector } from 'prisma/generated/enums';
 import { PrismaService } from 'src/prisma';
 import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
@@ -26,14 +27,8 @@ export class JornadaService {
     const eleccion = await this.getEleccion(eleccionId);
     const jornada = await this.ensureJornada(eleccionId);
 
-    const [padronHabilitado, votosEmitidos, dignidades] = await Promise.all([
-      this.prisma.padronElectoral.count({
-        where: {
-          eleccionId,
-          publicado: true,
-          estado: EstadoPadronElector.HABILITADO,
-        },
-      }),
+    const [credenciales, votosEmitidos, dignidades] = await Promise.all([
+      this.obtenerResumenCredenciales(eleccionId),
       this.prisma.votoEmitido.count({ where: { eleccionId } }),
       this.prisma.dignidad.count({ where: { eleccionId, activo: true } }),
     ]);
@@ -48,7 +43,7 @@ export class JornadaService {
       },
       jornada,
       pasoActual: this.pasoActual(jornada),
-      resumen: { padronHabilitado, votosEmitidos, dignidades },
+      resumen: { ...credenciales, votosEmitidos, dignidades },
     };
   }
 
@@ -139,6 +134,23 @@ export class JornadaService {
     if (!jornada.puestaCeroAt) {
       throw new BadRequestException(
         'Primero debe completar la puesta a cero.',
+      );
+    }
+
+    const credenciales = await this.obtenerResumenCredenciales(eleccionId);
+    if (!credenciales.padronHabilitado) {
+      throw new BadRequestException(
+        'No se puede iniciar la votacion: no existen electores habilitados en el padron publicado.',
+      );
+    }
+    if (credenciales.correosInvalidos > 0) {
+      throw new BadRequestException(
+        `No se puede iniciar la votacion: ${credenciales.correosInvalidos} elector(es) no tienen un correo institucional @yavirac.edu.ec valido.`,
+      );
+    }
+    if (credenciales.credencialesPendientes > 0) {
+      throw new BadRequestException(
+        `No se puede iniciar la votacion: faltan generar y enviar ${credenciales.credencialesPendientes} credencial(es). Use "Generar y enviar credenciales".`,
       );
     }
 
@@ -377,6 +389,77 @@ export class JornadaService {
     });
     if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');
     return eleccion;
+  }
+
+  private async obtenerResumenCredenciales(eleccionId: string) {
+    const padronBase = {
+      eleccionId,
+      publicado: true,
+      estado: EstadoPadronElector.HABILITADO,
+      elector: { activo: true },
+    } satisfies Prisma.PadronElectoralWhereInput;
+
+    const [padronHabilitado, credencialesPendientes, correosInvalidos] =
+      await Promise.all([
+        this.prisma.padronElectoral.count({ where: padronBase }),
+        this.prisma.padronElectoral.count({
+          where: {
+            ...padronBase,
+            elector: {
+              activo: true,
+              votosEmitidos: { none: { eleccionId } },
+            },
+            OR: [
+              { credencialHash: null },
+              { credencialEnviadaAt: null },
+              { credencialRevocadaAt: { not: null } },
+              { credencialEnvioError: { not: null } },
+            ],
+          },
+        }),
+        this.prisma.padronElectoral.count({
+          where: {
+            ...padronBase,
+            elector: {
+              activo: true,
+              OR: [
+                { email: null },
+                { email: '' },
+                {
+                  AND: [
+                    {
+                      NOT: {
+                        email: {
+                          endsWith: '@yavirac.edu.ec',
+                          mode: 'insensitive',
+                        },
+                      },
+                    },
+                    {
+                      NOT: {
+                        email: {
+                          endsWith: '.yavirac.edu.ec',
+                          mode: 'insensitive',
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+      ]);
+
+    return {
+      padronHabilitado,
+      credencialesEnviadas: Math.max(
+        0,
+        padronHabilitado - credencialesPendientes,
+      ),
+      credencialesPendientes,
+      correosInvalidos,
+    };
   }
 
   private audit(eleccionId: string, paso: string, actor: Actor) {

@@ -305,8 +305,18 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                    <mat-label>Email</mat-label>
-                    <input matInput type="email" formControlName="email" />
+                    <mat-label>Correo institucional</mat-label>
+                    <input
+                        matInput
+                        type="email"
+                        formControlName="email"
+                        placeholder="usuario@yavirac.edu.ec"
+                    />
+                    @if (form.controls.email.hasError('pattern')) {
+                        <mat-error>
+                            Debe usar un correo institucional de yavirac.edu.ec
+                        </mat-error>
+                    }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">

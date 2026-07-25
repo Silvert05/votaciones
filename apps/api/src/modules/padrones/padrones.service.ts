@@ -2,8 +2,9 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
-import { hashSync } from 'bcrypt';
+import { hash } from 'bcrypt';
 import { randomInt } from 'crypto';
 import { Prisma } from 'prisma/generated/client';
 import {
@@ -15,6 +16,7 @@ import { PrismaService } from 'src/prisma';
 import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
+import { CorreoService } from '../correo/correo.service';
 import {
   CreateElectorDto,
   QueryElectoresDto,
@@ -29,6 +31,16 @@ import {
 interface Actor {
   user: AuthUser;
   ip?: string | null;
+}
+
+interface CredencialPreparada {
+  padronId: string;
+  email: string;
+  nombres: string;
+  apellidos: string;
+  identificacion: string;
+  clave: string;
+  hash: string;
 }
 
 const electorSelect = {
@@ -61,6 +73,10 @@ const padronSelect = {
   observacion: true,
   publicado: true,
   fechaPublicacion: true,
+  credencialGeneradaAt: true,
+  credencialEnviadaAt: true,
+  credencialRevocadaAt: true,
+  credencialEnvioError: true,
   createdAt: true,
   updatedAt: true,
   elector: { select: electorSelect },
@@ -71,6 +87,7 @@ export class PadronesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly correo: CorreoService,
   ) {}
 
   async listElectores(query: QueryElectoresDto) {
@@ -147,7 +164,7 @@ export class PadronesService {
           ? { apellidos: dto.apellidos.trim() }
           : {}),
         ...(dto.email !== undefined
-          ? { email: this.emptyToNull(dto.email) }
+          ? { email: this.normalizarEmail(dto.email) }
           : {}),
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
         ...(dto.carreraId !== undefined ? { carreraId: dto.carreraId } : {}),
@@ -361,15 +378,48 @@ export class PadronesService {
     actor: Actor,
   ) {
     const before = await this.findPadronOrFail(eleccionId, padronId);
+    const reactivarPublicado =
+      before.publicado &&
+      before.estado !== EstadoPadronElector.HABILITADO &&
+      dto.estado === EstadoPadronElector.HABILITADO;
+    if (reactivarPublicado) {
+      this.correo.asegurarConfigurado();
+      if (!before.elector.email?.trim()) {
+        throw new BadRequestException(
+          'No se puede habilitar un elector publicado sin correo.',
+        );
+      }
+      const yaVoto = await this.prisma.votoEmitido.findFirst({
+        where: { eleccionId, electorId: before.electorId },
+        select: { id: true },
+      });
+      if (yaVoto) {
+        throw new BadRequestException(
+          'No se puede volver a habilitar a un elector que ya voto.',
+        );
+      }
+    }
+
     const padron = await this.prisma.padronElectoral.update({
       where: { id: padronId },
       data: {
         estado: dto.estado,
         motivo: this.emptyToNull(dto.motivo),
         observacion: this.emptyToNull(dto.observacion),
+        ...(dto.estado !== EstadoPadronElector.HABILITADO
+          ? {
+              credencialHash: null,
+              credencialRevocadaAt: new Date(),
+              credencialEnvioError: null,
+            }
+          : {}),
       },
       select: padronSelect,
     });
+
+    if (reactivarPublicado) {
+      await this.regenerarCredencial(eleccionId, padronId, actor);
+    }
 
     await this.audit(AuditTabla.PADRONES, AuditOperacion.UPDATE, padron.id, {
       datosAnteriores: before,
@@ -377,13 +427,21 @@ export class PadronesService {
       actor,
     });
 
-    return padron;
+    return reactivarPublicado
+      ? this.findPadronOrFail(eleccionId, padronId)
+      : padron;
   }
 
   async publicarPadron(eleccionId: string, actor: Actor) {
+    this.correo.asegurarConfigurado();
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
-      select: { id: true, estado: true },
+      select: {
+        id: true,
+        nombre: true,
+        estado: true,
+        configuracion: { select: { nombreInstitucion: true } },
+      },
     });
 
     if (!eleccion) {
@@ -399,15 +457,48 @@ export class PadronesService {
       );
     }
 
-    const habilitados = await this.prisma.padronElectoral.count({
+    const electoresHabilitados = await this.prisma.padronElectoral.findMany({
       where: { eleccionId, estado: EstadoPadronElector.HABILITADO },
+      select: {
+        id: true,
+        credencialHash: true,
+        credencialEnviadaAt: true,
+        elector: {
+          select: {
+            identificacion: true,
+            nombres: true,
+            apellidos: true,
+            email: true,
+            activo: true,
+          },
+        },
+      },
     });
+    const habilitados = electoresHabilitados.length;
 
     if (!habilitados) {
       throw new BadRequestException(
         'No hay electores habilitados para publicar.',
       );
     }
+
+    const sinCorreo = electoresHabilitados.filter(
+      (row) => !row.elector.email?.trim(),
+    );
+    if (sinCorreo.length) {
+      const ejemplos = sinCorreo
+        .slice(0, 5)
+        .map((row) => row.elector.identificacion)
+        .join(', ');
+      throw new BadRequestException(
+        `No se puede publicar: ${sinCorreo.length} elector(es) habilitado(s) no tienen correo. Revise: ${ejemplos}.`,
+      );
+    }
+
+    const pendientes = electoresHabilitados.filter(
+      (row) => !row.credencialHash || !row.credencialEnviadaAt,
+    );
+    const credenciales = await this.prepararCredenciales(pendientes);
 
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
@@ -432,49 +523,47 @@ export class PadronesService {
         });
       }
 
-      // Generar credenciales de votacion (DNI + clave) para habilitados sin clave.
-      const sinCredencial = await tx.padronElectoral.findMany({
-        where: {
-          eleccionId,
-          estado: EstadoPadronElector.HABILITADO,
-          credencialHash: null,
-        },
-        select: { id: true },
-      });
-      for (const row of sinCredencial) {
-        const clave = this.generarCredencial();
+      for (const credencial of credenciales) {
         await tx.padronElectoral.update({
-          where: { id: row.id },
+          where: { id: credencial.padronId },
           data: {
-            credencialHash: hashSync(clave, 10),
-            credencialTemporal: clave,
+            credencialHash: credencial.hash,
             credencialGeneradaAt: now,
+            credencialEnviadaAt: null,
+            credencialRevocadaAt: null,
+            credencialEnvioError: null,
+            credencialVersion: { increment: 1 },
           },
         });
       }
     });
 
+    const envios = await this.enviarCredenciales(eleccion, credenciales);
+
     await this.audit(AuditTabla.PADRONES, AuditOperacion.ESTADO, eleccionId, {
       datosAnteriores: { estadoEleccion: eleccion.estado },
-      datosNuevos: { publicado: true, habilitados },
+      datosNuevos: { publicado: true, habilitados, ...envios },
       actor,
     });
 
-    return { publicado: true, habilitados };
+    return { publicado: true, habilitados, ...envios };
   }
 
   async listCredenciales(eleccionId: string) {
     await this.ensureEleccion(eleccionId);
     const data = await this.prisma.padronElectoral.findMany({
-      where: { eleccionId, credencialHash: { not: null } },
+      where: { eleccionId, estado: EstadoPadronElector.HABILITADO },
       orderBy: [
         { elector: { apellidos: 'asc' } },
         { elector: { nombres: 'asc' } },
       ],
       select: {
         id: true,
-        credencialTemporal: true,
+        credencialHash: true,
         credencialGeneradaAt: true,
+        credencialEnviadaAt: true,
+        credencialRevocadaAt: true,
+        credencialEnvioError: true,
         elector: {
           select: {
             identificacion: true,
@@ -491,8 +580,11 @@ export class PadronesService {
       nombres: row.elector.nombres,
       apellidos: row.elector.apellidos,
       email: row.elector.email,
-      credencial: row.credencialTemporal,
       generadaAt: row.credencialGeneradaAt,
+      enviadaAt: row.credencialEnviadaAt,
+      revocadaAt: row.credencialRevocadaAt,
+      envioError: row.credencialEnvioError,
+      activa: Boolean(row.credencialHash && !row.credencialRevocadaAt),
     }));
   }
 
@@ -501,33 +593,241 @@ export class PadronesService {
     padronId: string,
     actor: Actor,
   ) {
+    this.correo.asegurarConfigurado();
     const padron = await this.findPadronOrFail(eleccionId, padronId);
-    const clave = this.generarCredencial();
+    if (
+      !padron.publicado ||
+      padron.estado !== EstadoPadronElector.HABILITADO ||
+      !padron.elector.activo
+    ) {
+      throw new BadRequestException(
+        'Solo se puede enviar una credencial a un elector publicado, activo y habilitado.',
+      );
+    }
+    if (!padron.elector.email?.trim()) {
+      throw new BadRequestException('El elector no tiene un correo valido.');
+    }
+    const yaVoto = await this.prisma.votoEmitido.findFirst({
+      where: { eleccionId, electorId: padron.electorId },
+      select: { id: true },
+    });
+    if (yaVoto) {
+      throw new BadRequestException(
+        'La credencial no puede regenerarse porque el elector ya voto.',
+      );
+    }
+
+    const eleccion = await this.obtenerEleccionParaCredenciales(eleccionId);
+    const [credencial] = await this.prepararCredenciales([
+      { id: padron.id, elector: padron.elector },
+    ]);
+    const now = new Date();
     await this.prisma.padronElectoral.update({
       where: { id: padronId },
       data: {
-        credencialHash: hashSync(clave, 10),
-        credencialTemporal: clave,
-        credencialGeneradaAt: new Date(),
+        credencialHash: credencial.hash,
+        credencialGeneradaAt: now,
+        credencialEnviadaAt: null,
+        credencialRevocadaAt: null,
+        credencialEnvioError: null,
+        credencialVersion: { increment: 1 },
       },
     });
 
+    const envios = await this.enviarCredenciales(eleccion, [credencial]);
+    if (envios.fallidas) {
+      throw new ServiceUnavailableException(
+        'No se pudo enviar la credencial. Revise la configuracion SMTP o reintente.',
+      );
+    }
+
     await this.audit(AuditTabla.PADRONES, AuditOperacion.UPDATE, padronId, {
       datosAnteriores: { electorId: padron.electorId },
-      datosNuevos: { credencialRegenerada: true },
+      datosNuevos: { credencialRegenerada: true, enviada: true },
       actor,
     });
 
-    return { identificacion: padron.elector.identificacion, credencial: clave };
+    return {
+      identificacion: padron.elector.identificacion,
+      email: padron.elector.email,
+      enviada: true,
+    };
+  }
+
+  async reenviarCredencialesPendientes(eleccionId: string, actor: Actor) {
+    this.correo.asegurarConfigurado();
+    const eleccion = await this.obtenerEleccionParaCredenciales(eleccionId);
+    const pendientes = await this.prisma.padronElectoral.findMany({
+      where: {
+        eleccionId,
+        publicado: true,
+        estado: EstadoPadronElector.HABILITADO,
+        OR: [
+          { credencialHash: null },
+          { credencialEnviadaAt: null },
+          { credencialRevocadaAt: { not: null } },
+          { credencialEnvioError: { not: null } },
+        ],
+        elector: {
+          activo: true,
+          votosEmitidos: { none: { eleccionId } },
+        },
+      },
+      select: {
+        id: true,
+        elector: {
+          select: {
+            identificacion: true,
+            nombres: true,
+            apellidos: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    const conCorreo = pendientes.filter((row) => row.elector.email?.trim());
+    const credenciales = await this.prepararCredenciales(conCorreo);
+    const now = new Date();
+    await this.prisma.$transaction(
+      credenciales.map((credencial) =>
+        this.prisma.padronElectoral.update({
+          where: { id: credencial.padronId },
+          data: {
+            credencialHash: credencial.hash,
+            credencialGeneradaAt: now,
+            credencialEnviadaAt: null,
+            credencialRevocadaAt: null,
+            credencialEnvioError: null,
+            credencialVersion: { increment: 1 },
+          },
+        }),
+      ),
+    );
+
+    const envios = await this.enviarCredenciales(eleccion, credenciales);
+    const resultado = {
+      pendientes: pendientes.length,
+      sinCorreo: pendientes.length - conCorreo.length,
+      ...envios,
+    };
+    await this.audit(AuditTabla.PADRONES, AuditOperacion.UPDATE, eleccionId, {
+      datosNuevos: { reenvioCredenciales: resultado },
+      actor,
+    });
+    return resultado;
   }
 
   private generarCredencial(): string {
-    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const alfabeto =
+      'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
     let clave = '';
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 12; i++) {
       clave += alfabeto[randomInt(alfabeto.length)];
     }
     return clave;
+  }
+
+  private async prepararCredenciales(
+    rows: Array<{
+      id: string;
+      elector: {
+        identificacion: string;
+        nombres: string;
+        apellidos: string;
+        email: string | null;
+      };
+    }>,
+  ): Promise<CredencialPreparada[]> {
+    const preparadas: CredencialPreparada[] = [];
+    const lote = 8;
+    for (let i = 0; i < rows.length; i += lote) {
+      const parte = rows.slice(i, i + lote);
+      preparadas.push(
+        ...(await Promise.all(
+          parte.map(async (row) => {
+            const clave = this.generarCredencial();
+            return {
+              padronId: row.id,
+              email: row.elector.email!.trim(),
+              nombres: row.elector.nombres,
+              apellidos: row.elector.apellidos,
+              identificacion: row.elector.identificacion,
+              clave,
+              hash: await hash(clave, 12),
+            };
+          }),
+        )),
+      );
+    }
+    return preparadas;
+  }
+
+  private async enviarCredenciales(
+    eleccion: {
+      id: string;
+      nombre: string;
+      configuracion: { nombreInstitucion: string | null } | null;
+    },
+    credenciales: CredencialPreparada[],
+  ): Promise<{ enviadas: number; fallidas: number }> {
+    let enviadas = 0;
+    let fallidas = 0;
+    const lote = 10;
+
+    for (let i = 0; i < credenciales.length; i += lote) {
+      await Promise.all(
+        credenciales.slice(i, i + lote).map(async (credencial) => {
+          try {
+            await this.correo.enviarCredencialVotacion({
+              email: credencial.email,
+              nombres: credencial.nombres,
+              apellidos: credencial.apellidos,
+              identificacion: credencial.identificacion,
+              clave: credencial.clave,
+              eleccionId: eleccion.id,
+              eleccionNombre: eleccion.nombre,
+              institucion: eleccion.configuracion?.nombreInstitucion,
+            });
+            await this.prisma.padronElectoral.update({
+              where: { id: credencial.padronId },
+              data: {
+                credencialEnviadaAt: new Date(),
+                credencialEnvioError: null,
+              },
+            });
+            enviadas++;
+          } catch (error) {
+            const message =
+              error instanceof Error
+                ? error.message.slice(0, 1000)
+                : 'Error desconocido al enviar el correo.';
+            await this.prisma.padronElectoral.update({
+              where: { id: credencial.padronId },
+              data: { credencialEnviadaAt: null, credencialEnvioError: message },
+            });
+            fallidas++;
+          }
+        }),
+      );
+    }
+
+    return { enviadas, fallidas };
+  }
+
+  private async obtenerEleccionParaCredenciales(id: string) {
+    const eleccion = await this.prisma.eleccion.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        nombre: true,
+        configuracion: { select: { nombreInstitucion: true } },
+      },
+    });
+    if (!eleccion) {
+      throw new NotFoundException('Eleccion no encontrada.');
+    }
+    return eleccion;
   }
 
   private async ensureEleccion(id: string) {
@@ -588,7 +888,7 @@ export class PadronesService {
       identificacion: dto.identificacion.trim(),
       nombres: dto.nombres.trim(),
       apellidos: dto.apellidos.trim(),
-      email: this.emptyToNull(dto.email),
+      email: this.normalizarEmail(dto.email),
       tipo: dto.tipo,
       carreraId: dto.carreraId ?? null,
       nivelId: dto.nivelId ?? null,
@@ -651,6 +951,10 @@ export class PadronesService {
     }
     const trimmed = value.trim();
     return trimmed.length ? trimmed : null;
+  }
+
+  private normalizarEmail(value?: string | null): string | null {
+    return this.emptyToNull(value)?.toLowerCase() ?? null;
   }
 
   private audit(

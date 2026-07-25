@@ -190,14 +190,14 @@ export class PadronesController {
 
   @Get('elecciones/:eleccionId/credenciales')
   @ApiOperation({
-    summary: 'Listar credenciales de votacion generadas (DNI + clave)',
+    summary: 'Listar el estado de entrega de credenciales de votacion',
   })
   listCredenciales(@Param('eleccionId', ParseUUIDPipe) eleccionId: string) {
     return this.padronesService.listCredenciales(eleccionId);
   }
 
   @Post('elecciones/:eleccionId/items/:padronId/credencial')
-  @ApiOperation({ summary: 'Regenerar la credencial de un elector' })
+  @ApiOperation({ summary: 'Regenerar y enviar la credencial de un elector' })
   regenerarCredencial(
     @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
     @Param('padronId', ParseUUIDPipe) padronId: string,
@@ -205,6 +205,19 @@ export class PadronesController {
     @Ip() ip: string,
   ) {
     return this.padronesService.regenerarCredencial(eleccionId, padronId, {
+      user,
+      ip,
+    });
+  }
+
+  @Post('elecciones/:eleccionId/credenciales/reenviar-pendientes')
+  @ApiOperation({ summary: 'Regenerar y reenviar credenciales no entregadas' })
+  reenviarCredencialesPendientes(
+    @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.padronesService.reenviarCredencialesPendientes(eleccionId, {
       user,
       ip,
     });

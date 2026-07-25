@@ -935,8 +935,9 @@ async function seedProcesoElectoral(catalogos: Catalogos) {
       publicado: true,
       fechaPublicacion,
       credencialHash: claveHash,
-      credencialTemporal: CLAVE_DEMO,
       credencialGeneradaAt: fechaPublicacion,
+      credencialEnviadaAt: fechaPublicacion,
+      credencialVersion: 1,
     })),
   });
 
@@ -1018,6 +1019,16 @@ async function seedProcesoElectoral(catalogos: Catalogos) {
   });
 
   await prisma.votoEmitido.createMany({ data: votosEmitidos });
+  await prisma.padronElectoral.updateMany({
+    where: {
+      eleccionId: eleccion.id,
+      electorId: { in: [...new Set(votosEmitidos.map((voto) => voto.electorId))] },
+    },
+    data: {
+      credencialHash: null,
+      credencialRevocadaAt: new Date('2026-06-15T12:00:00.000Z'),
+    },
+  });
   await prisma.conteoVoto.createMany({
     data: [...conteoAcc.values()].map((c) => ({
       eleccionId: eleccion.id,

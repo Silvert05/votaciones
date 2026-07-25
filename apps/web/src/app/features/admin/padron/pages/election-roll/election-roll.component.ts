@@ -58,7 +58,15 @@ export default class ElectionRollComponent implements OnInit {
   private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
-  readonly columns = ['identificacion', 'nombre', 'tipo', 'estado', 'publicado', 'acciones'];
+  readonly columns = [
+    'identificacion',
+    'nombre',
+    'email',
+    'tipo',
+    'estado',
+    'credencial',
+    'acciones',
+  ];
   readonly estados = ESTADOS_PADRON;
   readonly tipos = TIPOS_ELECTOR;
 
@@ -215,19 +223,58 @@ export default class ElectionRollComponent implements OnInit {
     }
     this._institutionalDialog.confirm({
       title: 'Publicar padrón electoral',
-      message: 'Los electores habilitados quedarán disponibles para este proceso electoral.',
+      message: 'Se generará una contraseña única y se enviará al correo de cada elector habilitado. Los electores sin correo impedirán la publicación.',
       confirmText: 'Publicar padrón',
       icon: 'heroicons_outline:user-group',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._padronService.publicar(eleccionId).subscribe({
         next: (res) => {
-          this._notify(`Padrón publicado con ${res.habilitados} electores habilitados.`);
+          const detalle = res.fallidas
+            ? ` Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}.`
+            : ` Credenciales enviadas: ${res.enviadas}.`;
+          this._notify(`Padrón publicado con ${res.habilitados} electores.${detalle}`);
           this.loadPadron();
           this.loadElecciones();
         },
         error: (err) =>
           this._notify(this.errorMessage(err, 'No se pudo publicar el padrón.')),
+      });
+    });
+  }
+
+  reenviarPendientes(): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._padronService.reenviarCredencialesPendientes(eleccionId).subscribe({
+      next: (res) => {
+        this._notify(
+          `Reenvío completado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.`,
+        );
+        this.loadPadron();
+      },
+      error: (err) =>
+        this._notify(this.errorMessage(err, 'No se pudieron reenviar las credenciales.')),
+    });
+  }
+
+  enviarCredencial(item: PadronElectoralItem): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._institutionalDialog.confirm({
+      title: 'Enviar nueva credencial',
+      message: `Se invalidará la contraseña anterior y se enviará una nueva a ${item.elector.email ?? 'su correo'}.`,
+      confirmText: 'Generar y enviar',
+      icon: 'heroicons_outline:envelope',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this._padronService.enviarCredencial(eleccionId, item.id).subscribe({
+        next: () => {
+          this._notify('Nueva credencial enviada correctamente.');
+          this.loadPadron();
+        },
+        error: (err) =>
+          this._notify(this.errorMessage(err, 'No se pudo enviar la credencial.')),
       });
     });
   }
@@ -292,6 +339,22 @@ export default class ElectionRollComponent implements OnInit {
     if (estado === 'HABILITADO') return `${base} bg-green-100 text-green-700`;
     if (estado === 'OBSERVADO') return `${base} bg-amber-100 text-amber-700`;
     return `${base} bg-red-100 text-red-700`;
+  }
+
+  credencialLabel(item: PadronElectoralItem): string {
+    if (item.credencialRevocadaAt) return 'Revocada';
+    if (item.credencialEnvioError) return 'Error de envío';
+    if (item.credencialEnviadaAt) return 'Enviada';
+    if (item.credencialGeneradaAt) return 'Pendiente de envío';
+    return 'No generada';
+  }
+
+  credencialClass(item: PadronElectoralItem): string {
+    const base = 'inline-flex rounded px-2 py-1 text-xs font-semibold';
+    if (item.credencialRevocadaAt) return `${base} bg-slate-100 text-slate-700`;
+    if (item.credencialEnvioError) return `${base} bg-red-100 text-red-700`;
+    if (item.credencialEnviadaAt) return `${base} bg-green-100 text-green-700`;
+    return `${base} bg-amber-100 text-amber-700`;
   }
 
   private _notify(message: string): void {

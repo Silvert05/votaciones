@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +13,11 @@ import { finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
+import { PadronService } from '../../../padron/services/padron.service';
+import {
+  CorreoPrueba,
+  EstadoCorreo,
+} from '../../../padron/models/padron.model';
 import { JornadaEstado } from '../../models/jornada.model';
 import { JornadaService } from '../../services/jornada.service';
 
@@ -25,6 +31,7 @@ interface PasoInfo {
   selector: 'admin-jornada',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     DatePipe,
     MatButtonModule,
     MatIconModule,
@@ -38,11 +45,14 @@ interface PasoInfo {
 export default class JornadaComponent implements OnInit, OnDestroy {
   private _electionsService = inject(ElectionsService);
   private _jornadaService = inject(JornadaService);
+  private _padronService = inject(PadronService);
   private _snackBar = inject(MatSnackBar);
   private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
   estado: JornadaEstado | null = null;
+  estadoCorreo: EstadoCorreo | null = null;
+  correosPrueba: CorreoPrueba[] = [];
   loading = false;
   working = false;
 
@@ -62,6 +72,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadElecciones();
+    this.loadEstadoCorreo();
     this.selectedIdCtrl.valueChanges.subscribe((id) => {
       if (id) this.loadEstado(id);
       else this.estado = null;
@@ -135,6 +146,76 @@ export default class JornadaComponent implements OnInit, OnDestroy {
         fechaFinVotacion: fechaFin,
       }),
     );
+  }
+
+  loadEstadoCorreo(): void {
+    this._padronService.estadoCorreo().subscribe({
+      next: (estado) => {
+        this.estadoCorreo = estado;
+        if (estado.modo === 'preview') this.loadBuzonPruebas();
+      },
+      error: () => {
+        this.estadoCorreo = null;
+      },
+    });
+  }
+
+  loadBuzonPruebas(): void {
+    this._padronService.buzonPruebas().subscribe({
+      next: (correos) => (this.correosPrueba = correos),
+      error: () => (this.correosPrueba = []),
+    });
+  }
+
+  limpiarBuzonPruebas(): void {
+    this._padronService.limpiarBuzonPruebas().subscribe({
+      next: () => {
+        this.correosPrueba = [];
+        this._notify('Buzón local de pruebas vaciado.');
+      },
+      error: (err) =>
+        this._notify(this._msg(err, 'No se pudo vaciar el buzón de pruebas.')),
+    });
+  }
+
+  generarEnviarCredenciales(): void {
+    if (!this.estado) return;
+    const eleccionId = this.estado.eleccion.id;
+    this._institutionalDialog
+      .confirm({
+        title: 'Generar y enviar credenciales',
+        message:
+          this.estadoCorreo?.modo === 'preview'
+            ? 'Se generará una contraseña única para cada elector pendiente y aparecerá en el buzón local de pruebas.'
+            : 'Se generará una contraseña única para cada elector pendiente y se enviará a su correo institucional.',
+        confirmText: 'Generar y enviar',
+        icon: 'heroicons_outline:envelope',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.working = true;
+        this._padronService
+          .reenviarCredencialesPendientes(eleccionId)
+          .pipe(finalize(() => (this.working = false)))
+          .subscribe({
+            next: (res) => {
+              this._notify(
+                `Proceso terminado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.`,
+              );
+              this.loadEstado(eleccionId);
+              if (this.estadoCorreo?.modo === 'preview') {
+                this.loadBuzonPruebas();
+              }
+            },
+            error: (err) =>
+              this._notify(
+                this._msg(
+                  err,
+                  'No se pudieron generar y enviar las credenciales.',
+                ),
+              ),
+          });
+      });
   }
 
   cerrarVotacion(): void {

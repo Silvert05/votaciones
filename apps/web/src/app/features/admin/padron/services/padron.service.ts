@@ -4,12 +4,16 @@ import { Observable } from 'rxjs';
 import {
     CreateElectorPayload,
     CatalogosElector,
+    CorreoPrueba,
     Elector,
     ElectoresPaginated,
     ElectoresQuery,
+    EstadoCorreo,
     PadronElectoralItem,
     PadronPaginated,
     PadronQuery,
+    PublicarPadronResponse,
+    ReenvioCredencialesResponse,
     UpdateElectorPayload,
     UpdatePadronElectorPayload,
 } from '../models/padron.model';
@@ -115,10 +119,47 @@ export class PadronService {
 
     publicar(
         eleccionId: string
-    ): Observable<{ publicado: boolean; habilitados: number }> {
-        return this._http.post<{ publicado: boolean; habilitados: number }>(
+    ): Observable<PublicarPadronResponse> {
+        return this._http.post<PublicarPadronResponse>(
             `/padrones/elecciones/${eleccionId}/publicar`,
             {}
+        );
+    }
+
+    enviarCredencial(
+        eleccionId: string,
+        padronId: string
+    ): Observable<{ identificacion: string; email: string; enviada: boolean }> {
+        return this._http.post<{
+            identificacion: string;
+            email: string;
+            enviada: boolean;
+        }>(
+            `/padrones/elecciones/${eleccionId}/items/${padronId}/credencial`,
+            {}
+        );
+    }
+
+    reenviarCredencialesPendientes(
+        eleccionId: string
+    ): Observable<ReenvioCredencialesResponse> {
+        return this._http.post<ReenvioCredencialesResponse>(
+            `/padrones/elecciones/${eleccionId}/credenciales/reenviar-pendientes`,
+            {}
+        );
+    }
+
+    estadoCorreo(): Observable<EstadoCorreo> {
+        return this._http.get<EstadoCorreo>('/correo/estado');
+    }
+
+    buzonPruebas(): Observable<CorreoPrueba[]> {
+        return this._http.get<CorreoPrueba[]>('/correo/buzon-pruebas');
+    }
+
+    limpiarBuzonPruebas(): Observable<{ eliminados: number }> {
+        return this._http.delete<{ eliminados: number }>(
+            '/correo/buzon-pruebas'
         );
     }
 }

@@ -268,6 +268,14 @@ export class VotacionService {
           },
         });
       }
+      await tx.padronElectoral.updateMany({
+        where: { eleccionId, electorId: elector.id },
+        data: {
+          credencialHash: null,
+          credencialRevocadaAt: new Date(),
+          credencialEnvioError: null,
+        },
+      });
     });
 
     await this.audit(
@@ -360,10 +368,12 @@ export class VotacionService {
         eleccionId,
         publicado: true,
         estado: EstadoPadronElector.HABILITADO,
+        credencialRevocadaAt: null,
         elector: { identificacion: dto.identificacion.trim(), activo: true },
       },
       select: {
         credencialHash: true,
+        credencialVersion: true,
         elector: {
           select: {
             id: true,
@@ -397,6 +407,7 @@ export class VotacionService {
         sub: padron.elector.id,
         eleccionId,
         identificacion: padron.elector.identificacion,
+        credencialVersion: padron.credencialVersion,
         type: 'voto',
       },
       { expiresIn: '30m' },
@@ -485,6 +496,8 @@ export class VotacionService {
         publicado: true,
         estado: EstadoPadronElector.HABILITADO,
         electorId,
+        credencialHash: { not: null },
+        credencialRevocadaAt: null,
       },
       select: {
         elector: { select: { id: true, tipo: true, identificacion: true } },
@@ -565,6 +578,16 @@ export class VotacionService {
           },
         });
       }
+      await tx.padronElectoral.update({
+        where: {
+          eleccionId_electorId: { eleccionId, electorId },
+        },
+        data: {
+          credencialHash: null,
+          credencialRevocadaAt: new Date(),
+          credencialEnvioError: null,
+        },
+      });
     });
 
     await this.auditoria.registrar({

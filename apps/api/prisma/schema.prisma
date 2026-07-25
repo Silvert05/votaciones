@@ -322,8 +322,11 @@ model PadronElectoral {
   publicado            Boolean             @default(false)
   fechaPublicacion     DateTime?           @map("fecha_publicacion")
   credencialHash       String?             @map("credencial_hash") @db.VarChar(255)
-  credencialTemporal   String?             @map("credencial_temporal") @db.VarChar(60)
   credencialGeneradaAt DateTime?           @map("credencial_generada_at")
+  credencialEnviadaAt  DateTime?           @map("credencial_enviada_at")
+  credencialRevocadaAt DateTime?           @map("credencial_revocada_at")
+  credencialEnvioError String?              @map("credencial_envio_error") @db.Text
+  credencialVersion    Int                  @default(0) @map("credencial_version")
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
 

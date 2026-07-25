@@ -86,10 +86,20 @@
     </div>
 
     <!-- Resumen -->
-    <div class="px-6 pb-4 grid grid-cols-3 gap-3">
+    <div class="px-6 pb-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
       <div class="rounded border p-3 text-center">
         <div class="text-2xl font-bold">{{ estado.resumen.padronHabilitado }}</div>
         <div class="text-xs text-secondary">Electores habiles</div>
+      </div>
+      <div class="rounded border p-3 text-center">
+        <div class="text-2xl font-bold text-green-600">{{ estado.resumen.credencialesEnviadas }}</div>
+        <div class="text-xs text-secondary">Credenciales listas</div>
+      </div>
+      <div class="rounded border p-3 text-center">
+        <div class="text-2xl font-bold" [class.text-red-600]="estado.resumen.credencialesPendientes > 0">
+          {{ estado.resumen.credencialesPendientes }}
+        </div>
+        <div class="text-xs text-secondary">Credenciales pendientes</div>
       </div>
       <div class="rounded border p-3 text-center">
         <div class="text-2xl font-bold">{{ estado.resumen.votosEmitidos }}</div>
@@ -120,13 +130,110 @@
       }
       @case (3) {
       <div class="text-2xl font-extrabold">3. INICIAR VOTACION</div>
-      <p class="text-secondary mt-1">Habilita el link de votacion para los electores.</p>
+      <p class="text-secondary mt-1">
+        Primero genera y envía las credenciales. La jornada permanecerá bloqueada mientras exista algún elector pendiente.
+      </p>
+      <div
+        class="mt-4 rounded-xl border p-4"
+        [class.border-green-500]="estado.resumen.credencialesPendientes === 0 && estado.resumen.correosInvalidos === 0"
+        [class.border-red-500]="estado.resumen.credencialesPendientes > 0 || estado.resumen.correosInvalidos > 0"
+      >
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold">
+              {{ estado.resumen.credencialesEnviadas }} de {{ estado.resumen.padronHabilitado }}
+              credenciales listas
+            </div>
+            @if (estado.resumen.correosInvalidos > 0) {
+            <div class="mt-1 text-sm text-red-600">
+              {{ estado.resumen.correosInvalidos }} elector(es) sin correo institucional válido.
+            </div>
+            } @else if (estado.resumen.credencialesPendientes > 0) {
+            <div class="mt-1 text-sm text-amber-700">
+              Faltan {{ estado.resumen.credencialesPendientes }} credencial(es).
+            </div>
+            } @else {
+            <div class="mt-1 text-sm text-green-600">Todos los electores están listos para votar.</div>
+            }
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              matButton="filled"
+              color="primary"
+              type="button"
+              [disabled]="working || estado.resumen.padronHabilitado === 0 || estado.resumen.correosInvalidos > 0"
+              (click)="generarEnviarCredenciales()"
+            >
+              <mat-icon [svgIcon]="'heroicons_solid:envelope'" />
+              <span class="ml-1">Generar y enviar credenciales</span>
+            </button>
+            <a matButton="tonal" [routerLink]="['/admin/elecciones/padron']">
+              Enviar una por una
+            </a>
+          </div>
+        </div>
+      </div>
+      @if (estadoCorreo?.modo === 'preview') {
+      <div class="mt-4 rounded-xl border border-amber-400 bg-amber-50 p-4 dark:bg-amber-950/20">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold text-amber-900 dark:text-amber-200">
+              Buzón local de pruebas
+            </div>
+            <p class="mt-1 text-sm text-amber-800 dark:text-amber-300">
+              Los correos no salen a Internet. Usa estas credenciales para comprobar el flujo completo de votación.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button matButton="tonal" type="button" (click)="loadBuzonPruebas()">
+              Actualizar
+            </button>
+            <button matButton type="button" (click)="limpiarBuzonPruebas()" [disabled]="correosPrueba.length === 0">
+              Vaciar
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 max-h-80 overflow-auto rounded-lg border bg-white dark:bg-gray-900">
+          @for (correo of correosPrueba; track correo.id) {
+          <div class="grid grid-cols-1 gap-2 border-b p-3 text-sm md:grid-cols-4">
+            <div>
+              <div class="text-xs text-secondary">Destinatario</div>
+              <div class="font-medium">{{ correo.email }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-secondary">Usuario</div>
+              <code>{{ correo.usuario }}</code>
+            </div>
+            <div>
+              <div class="text-xs text-secondary">Contraseña</div>
+              <code class="font-bold">{{ correo.clave }}</code>
+            </div>
+            <div class="flex items-end">
+              <a matButton="filled" color="primary" [href]="correo.accesoUrl" target="_blank" rel="noopener">
+                Probar acceso
+              </a>
+            </div>
+          </div>
+          } @empty {
+          <div class="p-4 text-center text-sm text-secondary">
+            Genera las credenciales para ver aquí los correos de prueba.
+          </div>
+          }
+        </div>
+      </div>
+      }
       <mat-form-field appearance="outline" class="mt-3 w-full sm:w-96">
         <mat-label>Fecha y hora de cierre (cronometro)</mat-label>
         <input matInput type="datetime-local" [formControl]="fechaFinCtrl">
       </mat-form-field>
       <div>
-        <button matButton="filled" color="primary" [disabled]="working" (click)="iniciarVotacion()">
+        <button
+          matButton="filled"
+          color="primary"
+          [disabled]="working || estado.resumen.credencialesPendientes > 0 || estado.resumen.correosInvalidos > 0"
+          (click)="iniciarVotacion()"
+        >
           <mat-icon [svgIcon]="'heroicons_solid:cursor-arrow-rays'" /><span class="ml-1">Iniciar votacion</span>
         </button>
       </div>

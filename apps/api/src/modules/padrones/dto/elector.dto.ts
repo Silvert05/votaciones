@@ -11,6 +11,7 @@ import {
   IsUUID,
   Max,
   MaxLength,
+  Matches,
   Min,
 } from 'class-validator';
 import { TipoElector } from 'prisma/generated/enums';
@@ -70,6 +71,10 @@ export class CreateElectorDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsEmail()
+  @Matches(/^[^@\s]+@(?:[a-z0-9-]+\.)*yavirac\.edu\.ec$/i, {
+    message:
+      'El correo debe pertenecer al dominio institucional yavirac.edu.ec.',
+  })
   @MaxLength(180)
   email?: string | null;
 
@@ -123,6 +128,10 @@ export class UpdateElectorDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsEmail()
+  @Matches(/^[^@\s]+@(?:[a-z0-9-]+\.)*yavirac\.edu\.ec$/i, {
+    message:
+      'El correo debe pertenecer al dominio institucional yavirac.edu.ec.',
+  })
   @MaxLength(180)
   email?: string | null;
 

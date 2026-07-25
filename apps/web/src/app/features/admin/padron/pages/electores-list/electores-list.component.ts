@@ -87,7 +87,16 @@ export default class ElectoresListComponent implements OnInit {
         identificacion: ['', [Validators.required, Validators.maxLength(20)]],
         nombres: ['', [Validators.required, Validators.maxLength(120)]],
         apellidos: ['', [Validators.required, Validators.maxLength(120)]],
-        email: ['', [Validators.email, Validators.maxLength(180)]],
+        email: [
+            '',
+            [
+                Validators.email,
+                Validators.pattern(
+                    /^[^@\s]+@(?:[a-z0-9-]+\.)*yavirac\.edu\.ec$/i
+                ),
+                Validators.maxLength(180),
+            ],
+        ],
         tipo: ['ESTUDIANTE' as TipoElector, Validators.required],
         carreraId: [''],
         nivelId: [''],

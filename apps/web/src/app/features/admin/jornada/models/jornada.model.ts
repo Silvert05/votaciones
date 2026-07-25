@@ -40,6 +40,9 @@ export interface JornadaEstado {
   pasoActual: number;
   resumen: {
     padronHabilitado: number;
+    credencialesEnviadas: number;
+    credencialesPendientes: number;
+    correosInvalidos: number;
     votosEmitidos: number;
     dignidades: number;
   };
