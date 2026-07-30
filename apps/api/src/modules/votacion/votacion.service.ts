@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 import { Prisma } from 'prisma/generated/client';
 import {
   EstadoCandidatura,
@@ -28,6 +29,31 @@ interface Actor {
   user: AuthUser;
   ip?: string | null;
 }
+
+interface ParticipacionCarreraRow {
+  carreraId: string;
+  carrera: string;
+  habilitados: number;
+  votantes: number;
+}
+
+interface ConteoCarreraRow {
+  carreraId: string;
+  dignidadId: string;
+  candidaturaId: string | null;
+  tipo: TipoVoto;
+  opcionKey: string;
+  total: number;
+  identificacion: string | null;
+  nombres: string | null;
+  apellidos: string | null;
+  fotoUrl: string | null;
+  listaCodigo: string | null;
+  listaNombre: string | null;
+  listaColor: string | null;
+}
+
+const MINIMO_PRIVACIDAD_CARRERA = 5;
 
 const candidatoSelect = {
   id: true,
@@ -267,6 +293,17 @@ export class VotacionService {
             total: 1,
           },
         });
+        if (elector.carreraId) {
+          await this.incrementarConteoCarrera(tx, {
+            eleccionId,
+            dignidadId: voto.dignidadId,
+            carreraId: elector.carreraId,
+            candidaturaId:
+              voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
+            tipo: voto.tipo,
+            opcionKey,
+          });
+        }
       }
       await tx.padronElectoral.updateMany({
         where: { eleccionId, electorId: elector.id },
@@ -348,12 +385,17 @@ export class VotacionService {
       })),
     );
 
+    const estadisticasCarrera =
+      await this.estadisticasPorCarrera(eleccionId);
+
     return {
       eleccion,
       padronHabilitado,
       dignidades,
       emitidos,
       conteos,
+      estadisticasCarrera,
+      minimoPrivacidadCarrera: MINIMO_PRIVACIDAD_CARRERA,
     };
   }
 
@@ -500,7 +542,16 @@ export class VotacionService {
         credencialRevocadaAt: null,
       },
       select: {
-        elector: { select: { id: true, tipo: true, identificacion: true } },
+        elector: {
+          select: {
+            id: true,
+            tipo: true,
+            carreraId: true,
+            identificacion: true,
+            nombres: true,
+            apellidos: true,
+          },
+        },
       },
     });
     if (!elector) {
@@ -552,12 +603,15 @@ export class VotacionService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    const comprobante = await this.prisma.$transaction(async (tx) => {
+      let registro: { id: string; createdAt: Date } | null = null;
       for (const voto of dto.votos) {
         const opcionKey = this.opcionKey(voto.tipo, voto.candidaturaId);
-        await tx.votoEmitido.create({
+        const emitido = await tx.votoEmitido.create({
           data: { eleccionId, dignidadId: voto.dignidadId, electorId },
+          select: { id: true, createdAt: true },
         });
+        registro ??= emitido;
         await tx.conteoVoto.upsert({
           where: {
             eleccionId_dignidadId_opcionKey: {
@@ -577,6 +631,17 @@ export class VotacionService {
             total: 1,
           },
         });
+        if (elector.elector.carreraId) {
+          await this.incrementarConteoCarrera(tx, {
+            eleccionId,
+            dignidadId: voto.dignidadId,
+            carreraId: elector.elector.carreraId,
+            candidaturaId:
+              voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
+            tipo: voto.tipo,
+            opcionKey,
+          });
+        }
       }
       await tx.padronElectoral.update({
         where: {
@@ -588,6 +653,7 @@ export class VotacionService {
           credencialEnvioError: null,
         },
       });
+      return registro;
     });
 
     await this.auditoria.registrar({
@@ -603,7 +669,27 @@ export class VotacionService {
       ip,
     });
 
-    return { registrado: true, dignidades: dto.votos.length };
+    if (!comprobante) {
+      throw new BadRequestException('No se pudo generar el comprobante.');
+    }
+
+    return {
+      registrado: true,
+      dignidades: dto.votos.length,
+      comprobante: {
+        codigo: comprobante.id,
+        emitidoAt: comprobante.createdAt,
+        elector: {
+          identificacion: elector.elector.identificacion,
+          nombres: elector.elector.nombres,
+          apellidos: elector.elector.apellidos,
+        },
+        eleccion: {
+          nombre: eleccion.nombre,
+          institucion: eleccion.configuracion?.nombreInstitucion ?? null,
+        },
+      },
+    };
   }
 
   private dignidadesElegiblesWhere(
@@ -615,9 +701,137 @@ export class VotacionService {
     }));
   }
 
+  private async incrementarConteoCarrera(
+    tx: Prisma.TransactionClient,
+    data: {
+      eleccionId: string;
+      dignidadId: string;
+      carreraId: string;
+      candidaturaId: string | null;
+      tipo: TipoVoto;
+      opcionKey: string;
+    },
+  ): Promise<void> {
+    const candidatura = data.candidaturaId
+      ? Prisma.sql`${data.candidaturaId}::uuid`
+      : Prisma.sql`NULL`;
+    await tx.$executeRaw(Prisma.sql`
+      INSERT INTO "conteos_votos_carrera" (
+        "id", "eleccion_id", "dignidad_id", "carrera_id",
+        "candidatura_id", "tipo", "opcion_key", "total",
+        "created_at", "updated_at"
+      )
+      VALUES (
+        ${randomUUID()}::uuid, ${data.eleccionId}::uuid,
+        ${data.dignidadId}::uuid, ${data.carreraId}::uuid,
+        ${candidatura}, ${data.tipo}::"TipoVoto", ${data.opcionKey},
+        1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+      ON CONFLICT (
+        "eleccion_id", "dignidad_id", "carrera_id", "opcion_key"
+      )
+      DO UPDATE SET
+        "total" = "conteos_votos_carrera"."total" + 1,
+        "updated_at" = CURRENT_TIMESTAMP
+    `);
+  }
+
+  private async estadisticasPorCarrera(eleccionId: string) {
+    const [participacion, conteos] = await Promise.all([
+      this.prisma.$queryRaw<ParticipacionCarreraRow[]>(Prisma.sql`
+        SELECT
+          c."id" AS "carreraId",
+          c."nombre" AS "carrera",
+          COUNT(DISTINCT pe."elector_id")::int AS "habilitados",
+          COUNT(DISTINCT ve."elector_id")::int AS "votantes"
+        FROM "padrones_electorales" pe
+        INNER JOIN "electores" e ON e."id" = pe."elector_id"
+        INNER JOIN "carreras" c ON c."id" = e."carrera_id"
+        LEFT JOIN "votos_emitidos" ve
+          ON ve."eleccion_id" = pe."eleccion_id"
+          AND ve."elector_id" = pe."elector_id"
+        WHERE pe."eleccion_id" = ${eleccionId}::uuid
+          AND pe."publicado" = true
+          AND pe."estado" = ${EstadoPadronElector.HABILITADO}::"EstadoPadronElector"
+        GROUP BY c."id", c."nombre", c."orden"
+        ORDER BY c."orden" ASC, c."nombre" ASC
+      `),
+      this.prisma.$queryRaw<ConteoCarreraRow[]>(Prisma.sql`
+        SELECT
+          cvc."carrera_id" AS "carreraId",
+          cvc."dignidad_id" AS "dignidadId",
+          cvc."candidatura_id" AS "candidaturaId",
+          cvc."tipo" AS "tipo",
+          cvc."opcion_key" AS "opcionKey",
+          cvc."total" AS "total",
+          e."identificacion" AS "identificacion",
+          e."nombres" AS "nombres",
+          e."apellidos" AS "apellidos",
+          e."foto_url" AS "fotoUrl",
+          l."codigo" AS "listaCodigo",
+          l."nombre" AS "listaNombre",
+          l."color" AS "listaColor"
+        FROM "conteos_votos_carrera" cvc
+        LEFT JOIN "candidaturas" ca ON ca."id" = cvc."candidatura_id"
+        LEFT JOIN "electores" e ON e."id" = ca."elector_id"
+        LEFT JOIN "listas_electorales" l ON l."id" = ca."lista_id"
+        WHERE cvc."eleccion_id" = ${eleccionId}::uuid
+        ORDER BY cvc."carrera_id", cvc."dignidad_id", cvc."total" DESC
+      `),
+    ]);
+
+    return participacion.map((item) => {
+      const votantes = Number(item.votantes);
+      const habilitados = Number(item.habilitados);
+      const publicable = votantes >= MINIMO_PRIVACIDAD_CARRERA;
+      return {
+        carreraId: item.carreraId,
+        carrera: item.carrera,
+        habilitados,
+        votantes,
+        porcentaje: habilitados
+          ? Math.round((votantes / habilitados) * 10000) / 100
+          : 0,
+        publicable,
+        opciones: publicable
+          ? conteos
+              .filter((conteo) => conteo.carreraId === item.carreraId)
+              .map((conteo) => ({
+                dignidadId: conteo.dignidadId,
+                candidaturaId: conteo.candidaturaId,
+                tipo: conteo.tipo,
+                opcionKey: conteo.opcionKey,
+                total: Number(conteo.total),
+                candidatura: conteo.candidaturaId
+                  ? {
+                      id: conteo.candidaturaId,
+                      elector: {
+                        identificacion: conteo.identificacion ?? '',
+                        nombres: conteo.nombres ?? '',
+                        apellidos: conteo.apellidos ?? '',
+                        fotoUrl: conteo.fotoUrl,
+                      },
+                      lista: conteo.listaCodigo
+                        ? {
+                            codigo: conteo.listaCodigo,
+                            nombre: conteo.listaNombre ?? '',
+                            color: conteo.listaColor,
+                          }
+                        : null,
+                    }
+                  : null,
+              }))
+          : [],
+      };
+    });
+  }
+
   private ensureVotacionDisponible(eleccion: {
     estado: EstadoEleccion;
-    jornada: { linkVotacionActivo: boolean } | null;
+    jornada: {
+      linkVotacionActivo: boolean;
+      fechaFinVotacion: Date | null;
+    } | null;
   }) {
     if (
       eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA ||
@@ -625,6 +839,14 @@ export class VotacionService {
     ) {
       throw new BadRequestException(
         'La votacion no esta disponible en este momento.',
+      );
+    }
+    if (
+      eleccion.jornada.fechaFinVotacion &&
+      new Date() >= eleccion.jornada.fechaFinVotacion
+    ) {
+      throw new BadRequestException(
+        'La jornada de votacion finalizo segun el cronograma.',
       );
     }
   }
@@ -701,6 +923,7 @@ export class VotacionService {
           select: {
             id: true,
             identificacion: true,
+            carreraId: true,
           },
         },
       },

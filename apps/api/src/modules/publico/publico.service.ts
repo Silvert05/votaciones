@@ -85,12 +85,13 @@ export class PublicoService {
             votacionIniciadaAt: true,
             votacionCerradaAt: true,
             fechaFinVotacion: true,
+            resultadosAt: true,
           },
         },
       },
     });
     if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');
-    if (!RESULT_STATES.includes(eleccion.estado)) {
+    if (!eleccion.jornada?.resultadosAt) {
       throw new BadRequestException('Los resultados aun no estan disponibles.');
     }
     const resultados = await this.votacion.resultados(eleccionId);
@@ -219,7 +220,9 @@ export class PublicoService {
   ) {
     const votarDisponible =
       e.estado === EstadoEleccion.VOTACION_ABIERTA &&
-      !!e.jornada?.linkVotacionActivo;
+      !!e.jornada?.linkVotacionActivo &&
+      (!e.jornada.fechaFinVotacion ||
+        new Date() < e.jornada.fechaFinVotacion);
     return {
       id: e.id,
       nombre: e.nombre,
@@ -229,7 +232,7 @@ export class PublicoService {
       configuracion: e.configuracion,
       cronograma: e.cronograma,
       votarDisponible,
-      resultadosDisponibles: RESULT_STATES.includes(e.estado),
+      resultadosDisponibles: !!e.jornada?.resultadosAt,
       fechaFinVotacion: e.jornada?.fechaFinVotacion ?? null,
     };
   }

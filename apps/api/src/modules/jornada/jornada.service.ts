@@ -41,6 +41,7 @@ export class JornadaService {
         estado: eleccion.estado,
         institucion: eleccion.configuracion?.nombreInstitucion ?? null,
       },
+      cronograma: eleccion.cronograma,
       jornada,
       pasoActual: this.pasoActual(jornada),
       resumen: { ...credenciales, votosEmitidos, dignidades },
@@ -155,9 +156,24 @@ export class JornadaService {
     }
 
     const eleccion = await this.getEleccion(eleccionId);
-    const fechaFin = dto.fechaFinVotacion
-      ? new Date(dto.fechaFinVotacion)
-      : jornada.fechaFinVotacion;
+    const fechaInicio = eleccion.cronograma?.fechaInicioVotacion;
+    const fechaFin = eleccion.cronograma?.fechaFinVotacion;
+    if (!fechaInicio || !fechaFin) {
+      throw new BadRequestException(
+        'Configure las fechas de inicio y cierre en el cronograma antes de iniciar la votacion.',
+      );
+    }
+    const now = new Date();
+    if (now < fechaInicio) {
+      throw new BadRequestException(
+        `La votacion se habilitara automaticamente desde ${fechaInicio.toLocaleString('es-EC')}.`,
+      );
+    }
+    if (now >= fechaFin) {
+      throw new BadRequestException(
+        'La fecha de cierre configurada en el cronograma ya finalizo.',
+      );
+    }
 
     await this.prisma.$transaction(async (tx) => {
       if (eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA) {
@@ -205,6 +221,17 @@ export class JornadaService {
     if (jornada.votacionCerradaAt) return this.obtenerEstado(eleccionId);
 
     const eleccion = await this.getEleccion(eleccionId);
+    const fechaFin = eleccion.cronograma?.fechaFinVotacion;
+    if (!fechaFin) {
+      throw new BadRequestException(
+        'Configure la fecha de cierre en el cronograma.',
+      );
+    }
+    if (new Date() < fechaFin) {
+      throw new BadRequestException(
+        `La votacion permanecera abierta hasta ${fechaFin.toLocaleString('es-EC')}.`,
+      );
+    }
 
     await this.prisma.$transaction(async (tx) => {
       if (eleccion.estado === EstadoEleccion.VOTACION_ABIERTA) {
@@ -253,6 +280,18 @@ export class JornadaService {
     }
 
     const eleccion = await this.getEleccion(eleccionId);
+    const fechaPublicacion =
+      eleccion.cronograma?.fechaPublicacionResultados;
+    if (!fechaPublicacion) {
+      throw new BadRequestException(
+        'Configure la fecha de publicacion de resultados en el cronograma.',
+      );
+    }
+    if (new Date() < fechaPublicacion) {
+      throw new BadRequestException(
+        `Los resultados podran publicarse desde ${fechaPublicacion.toLocaleString('es-EC')}.`,
+      );
+    }
 
     await this.prisma.$transaction(async (tx) => {
       if (eleccion.estado === EstadoEleccion.VOTACION_CERRADA) {
@@ -293,6 +332,14 @@ export class JornadaService {
     if (!jornada.votacionIniciadaAt || jornada.votacionCerradaAt) {
       throw new BadRequestException(
         'El link solo puede reactivarse con la votacion abierta.',
+      );
+    }
+    if (
+      jornada.fechaFinVotacion &&
+      new Date() >= jornada.fechaFinVotacion
+    ) {
+      throw new BadRequestException(
+        'El cronograma de votacion ya finalizo y el link no puede reactivarse.',
       );
     }
     await this.prisma.jornadaElectoral.update({
@@ -385,6 +432,13 @@ export class JornadaService {
         tipo: true,
         estado: true,
         configuracion: { select: { nombreInstitucion: true } },
+        cronograma: {
+          select: {
+            fechaInicioVotacion: true,
+            fechaFinVotacion: true,
+            fechaPublicacionResultados: true,
+          },
+        },
       },
     });
     if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');

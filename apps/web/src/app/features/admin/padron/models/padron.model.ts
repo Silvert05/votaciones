@@ -100,8 +100,6 @@ export interface UpdatePadronElectorPayload {
 export interface PublicarPadronResponse {
   publicado: boolean;
   habilitados: number;
-  enviadas: number;
-  fallidas: number;
 }
 
 export interface ReenvioCredencialesResponse {

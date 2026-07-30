@@ -62,7 +62,7 @@ export default class LoginComponent implements OnInit {
 
         const redirectURL =
           this._activatedRoute.snapshot.queryParamMap.get('redirectURL') ||
-          '/admin/dashboard';
+          '/admin/elecciones/jornada';
         this._router.navigateByUrl(redirectURL);
       },
       error: (err) => {

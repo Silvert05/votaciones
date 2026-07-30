@@ -1,12 +1,16 @@
 <div
-    class="flex min-h-full w-full min-w-0 flex-auto flex-col bg-gray-50 dark:bg-gray-900"
+    class="venp-user-canvas flex min-h-full w-full min-w-0 flex-auto flex-col"
 >
     <!-- Cabecera -->
     <div class="venp-gradient text-white">
-        <div class="mx-auto max-w-6xl px-6 py-10 text-center">
-            <h1 class="text-3xl font-extrabold sm:text-4xl">Candidatos</h1>
+        <div class="mx-auto w-full max-w-screen-xl px-6 py-14 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/25 bg-white/15 shadow-xl backdrop-blur">
+                <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:user-group'" />
+            </div>
+            <p class="mt-5 text-xs font-bold uppercase tracking-[.28em] text-white/75">Proceso electoral institucional</p>
+            <h1 class="mt-2 text-4xl font-black sm:text-5xl">Conoce a tus candidatos</h1>
             @if (data) {
-                <p class="mt-2 text-white/85">{{ data.eleccion.nombre }}</p>
+                <p class="mt-3 text-lg font-semibold text-white/90">{{ data.eleccion.nombre }}</p>
                 @if (data.eleccion.institucion) {
                     <p class="text-sm text-white/70">
                         {{ data.eleccion.institucion }}
@@ -16,7 +20,7 @@
         </div>
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div class="mx-auto w-full max-w-screen-xl px-4 py-12 sm:px-6 lg:px-10">
         @if (cargando) {
             <div class="text-secondary p-10 text-center">
                 Cargando candidatos…
@@ -36,44 +40,43 @@
         } @else {
             <div class="flex flex-col gap-12">
                 @for (d of data.dignidades; track d.id) {
-                    <section>
-                        <div class="mb-6 flex items-center gap-3">
-                            <span
-                                class="venp-bg-primary h-8 w-1.5 rounded-full"
-                            ></span>
-                            <div>
-                                <h2
-                                    class="text-xl font-bold text-gray-800 sm:text-2xl dark:text-gray-100"
-                                >
+                    <section class="venp-premium-card overflow-hidden p-5 sm:p-8">
+                        <div class="grid gap-7 lg:grid-cols-[15rem_minmax(0,1fr)]">
+                            <aside class="relative overflow-hidden rounded-3xl bg-slate-950 p-6 text-white">
+                                <span class="venp-bg-secondary absolute -right-8 -top-8 h-24 w-24 rounded-full"></span>
+                                <span class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-lg font-black text-slate-950 shadow-lg">
+                                    {{ $index + 1 }}
+                                </span>
+                                <p class="venp-section-kicker mt-8 text-orange-300">Dignidad electoral</p>
+                                <h2 class="mt-2 text-2xl font-black tracking-tight">
                                     {{ d.nombre }}
                                 </h2>
                                 @if (d.descripcion) {
-                                    <p class="text-secondary text-sm">
+                                    <p class="mt-2 text-sm leading-relaxed text-slate-300">
                                         {{ d.descripcion }}
                                     </p>
                                 }
-                            </div>
-                            <span
-                                class="ml-auto rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
-                            >
-                                {{ d.cantidadGanadores }} a elegir
-                            </span>
-                        </div>
+                                <span class="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:check-badge'" />
+                                    {{ d.cantidadGanadores }} a elegir
+                                </span>
+                            </aside>
 
-                        @if (!d.candidaturas.length) {
-                            <p class="text-secondary text-sm">
-                                Sin candidaturas calificadas para esta dignidad.
-                            </p>
-                        } @else {
-                            <div
-                                class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4"
-                            >
+                            <div class="min-w-0">
+                                @if (!d.candidaturas.length) {
+                                    <div class="venp-soft-panel flex min-h-52 items-center justify-center p-8 text-center">
+                                        <p class="text-secondary text-sm">
+                                            Sin candidaturas calificadas para esta dignidad.
+                                        </p>
+                                    </div>
+                                } @else {
+                                    <div class="grid grid-cols-[repeat(auto-fit,minmax(13rem,15rem))] justify-center gap-5 lg:justify-start">
                                 @for (c of d.candidaturas; track c.id) {
                                     <div
-                                        class="group bg-card overflow-hidden rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+                                        class="group venp-choice-card overflow-hidden rounded-3xl transition-all duration-300"
                                     >
                                         <div
-                                            class="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800"
+                                            class="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800"
                                         >
                                             <img
                                                 [src]="
@@ -84,12 +87,19 @@
                                                     )
                                                 "
                                                 [alt]="c.elector.apellidos"
-                                                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                class="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                                             />
+                                            <span class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/70 to-transparent"></span>
+                                            @if (c.lista) {
+                                                <span class="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-black shadow-lg"
+                                                    [style.color]="c.lista.color || '#183f84'">
+                                                    LISTA {{ c.lista.codigo }}
+                                                </span>
+                                            }
                                         </div>
-                                        <div class="p-4 text-center">
+                                        <div class="p-5 text-left">
                                             <div
-                                                class="font-bold leading-tight"
+                                                class="text-lg font-black leading-tight"
                                             >
                                                 {{ c.elector.apellidos }}
                                             </div>
@@ -98,21 +108,21 @@
                                             </div>
                                             @if (c.lista) {
                                                 <div
-                                                    class="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                                                    class="mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold"
                                                     [style.background]="
                                                         (c.lista.color ||
-                                                            '#1d4ed8') + '22'
+                                                            '#183f84') + '22'
                                                     "
                                                     [style.color]="
                                                         c.lista.color ||
-                                                        '#1d4ed8'
+                                                        '#183f84'
                                                     "
                                                 >
                                                     <span
                                                         class="h-2.5 w-2.5 rounded-full"
                                                         [style.background]="
                                                             c.lista.color ||
-                                                            '#1d4ed8'
+                                                            '#183f84'
                                                         "
                                                     ></span>
                                                     Lista {{ c.lista.codigo }}
@@ -121,8 +131,10 @@
                                         </div>
                                     </div>
                                 }
+                                    </div>
+                                }
                             </div>
-                        }
+                        </div>
                     </section>
                 }
             </div>

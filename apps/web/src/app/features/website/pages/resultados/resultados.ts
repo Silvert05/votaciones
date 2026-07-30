@@ -187,6 +187,46 @@ export default class ResultadosComponent implements OnInit {
             .sort((a, b) => b.total - a.total);
     }
 
+    filasCarrera(
+        carrera: ResultadosPublicos['estadisticasCarrera'][number]
+    ): FilaResultado[] {
+        const opciones = carrera.opciones.filter(
+            (opcion) => opcion.dignidadId === this.dignidadCtrl.value
+        );
+        const total = opciones.reduce((acc, opcion) => acc + opcion.total, 0) || 1;
+        return opciones
+            .map((opcion) => {
+                let etiqueta = 'Voto en blanco';
+                let detalle = '';
+                let color = '#94a3b8';
+                let fotoUrl: string | null = null;
+                if (opcion.tipo === 'NULO') {
+                    etiqueta = 'Voto nulo';
+                    color = '#64748b';
+                } else if (opcion.candidatura) {
+                    etiqueta = `${opcion.candidatura.elector.apellidos} ${opcion.candidatura.elector.nombres}`;
+                    detalle = opcion.candidatura.lista
+                        ? `${opcion.candidatura.lista.codigo} · ${opcion.candidatura.lista.nombre}`
+                        : '';
+                    color =
+                        opcion.candidatura.lista?.color ||
+                        this._theme.theme().colorPrimario;
+                    fotoUrl =
+                        opcion.candidatura.elector.fotoUrl ||
+                        '/img/avatar-placeholder.svg';
+                }
+                return {
+                    etiqueta,
+                    detalle,
+                    color,
+                    fotoUrl,
+                    total: opcion.total,
+                    porcentaje: (opcion.total / total) * 100,
+                };
+            })
+            .sort((a, b) => b.total - a.total);
+    }
+
     private _buildChart(): void {
         const filas = this.filas;
         const total = filas.reduce((acc, f) => acc + f.total, 0) || 1;

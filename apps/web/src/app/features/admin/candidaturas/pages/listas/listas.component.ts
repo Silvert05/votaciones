@@ -70,7 +70,10 @@ export default class ListasComponent implements OnInit {
   form = this._fb.group({
     codigo: ['', [Validators.required, Validators.maxLength(30)]],
     nombre: ['', [Validators.required, Validators.maxLength(160)]],
-    color: ['', Validators.maxLength(20)],
+    color: [
+      '#2563eb',
+      [Validators.maxLength(20), Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    ],
     descripcion: [''],
     propuesta: [''],
     estado: ['BORRADOR' as EstadoListaElectoral],
@@ -170,7 +173,7 @@ export default class ListasComponent implements OnInit {
     this.form.reset({
       codigo: '',
       nombre: '',
-      color: '',
+      color: '#2563eb',
       descripcion: '',
       propuesta: '',
       estado: 'BORRADOR',
@@ -183,7 +186,7 @@ export default class ListasComponent implements OnInit {
     this.form.reset({
       codigo: lista.codigo,
       nombre: lista.nombre,
-      color: lista.color ?? '',
+      color: lista.color ?? '#2563eb',
       descripcion: lista.descripcion ?? '',
       propuesta: lista.propuesta ?? '',
       estado: lista.estado,

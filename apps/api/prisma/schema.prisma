@@ -191,6 +191,7 @@ model Eleccion {
   candidaturas           Candidatura[]
   votosEmitidos          VotoEmitido[]
   conteosVotos           ConteoVoto[]
+  conteosVotosCarrera    ConteoVotoCarrera[]
   actasEscrutinio        ActaEscrutinio[]
   impugnacionesResultado ImpugnacionResultado[]
   historialEstados       HistorialEstadoEleccion[]
@@ -228,7 +229,8 @@ model Carrera {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  electores Elector[]
+  electores            Elector[]
+  conteosVotosCarrera  ConteoVotoCarrera[]
 
   @@index([activo, orden])
   @@map("carreras")
@@ -379,6 +381,7 @@ model Candidatura {
   elector      Elector                 @relation(fields: [electorId], references: [id], onDelete: Restrict)
   lista        ListaElectoral?         @relation(fields: [listaId], references: [id], onDelete: SetNull)
   conteosVotos ConteoVoto[]
+  conteosVotosCarrera ConteoVotoCarrera[]
   detallesActa DetalleActaEscrutinio[]
 
   @@unique([eleccionId, dignidadId, electorId])
@@ -407,6 +410,7 @@ model Dignidad {
   candidaturas           Candidatura[]
   votosEmitidos          VotoEmitido[]
   conteosVotos           ConteoVoto[]
+  conteosVotosCarrera    ConteoVotoCarrera[]
   actasEscrutinio        ActaEscrutinio[]
   impugnacionesResultado ImpugnacionResultado[]
 
@@ -453,6 +457,33 @@ model ConteoVoto {
   @@index([dignidadId])
   @@index([candidaturaId])
   @@map("conteos_votos")
+}
+
+// Acumulado estadistico por carrera. No relaciona una opcion con un elector
+// individual, preservando el secreto del voto.
+model ConteoVotoCarrera {
+  id            String   @id @default(uuid()) @db.Uuid
+  eleccionId    String   @map("eleccion_id") @db.Uuid
+  dignidadId    String   @map("dignidad_id") @db.Uuid
+  carreraId     String   @map("carrera_id") @db.Uuid
+  candidaturaId String?  @map("candidatura_id") @db.Uuid
+  tipo          TipoVoto
+  opcionKey     String   @map("opcion_key") @db.VarChar(80)
+  total         Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  eleccion    Eleccion     @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad    Dignidad     @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  carrera     Carrera      @relation(fields: [carreraId], references: [id], onDelete: Restrict)
+  candidatura Candidatura? @relation(fields: [candidaturaId], references: [id], onDelete: SetNull)
+
+  @@unique([eleccionId, dignidadId, carreraId, opcionKey])
+  @@index([eleccionId])
+  @@index([dignidadId])
+  @@index([carreraId])
+  @@index([candidaturaId])
+  @@map("conteos_votos_carrera")
 }
 
 model ActaEscrutinio {

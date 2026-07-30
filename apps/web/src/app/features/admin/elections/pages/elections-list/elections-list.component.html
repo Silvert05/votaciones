@@ -137,10 +137,7 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha de convocatoria</mat-label>
-          <input matInput type="datetime-local" formControlName="fechaConvocatoria">
-        </mat-form-field>
+        <app-date-time-picker label="Fecha de convocatoria" formControlName="fechaConvocatoria" />
 
         <mat-form-field appearance="outline">
           <mat-label>Vuelta</mat-label>

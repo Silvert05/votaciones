@@ -1,20 +1,24 @@
-<div class="flex min-h-full w-full min-w-0 flex-auto flex-col bg-gray-50 dark:bg-gray-900">
+<div class="venp-user-canvas flex min-h-full w-full min-w-0 flex-auto flex-col">
 
   <!-- Cabecera del proceso -->
   <div class="venp-gradient w-full text-white">
-    <div class="w-full px-6 py-9 text-center lg:px-10">
-      <h1 class="text-2xl sm:text-3xl font-bold">
+    <div class="mx-auto w-full max-w-screen-xl px-6 py-14 text-center lg:px-10">
+      <div class="venp-icon-panel mx-auto h-14 w-14">
+        <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:trophy'" />
+      </div>
+      <p class="venp-section-kicker mt-5 text-white/70">Publicación oficial</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight sm:text-5xl">
         {{ resultados?.eleccion?.nombre || 'Resultados electorales' }}
       </h1>
       <p class="mt-1 text-white/80 text-sm">Voto Electrónico No Presencial (VENP)</p>
     </div>
   </div>
 
-  <div class="w-full px-6 py-8 lg:px-10">
+  <div class="mx-auto w-full max-w-screen-xl px-4 py-12 sm:px-6 lg:px-10">
 
     <!-- Título de estado + acciones -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <h2 class="text-lg sm:text-xl font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+      <h2 class="text-lg font-black uppercase tracking-tight text-gray-700 sm:text-xl dark:text-gray-200">
         Resultados electorales
         @if (resultados?.fechaFin) {
         <span class="text-secondary font-semibold">
@@ -25,13 +29,13 @@
       </h2>
       <div class="flex gap-2 print:hidden">
         <button
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+          class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200"
           type="button" (click)="exportarPdf()">
           <mat-icon class="icon-size-5 text-red-600" [svgIcon]="'heroicons_outline:document-arrow-down'" />
           Exportar a PDF
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+          class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200"
           type="button" (click)="imprimir()">
           <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:printer'" /> Imprimir
         </button>
@@ -40,9 +44,9 @@
 
     <!-- Selector de cédula -->
     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 print:hidden">
-      <div class="rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 p-4">
-        <label class="block text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Proceso electoral</label>
-        <select class="w-full rounded-lg border border-blue-200 dark:border-blue-800 px-3 py-2 bg-white dark:bg-gray-800"
+      <div class="venp-premium-card p-5">
+        <label class="venp-section-kicker venp-text-primary mb-2 block">Proceso electoral</label>
+        <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800"
           [formControl]="eleccionCtrl">
           @for (e of elecciones; track e.id) {
           <option [value]="e.id">{{ e.nombre }}</option>
@@ -50,10 +54,10 @@
         </select>
       </div>
       @if (resultados) {
-      <div class="rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 p-4">
-        <label class="block text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">Seleccione la cédula de
+      <div class="venp-premium-card p-5">
+        <label class="venp-section-kicker venp-text-primary mb-2 block">Seleccione la cédula de
           votación</label>
-        <select class="w-full rounded-lg border border-blue-200 dark:border-blue-800 px-3 py-2 bg-white dark:bg-gray-800"
+        <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800"
           [formControl]="dignidadCtrl">
           @for (d of resultados.dignidades; track d.id) {
           <option [value]="d.id">{{ d.nombre }}</option>
@@ -68,7 +72,7 @@
     }
 
     @if (!elecciones.length && !loading) {
-    <div class="mt-8 text-center text-secondary p-10 bg-card rounded-xl shadow-sm border">
+    <div class="venp-premium-card mt-8 p-10 text-center text-secondary">
       <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:chart-bar'" />
       <p class="font-medium">Aún no hay resultados publicados.</p>
       <p class="text-sm mt-1">Los resultados aparecen cuando la jornada de votación se cierra y se generan.</p>
@@ -81,7 +85,7 @@
       <div class="lg:col-span-3 flex flex-col gap-6">
 
         <!-- Tiles -->
-        <div class="grid grid-cols-2 md:grid-cols-4 rounded-xl overflow-hidden bg-card border shadow-sm">
+        <div class="venp-premium-card grid grid-cols-2 overflow-hidden md:grid-cols-4">
           <div class="p-4 border-r border-b md:border-b-0">
             <div class="text-[11px] text-secondary uppercase tracking-wide">Cédula</div>
             <div class="font-bold mt-1 leading-tight text-sm">{{ dignidadSel.nombre }}</div>
@@ -101,8 +105,9 @@
         </div>
 
         <!-- Gráfico ApexCharts -->
-        <div class="bg-card border rounded-xl p-4 sm:p-6 shadow-sm">
-          <div class="text-center font-bold text-gray-600 dark:text-gray-300 mb-2 uppercase text-sm tracking-wide">
+        <div class="venp-premium-card relative overflow-hidden p-4 sm:p-7">
+          <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+          <div class="mb-4 text-center text-sm font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
             Resultados — {{ dignidadSel.nombre | uppercase }}
           </div>
           <apx-chart [series]="series" [chart]="chart" [colors]="colors" [plotOptions]="plotOptions"
@@ -112,7 +117,7 @@
           <!-- Leyenda con fotos -->
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
             @for (f of filas; track f.etiqueta) {
-            <div class="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <div class="venp-soft-panel flex items-center gap-3 px-4 py-3">
               @if (f.fotoUrl) {
               <img [src]="f.fotoUrl" [alt]="f.etiqueta" class="w-10 h-10 rounded-full object-cover">
               } @else {
@@ -136,7 +141,7 @@
       </div>
 
       <!-- Panel lateral -->
-      <div class="bg-card border rounded-xl p-5 h-fit shadow-sm">
+      <div class="venp-premium-card h-fit p-6">
         <div class="venp-border-primary border-l-4 pl-4 flex flex-col gap-4">
           <div>
             <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha inicio</div>
@@ -159,6 +164,85 @@
         </div>
       </div>
     </div>
+
+    @if (resultados.estadisticasCarrera.length) {
+    <section class="mt-12">
+      <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="venp-section-kicker venp-text-secondary">Análisis institucional</p>
+          <h2 class="mt-2 text-2xl font-black text-slate-900 sm:text-3xl dark:text-white">
+            Resultados y participación por carrera
+          </h2>
+          <p class="text-secondary mt-2 max-w-3xl text-sm">
+            Desglose agregado para {{ dignidadSel.nombre }}. No se almacena ni publica la selección individual de ningún elector.
+          </p>
+        </div>
+        <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 shadow-sm">
+          Privacidad mínima: {{ resultados.minimoPrivacidadCarrera }} votantes
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        @for (carrera of resultados.estadisticasCarrera; track carrera.carreraId) {
+        @let detalleCarrera = filasCarrera(carrera);
+        <article class="venp-premium-card venp-reveal overflow-hidden">
+          <div class="border-b border-slate-200 p-6 dark:border-slate-700">
+            <div class="flex items-start gap-4">
+              <span class="venp-bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg">
+                <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
+              </span>
+              <div class="min-w-0 flex-auto">
+                <h3 class="text-lg font-black leading-tight">{{ carrera.carrera }}</h3>
+                <p class="text-secondary mt-1 text-xs">
+                  {{ carrera.votantes }} de {{ carrera.habilitados }} electores participaron
+                </p>
+              </div>
+              <span class="venp-text-primary text-xl font-black">
+                {{ carrera.porcentaje | number: '1.0-2' }}%
+              </span>
+            </div>
+            <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+              <div class="venp-bg-primary h-full rounded-full transition-all duration-500"
+                [style.width.%]="carrera.porcentaje"></div>
+            </div>
+          </div>
+
+          <div class="p-6">
+            @if (!carrera.publicable) {
+              <div class="venp-soft-panel flex items-start gap-3 p-4">
+                <mat-icon class="venp-text-secondary shrink-0" [svgIcon]="'heroicons_outline:lock-closed'" />
+                <p class="text-secondary text-sm leading-relaxed">
+                  El detalle de preferencias permanece protegido hasta alcanzar el mínimo institucional de privacidad.
+                </p>
+              </div>
+            } @else if (!detalleCarrera.length) {
+              <p class="text-secondary py-4 text-center text-sm">
+                No existen conteos por carrera para esta dignidad.
+              </p>
+            } @else {
+              <div class="flex flex-col gap-4">
+                @for (fila of detalleCarrera; track fila.etiqueta) {
+                  <div>
+                    <div class="flex items-center justify-between gap-3 text-sm">
+                      <span class="truncate font-bold">{{ fila.etiqueta }}</span>
+                      <span class="shrink-0 font-black" [style.color]="fila.color">
+                        {{ fila.total }} · {{ fila.porcentaje | number: '1.0-2' }}%
+                      </span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div class="h-full rounded-full" [style.background]="fila.color"
+                        [style.width.%]="fila.porcentaje"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </article>
+        }
+      </div>
+    </section>
+    }
     }
   </div>
 </div>

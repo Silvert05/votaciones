@@ -36,6 +36,11 @@ export interface JornadaEstado {
     estado: string;
     institucion: string | null;
   };
+  cronograma: {
+    fechaInicioVotacion: string | null;
+    fechaFinVotacion: string | null;
+    fechaPublicacionResultados: string | null;
+  } | null;
   jornada: Jornada;
   pasoActual: number;
   resumen: {
@@ -52,6 +57,4 @@ export interface PasoPayload {
   reporte?: string;
 }
 
-export interface IniciarVotacionPayload extends PasoPayload {
-  fechaFinVotacion?: string;
-}
+export type IniciarVotacionPayload = PasoPayload;

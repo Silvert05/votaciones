@@ -36,8 +36,8 @@
               <div><h2 class="font-bold">Preparacion</h2><p class="text-sm text-secondary">Inicio oficial y publicacion del padron.</p></div>
             </div>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <mat-form-field appearance="outline"><mat-label>Convocatoria</mat-label><input matInput type="datetime-local" formControlName="fechaConvocatoria"><mat-icon matPrefix [svgIcon]="'heroicons_outline:megaphone'" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Publicacion del padron</mat-label><input matInput type="datetime-local" formControlName="fechaPublicacionPadron"><mat-icon matPrefix [svgIcon]="'heroicons_outline:users'" /></mat-form-field>
+              <app-date-time-picker label="Convocatoria" formControlName="fechaConvocatoria" />
+              <app-date-time-picker label="Publicacion del padron" formControlName="fechaPublicacionPadron" />
             </div>
           </section>
 
@@ -47,8 +47,8 @@
               <div><h2 class="font-bold">Candidaturas</h2><p class="text-sm text-secondary">Periodo disponible para registrar participantes.</p></div>
             </div>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <mat-form-field appearance="outline"><mat-label>Apertura de candidaturas</mat-label><input matInput type="datetime-local" formControlName="fechaInicioInscripcion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:user-plus'" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Cierre de candidaturas</mat-label><input matInput type="datetime-local" formControlName="fechaFinInscripcion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:lock-closed'" /></mat-form-field>
+              <app-date-time-picker label="Apertura de candidaturas" formControlName="fechaInicioInscripcion" />
+              <app-date-time-picker label="Cierre de candidaturas" formControlName="fechaFinInscripcion" />
             </div>
           </section>
 
@@ -58,9 +58,9 @@
               <div><h2 class="font-bold">Jornada y resultados</h2><p class="text-sm text-secondary">Estas son las fechas principales que vera el elector.</p></div>
             </div>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <mat-form-field appearance="outline"><mat-label>Inicio de la votacion</mat-label><input matInput type="datetime-local" formControlName="fechaInicioVotacion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:cursor-arrow-rays'" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Cierre de la votacion</mat-label><input matInput type="datetime-local" formControlName="fechaFinVotacion"><mat-icon matPrefix [svgIcon]="'heroicons_outline:clock'" /></mat-form-field>
-              <mat-form-field appearance="outline" class="md:col-span-2"><mat-label>Publicacion de resultados</mat-label><input matInput type="datetime-local" formControlName="fechaPublicacionResultados"><mat-icon matPrefix [svgIcon]="'heroicons_outline:chart-bar'" /></mat-form-field>
+              <app-date-time-picker label="Inicio de la votacion" [required]="true" formControlName="fechaInicioVotacion" />
+              <app-date-time-picker label="Cierre de la votacion" [required]="true" formControlName="fechaFinVotacion" />
+              <app-date-time-picker class="md:col-span-2" label="Publicacion de resultados" formControlName="fechaPublicacionResultados" />
             </div>
           </section>
         </form>

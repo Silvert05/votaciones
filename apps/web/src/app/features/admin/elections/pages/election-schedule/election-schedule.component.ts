@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import { DateTimePickerComponent } from 'app/shared/components/date-time-picker/date-time-picker.component';
 import {
   CronogramaElectoral,
   Eleccion,
@@ -46,6 +47,7 @@ const EVENTOS_PREVIEW = [
     MatInputModule,
     MatSelectModule,
     MatProgressBarModule,
+    DateTimePickerComponent,
   ],
   templateUrl: './election-schedule.component.html',
 })
@@ -128,6 +130,16 @@ export default class ElectionScheduleComponent implements OnInit {
     if (raw.fechaInicioVotacion && raw.fechaFinVotacion &&
         new Date(raw.fechaInicioVotacion) >= new Date(raw.fechaFinVotacion)) {
       this._notify('El cierre de la votacion debe ser posterior al inicio.');
+      return;
+    }
+    if (
+      raw.fechaFinVotacion &&
+      raw.fechaPublicacionResultados &&
+      new Date(raw.fechaFinVotacion) > new Date(raw.fechaPublicacionResultados)
+    ) {
+      this._notify(
+        'La publicacion de resultados debe ser posterior al cierre de la votacion.',
+      );
       return;
     }
 

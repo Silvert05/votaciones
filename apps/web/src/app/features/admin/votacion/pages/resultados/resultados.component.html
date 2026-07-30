@@ -1,8 +1,14 @@
-<div class="flex flex-col flex-auto p-6 sm:p-10">
+<div class="venp-admin-page flex flex-auto flex-col p-6 sm:p-10">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div>
-      <div class="text-4xl font-extrabold tracking-tight leading-tight">Resultados</div>
-      <p class="mt-2 text-secondary">Participacion y conteo por dignidad</p>
+    <div class="flex items-center gap-4">
+      <span class="venp-admin-icon flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg">
+        <mat-icon class="icon-size-7" [svgIcon]="'heroicons_outline:chart-bar-square'" />
+      </span>
+      <div>
+        <p class="venp-section-kicker text-orange-600">Analítica institucional</p>
+        <div class="mt-1 text-4xl font-extrabold tracking-tight leading-tight">Resultados y reportes</div>
+        <p class="mt-1 text-secondary">Participación, conteos y estadísticas agregadas por carrera</p>
+      </div>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="loadResultados()" [disabled]="!selectedEleccionCtrl.value">
       <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
@@ -10,12 +16,12 @@
     </button>
   </div>
 
-  <div class="mt-6 rounded shadow bg-card overflow-hidden">
+  <div class="venp-admin-surface mt-7 overflow-hidden">
     @if (loading) {
     <mat-progress-bar [mode]="'indeterminate'" />
     }
 
-    <div class="p-4 border-b">
+    <div class="border-b p-5">
       <mat-form-field appearance="outline" class="w-full md:w-160">
         <mat-label>Eleccion</mat-label>
         <mat-select [formControl]="selectedEleccionCtrl">
@@ -27,17 +33,60 @@
     </div>
 
     @if (resultados) {
-    <div class="p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-        <div class="rounded border p-4">
+    <div class="p-5 sm:p-7">
+      <section class="mb-7">
+        <div class="mb-4">
+          <p class="venp-section-kicker text-orange-600">Centro de reportes</p>
+          <h2 class="mt-1 text-xl font-black">Documentos disponibles</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <button type="button" (click)="exportarResultadosCsv()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+              <mat-icon [svgIcon]="'heroicons_outline:table-cells'" />
+            </span>
+            <span>
+              <strong class="block">Resultados consolidados</strong>
+              <small class="text-secondary mt-1 block">CSV por dignidad, opción y porcentaje</small>
+            </span>
+          </button>
+          <button type="button" (click)="exportarCarrerasCsv()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
+              <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
+            </span>
+            <span>
+              <strong class="block">Estadística por carrera</strong>
+              <small class="text-secondary mt-1 block">CSV de participación y preferencias agregadas</small>
+            </span>
+          </button>
+          <button type="button" (click)="imprimirResumen()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
+              <mat-icon [svgIcon]="'heroicons_outline:printer'" />
+            </span>
+            <span>
+              <strong class="block">Informe ejecutivo</strong>
+              <small class="text-secondary mt-1 block">Imprimir o guardar el resumen como PDF</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="venp-admin-metric rounded-2xl p-5">
           <div class="text-sm text-secondary">Estado</div>
           <div class="text-xl font-semibold">{{ label(resultados.eleccion.estado) }}</div>
         </div>
-        <div class="rounded border p-4">
+        <div class="venp-admin-metric rounded-2xl p-5">
           <div class="text-sm text-secondary">Padron habilitado</div>
           <div class="text-xl font-semibold">{{ resultados.padronHabilitado }}</div>
         </div>
-        <div class="rounded border p-4">
+        <div class="venp-admin-metric rounded-2xl p-5">
+          <div class="text-sm text-secondary">Votantes</div>
+          <div class="text-xl font-semibold">{{ totalVotantes }}</div>
+        </div>
+        <div class="venp-admin-metric rounded-2xl p-5">
           <div class="text-sm text-secondary">Dignidades</div>
           <div class="text-xl font-semibold">{{ resultados.dignidades.length }}</div>
         </div>
@@ -46,7 +95,7 @@
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
         @for (dignidad of resultados.dignidades; track dignidad.id) {
         @let emitidos = emitidosPorDignidad(dignidad.id);
-        <div class="rounded border p-4">
+        <div class="venp-admin-report rounded-2xl p-5">
           <div class="flex items-center justify-between gap-3">
             <div>
               <div class="text-lg font-semibold">{{ dignidad.nombre }}</div>
@@ -75,6 +124,62 @@
         </div>
         }
       </div>
+
+      @if (resultados.estadisticasCarrera.length) {
+      <section class="mt-9">
+        <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="venp-section-kicker text-orange-600">Segmentación protegida</p>
+            <h2 class="mt-1 text-2xl font-black">Participación por carrera</h2>
+          </div>
+          <span class="text-secondary text-xs">
+            El detalle se habilita desde {{ resultados.minimoPrivacidadCarrera }} votantes
+          </span>
+        </div>
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          @for (carrera of resultados.estadisticasCarrera; track carrera.carreraId) {
+          <article class="venp-admin-report overflow-hidden rounded-2xl">
+            <div class="flex items-center gap-4 border-b p-5">
+              <span class="venp-admin-icon flex h-11 w-11 items-center justify-center rounded-xl text-white">
+                <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
+              </span>
+              <div class="min-w-0 flex-auto">
+                <h3 class="truncate font-black">{{ carrera.carrera }}</h3>
+                <p class="text-secondary text-xs">{{ carrera.votantes }} de {{ carrera.habilitados }} votaron</p>
+              </div>
+              <strong class="text-xl">{{ carrera.porcentaje }}%</strong>
+            </div>
+            <div class="p-5">
+              @if (!carrera.publicable) {
+                <div class="flex items-start gap-2 rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
+                  <mat-icon class="shrink-0 icon-size-5" [svgIcon]="'heroicons_outline:lock-closed'" />
+                  Preferencias protegidas por el mínimo de privacidad.
+                </div>
+              } @else {
+                <div class="flex flex-col gap-5">
+                  @for (dignidad of resultados.dignidades; track dignidad.id) {
+                    <div>
+                      <h4 class="text-xs font-black uppercase tracking-wide text-slate-500">{{ dignidad.nombre }}</h4>
+                      <div class="mt-2 flex flex-col gap-2">
+                        @for (opcion of opcionesCarrera(carrera, dignidad.id); track opcion.opcionKey) {
+                          <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+                            <span class="truncate">{{ opcionCarreraLabel(opcion) }}</span>
+                            <strong>{{ opcion.total }}</strong>
+                          </div>
+                        } @empty {
+                          <span class="text-secondary text-xs">Sin conteos registrados.</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+          }
+        </div>
+      </section>
+      }
     </div>
     } @else {
     <div class="p-8 text-center text-secondary">Selecciona una eleccion para ver resultados.</div>

@@ -1,40 +1,54 @@
 <fuse-loading-bar />
 
 <!-- Sidebar -->
-<fuse-vertical-navigation class="bg-card print:hidden" [mode]="isScreenSmall ? 'over' : 'side'"
+<fuse-vertical-navigation class="venp-admin-nav bg-card print:hidden" [mode]="isScreenSmall ? 'over' : 'side'"
   [name]="'mainNavigation'" [navigation]="navigation()" [opened]="!isScreenSmall">
 
 <ng-container fuseVerticalNavigationHeader>
-  <div class="flex h-14 items-center justify-center px-4">
+  <div class="flex h-20 items-center gap-3 border-b border-slate-200 px-5">
     <img
-      class="max-h-full w-auto object-contain dark:hidden"
+      class="h-12 w-12 object-contain dark:hidden"
       src="img/logo.png"
       alt="Logo image"
       style="image-rendering: -webkit-optimize-contrast;"
     />
     <img
-      class="hidden max-h-full w-auto object-contain dark:flex"
+      class="hidden h-12 w-12 object-contain dark:flex"
       src="img/logo.png"
       alt="Logo image"
       style="image-rendering: -webkit-optimize-contrast;"
     />
+    <div class="min-w-0">
+      <p class="venp-section-kicker text-orange-600">Yavirac</p>
+      <p class="truncate text-sm font-black text-slate-900 dark:text-white">Administración electoral</p>
+    </div>
   </div>
 </ng-container>
 
 </fuse-vertical-navigation>
 
-<div class="flex w-full min-w-0 flex-auto flex-col">
-  <div class="sticky top-0 z-49 bg-card flex h-14 w-full flex-0 items-center px-4 shadow-sm
+<div class="venp-admin-shell flex w-full min-w-0 flex-auto flex-col">
+  <div class="venp-admin-topbar sticky top-0 z-49 bg-card flex h-16 w-full flex-0 items-center px-4 shadow-sm
            dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden">
     <button mat-icon-button (click)="toggleNavigation('mainNavigation')">
       <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
     </button>
+    <div class="ml-3 hidden items-center gap-3 sm:flex">
+      <span class="h-7 w-px bg-slate-200"></span>
+      <div>
+        <p class="text-sm font-black leading-none text-slate-800 dark:text-white">Sistema de votaciones</p>
+        <p class="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
+          <span class="venp-live-pulse h-2 w-2 rounded-full"></span>
+          Gestión institucional
+        </p>
+      </div>
+    </div>
     <div class="ml-auto flex items-center gap-1 pl-2">
       <user />
     </div>
   </div>
 
-  <div class="flex flex-auto flex-col">
+  <div class="venp-admin-content flex flex-auto flex-col">
     @if (true) {
     <router-outlet></router-outlet>
     }

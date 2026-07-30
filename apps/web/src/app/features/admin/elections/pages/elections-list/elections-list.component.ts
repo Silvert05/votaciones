@@ -18,6 +18,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
+import { DateTimePickerComponent } from 'app/shared/components/date-time-picker/date-time-picker.component';
 import {
   ESTADOS_ELECCION,
   ESTADO_TRANSICIONES,
@@ -44,6 +45,7 @@ import { ElectionsService } from '../../services/elections.service';
     MatMenuModule,
     MatTooltipModule,
     MatProgressBarModule,
+    DateTimePickerComponent,
   ],
   templateUrl: './elections-list.component.html',
 })

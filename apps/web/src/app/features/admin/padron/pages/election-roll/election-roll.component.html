@@ -5,10 +5,6 @@
       <p class="mt-2 text-secondary">Electores habilitados, observados o inhabilitados por eleccion</p>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button matButton="tonal" type="button" (click)="reenviarPendientes()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:envelope'" />
-        <span class="ml-1">Generar y enviar credenciales</span>
-      </button>
       <button matButton="tonal" type="button" (click)="autoGenerar()" [disabled]="!selectedEleccionCtrl.value">
         <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
         <span class="ml-1">Autogenerar</span>
@@ -148,12 +144,6 @@
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
                 <span>Editar estado</span>
               </button>
-              @if (p.publicado && p.estado === 'HABILITADO' && p.elector.email) {
-              <button mat-menu-item (click)="enviarCredencial(p)">
-                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:envelope'" />
-                <span>Generar y enviar clave</span>
-              </button>
-              }
             </mat-menu>
           </td>
         </ng-container>

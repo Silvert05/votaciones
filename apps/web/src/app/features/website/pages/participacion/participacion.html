@@ -1,27 +1,41 @@
-<div class="flex min-h-full w-full min-w-0 flex-auto flex-col bg-gray-50 dark:bg-gray-900">
+<div class="venp-user-canvas flex min-h-full w-full min-w-0 flex-auto flex-col">
 
   <!-- Cabecera -->
   <div class="venp-gradient w-full text-white">
-    <div class="w-full px-6 py-10 text-center lg:px-10">
-      <h1 class="text-3xl sm:text-4xl font-extrabold">Participación electoral</h1>
+    <div class="mx-auto w-full max-w-screen-xl px-6 py-14 text-center lg:px-10">
+      <div class="venp-icon-panel mx-auto h-14 w-14">
+        <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:chart-pie'" />
+      </div>
+      <p class="venp-section-kicker mt-5 text-white/70">Transparencia en tiempo real</p>
+      <h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Participación electoral</h1>
       @if (data) {
       <p class="mt-2 text-white/85">{{ data.eleccion.nombre }}</p>
       }
-      <p class="mt-3 inline-flex items-center gap-1.5 text-xs text-white/80 bg-white/10 rounded-full px-3 py-1">
-        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-        Actualización automática cada 15 s
-      </p>
+      <div class="mx-auto mt-5 flex w-fit flex-col items-center gap-1 rounded-2xl border border-white/20 bg-slate-950/35 px-5 py-2.5 text-white shadow-lg backdrop-blur sm:flex-row sm:gap-3">
+        <span class="relative flex h-3 w-3">
+          <span class="venp-live-ring absolute inset-0 rounded-full bg-orange-400"></span>
+          <span class="venp-live-pulse relative h-3 w-3 rounded-full"></span>
+        </span>
+        <span class="text-xs font-bold">
+          {{ actualizando ? 'Consultando datos…' : 'Datos actualizados automáticamente cada 15 segundos' }}
+        </span>
+        @if (ultimaActualizacion) {
+          <span class="text-[11px] text-white/65">
+            Última consulta: {{ ultimaActualizacion | date: 'HH:mm:ss' }}
+          </span>
+        }
+      </div>
     </div>
   </div>
 
-  <div class="w-full px-4 py-10 sm:px-6 lg:px-10">
+  <div class="mx-auto w-full max-w-screen-xl px-4 py-12 sm:px-6 lg:px-10">
 
     @if (cargando) {
     <div class="text-center text-secondary p-10">Cargando participación…</div>
     }
 
     @else if (!data) {
-    <div class="max-w-lg mx-auto text-center text-secondary p-10 bg-card rounded-2xl shadow-sm border">
+    <div class="venp-premium-card mx-auto max-w-lg p-10 text-center text-secondary">
       <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:chart-pie'" />
       <p class="font-medium">No hay datos de participación disponibles.</p>
     </div>
@@ -31,36 +45,40 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       <!-- Gauge -->
-      <div class="bg-card rounded-2xl shadow-sm border p-6 flex flex-col items-center justify-center">
-        <div class="text-sm font-semibold text-secondary uppercase tracking-wide mb-2">Participación total</div>
+      <div class="venp-premium-card venp-reveal relative flex flex-col items-center justify-center overflow-hidden p-7">
+        <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+        <div class="venp-section-kicker text-secondary mb-2">Participación total</div>
         <apx-chart class="w-full" [series]="radialSeries" [chart]="radialChart" [colors]="radialColors"
           [labels]="radialLabels" [plotOptions]="radialPlot" [fill]="radialFill" />
       </div>
 
       <!-- Tiles -->
       <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="bg-card rounded-2xl shadow-sm border p-6 flex flex-col justify-center">
-          <mat-icon class="venp-text-primary icon-size-8 mb-2" [svgIcon]="'heroicons_outline:users'" />
+        <div class="venp-premium-card venp-reveal relative flex flex-col justify-center overflow-hidden p-6">
+          <span class="venp-bg-primary absolute inset-y-0 left-0 w-1.5"></span>
+          <mat-icon class="venp-text-primary mb-3 icon-size-8" [svgIcon]="'heroicons_outline:users'" />
           <div class="text-4xl font-extrabold">{{ data.padronHabilitado }}</div>
           <div class="text-sm text-secondary mt-1">Electores hábiles</div>
         </div>
-        <div class="bg-card rounded-2xl shadow-sm border p-6 flex flex-col justify-center">
-          <mat-icon class="icon-size-8 text-green-600 mb-2" [svgIcon]="'heroicons_outline:check-badge'" />
+        <div class="venp-premium-card venp-reveal venp-delay-2 relative flex flex-col justify-center overflow-hidden p-6">
+          <span class="absolute inset-y-0 left-0 w-1.5 bg-emerald-500"></span>
+          <mat-icon class="mb-3 text-green-600 icon-size-8" [svgIcon]="'heroicons_outline:check-badge'" />
           <div class="text-4xl font-extrabold">{{ data.votantes }}</div>
           <div class="text-sm text-secondary mt-1">Han votado</div>
         </div>
-        <div class="bg-card rounded-2xl shadow-sm border p-6 flex flex-col justify-center">
-          <mat-icon class="venp-text-primary icon-size-8 mb-2" [svgIcon]="'heroicons_outline:chart-pie'" />
+        <div class="venp-premium-card venp-reveal venp-delay-2 relative flex flex-col justify-center overflow-hidden p-6">
+          <span class="venp-bg-secondary absolute inset-y-0 left-0 w-1.5"></span>
+          <mat-icon class="venp-text-secondary mb-3 icon-size-8" [svgIcon]="'heroicons_outline:chart-pie'" />
           <div class="text-4xl font-extrabold">{{ data.porcentaje | number: '1.0-2' }}%</div>
           <div class="text-sm text-secondary mt-1">Porcentaje</div>
         </div>
-        <div class="sm:col-span-3 bg-card rounded-2xl shadow-sm border p-6 flex flex-col justify-center">
+        <div class="venp-premium-card flex flex-col justify-center p-6 sm:col-span-3">
           <div class="flex items-center justify-between text-sm mb-2">
             <span class="text-secondary">Faltan por votar</span>
             <span class="font-bold">{{ data.padronHabilitado - data.votantes }}</span>
           </div>
           <div class="w-full h-3 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-            <div class="venp-gradient h-full transition-all duration-500"
+            <div class="venp-bg-primary h-full transition-all duration-500"
               [style.width.%]="data.porcentaje"></div>
           </div>
         </div>
@@ -69,8 +87,16 @@
 
     <!-- Participacion por cedula -->
     @if (data.dignidades.length) {
-    <div class="mt-8 bg-card rounded-2xl shadow-sm border p-6">
-      <h2 class="font-bold text-lg mb-5">Votos emitidos por cédula</h2>
+    <div class="venp-premium-card mt-8 p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="venp-bg-primary flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow">
+          <mat-icon [svgIcon]="'heroicons_outline:chart-bar-square'" />
+        </div>
+        <div>
+          <p class="venp-section-kicker venp-text-secondary">Detalle consolidado</p>
+          <h2 class="text-xl font-black">Votos emitidos por cédula</h2>
+        </div>
+      </div>
       <div class="flex flex-col gap-5">
         @for (d of data.dignidades; track d.dignidadId) {
         <div>

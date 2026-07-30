@@ -2,25 +2,6 @@ import { FuseNavigationItem } from '@core/components/navigation';
 
 export const AdminNavigation: FuseNavigationItem[] = [
   {
-    "id": "dashboards",
-    "title": "Menu de opciones",
-    "type": "group",
-    "children": [
-      {
-        id: 'dashboard',
-        title: 'Panel',
-        type: 'basic',
-        icon: 'heroicons_outline:home',
-        link: '/admin/dashboard',
-      },
-    ]
-  },
-
-  {
-    id: 'divider-elections',
-    type: 'divider',
-  },
-  {
     id: 'elections',
     title: 'Elecciones',
     type: 'group',

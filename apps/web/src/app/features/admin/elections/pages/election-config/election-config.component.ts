@@ -19,7 +19,6 @@ const CONFIG_FIELDS: Array<keyof UpsertConfiguracionPayload> = [
   'nombreInstitucion',
   'logoUrl',
   'escudoUrl',
-  'videoUrl',
   'colorPrimario',
   'colorSecundario',
   'colorAcento',
@@ -54,10 +53,9 @@ export default class ElectionConfigComponent implements OnInit {
     nombreInstitucion: [''],
     logoUrl: [''],
     escudoUrl: [''],
-    videoUrl: [''],
-    colorPrimario: ['#1d4ed8', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
-    colorSecundario: ['#0ea5e9', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
-    colorAcento: ['#f59e0b', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    colorPrimario: ['#183f84', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    colorSecundario: ['#ea580c', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    colorAcento: ['#f3eadc', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
     mensajeBienvenida: [''],
   });
 
@@ -127,15 +125,22 @@ export default class ElectionConfigComponent implements OnInit {
       });
   }
 
+  aplicarPaletaYavirac(): void {
+    this.form.patchValue({
+      colorPrimario: '#183f84',
+      colorSecundario: '#ea580c',
+      colorAcento: '#f3eadc',
+    });
+  }
+
   private patchConfig(config: ConfiguracionEleccion | null): void {
     this.form.reset({
       nombreInstitucion: config?.nombreInstitucion ?? '',
       logoUrl: config?.logoUrl ?? '',
       escudoUrl: config?.escudoUrl ?? '',
-      videoUrl: config?.videoUrl ?? '',
-      colorPrimario: config?.colorPrimario ?? '#1d4ed8',
-      colorSecundario: config?.colorSecundario ?? '#0ea5e9',
-      colorAcento: config?.colorAcento ?? '#f59e0b',
+      colorPrimario: config?.colorPrimario ?? '#183f84',
+      colorSecundario: config?.colorSecundario ?? '#ea580c',
+      colorAcento: config?.colorAcento ?? '#f3eadc',
       mensajeBienvenida: config?.mensajeBienvenida ?? '',
     });
   }

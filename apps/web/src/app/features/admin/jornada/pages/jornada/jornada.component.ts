@@ -1,11 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -14,10 +12,6 @@ import { InstitutionalDialogService } from 'app/shared/services/institutional-di
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import { PadronService } from '../../../padron/services/padron.service';
-import {
-  CorreoPrueba,
-  EstadoCorreo,
-} from '../../../padron/models/padron.model';
 import { JornadaEstado } from '../../models/jornada.model';
 import { JornadaService } from '../../services/jornada.service';
 
@@ -31,12 +25,10 @@ interface PasoInfo {
   selector: 'admin-jornada',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     DatePipe,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule,
     MatSelectModule,
     MatProgressBarModule,
   ],
@@ -51,13 +43,10 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   elecciones: Eleccion[] = [];
   estado: JornadaEstado | null = null;
-  estadoCorreo: EstadoCorreo | null = null;
-  correosPrueba: CorreoPrueba[] = [];
   loading = false;
   working = false;
 
   selectedIdCtrl = new FormControl<string>('', { nonNullable: true });
-  fechaFinCtrl = new FormControl<string>('', { nonNullable: true });
 
   pasos: PasoInfo[] = [
     { numero: 1, titulo: 'Inicializar Jornada', icono: 'heroicons_outline:play' },
@@ -72,7 +61,6 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadElecciones();
-    this.loadEstadoCorreo();
     this.selectedIdCtrl.valueChanges.subscribe((id) => {
       if (id) this.loadEstado(id);
       else this.estado = null;
@@ -138,44 +126,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   iniciarVotacion(): void {
     if (!this.estado) return;
-    const fechaFin = this.fechaFinCtrl.value
-      ? new Date(this.fechaFinCtrl.value).toISOString()
-      : undefined;
-    this._run(
-      this._jornadaService.iniciarVotacion(this.estado.eleccion.id, {
-        fechaFinVotacion: fechaFin,
-      }),
-    );
-  }
-
-  loadEstadoCorreo(): void {
-    this._padronService.estadoCorreo().subscribe({
-      next: (estado) => {
-        this.estadoCorreo = estado;
-        if (estado.modo === 'preview') this.loadBuzonPruebas();
-      },
-      error: () => {
-        this.estadoCorreo = null;
-      },
-    });
-  }
-
-  loadBuzonPruebas(): void {
-    this._padronService.buzonPruebas().subscribe({
-      next: (correos) => (this.correosPrueba = correos),
-      error: () => (this.correosPrueba = []),
-    });
-  }
-
-  limpiarBuzonPruebas(): void {
-    this._padronService.limpiarBuzonPruebas().subscribe({
-      next: () => {
-        this.correosPrueba = [];
-        this._notify('Buzón local de pruebas vaciado.');
-      },
-      error: (err) =>
-        this._notify(this._msg(err, 'No se pudo vaciar el buzón de pruebas.')),
-    });
+    this._run(this._jornadaService.iniciarVotacion(this.estado.eleccion.id));
   }
 
   generarEnviarCredenciales(): void {
@@ -185,9 +136,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
       .confirm({
         title: 'Generar y enviar credenciales',
         message:
-          this.estadoCorreo?.modo === 'preview'
-            ? 'Se generará una contraseña única para cada elector pendiente y aparecerá en el buzón local de pruebas.'
-            : 'Se generará una contraseña única para cada elector pendiente y se enviará a su correo institucional.',
+          'Se generará una contraseña única para cada elector pendiente y se enviará a su correo institucional.',
         confirmText: 'Generar y enviar',
         icon: 'heroicons_outline:envelope',
       })
@@ -203,9 +152,6 @@ export default class JornadaComponent implements OnInit, OnDestroy {
                 `Proceso terminado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.`,
               );
               this.loadEstado(eleccionId);
-              if (this.estadoCorreo?.modo === 'preview') {
-                this.loadBuzonPruebas();
-              }
             },
             error: (err) =>
               this._notify(
@@ -257,8 +203,42 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   private applyEstado(estado: JornadaEstado): void {
     this.estado = estado;
-    this.fechaFinCtrl.setValue(this.toLocal(estado.jornada.fechaFinVotacion));
     this.setupCountdown();
+  }
+
+  get inicioProgramado(): string | null {
+    return this.estado?.cronograma?.fechaInicioVotacion ?? null;
+  }
+
+  get cierreProgramado(): string | null {
+    return this.estado?.cronograma?.fechaFinVotacion ?? null;
+  }
+
+  get publicacionProgramada(): string | null {
+    return this.estado?.cronograma?.fechaPublicacionResultados ?? null;
+  }
+
+  get puedeIniciarPorFecha(): boolean {
+    if (!this.inicioProgramado || !this.cierreProgramado) return false;
+    const now = Date.now();
+    return (
+      now >= new Date(this.inicioProgramado).getTime() &&
+      now < new Date(this.cierreProgramado).getTime()
+    );
+  }
+
+  get puedePublicarPorFecha(): boolean {
+    return (
+      !!this.publicacionProgramada &&
+      Date.now() >= new Date(this.publicacionProgramada).getTime()
+    );
+  }
+
+  get puedeCerrarPorFecha(): boolean {
+    return (
+      !!this.cierreProgramado &&
+      Date.now() >= new Date(this.cierreProgramado).getTime()
+    );
   }
 
   private setupCountdown(): void {
@@ -283,14 +263,6 @@ export default class JornadaComponent implements OnInit, OnDestroy {
     };
     tick();
     this._timer = setInterval(tick, 1000);
-  }
-
-  private toLocal(value?: string | null): string {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    const offset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
   }
 
   private _notify(message: string): void {

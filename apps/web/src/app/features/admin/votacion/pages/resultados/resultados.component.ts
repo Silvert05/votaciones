@@ -9,7 +9,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
-import { ConteoVoto, ResultadosResponse } from '../../models/votacion.model';
+import {
+  ConteoVoto,
+  EstadisticaCarrera,
+  ResultadosResponse,
+} from '../../models/votacion.model';
 import { VotacionService } from '../../services/votacion.service';
 
 @Component({
@@ -84,6 +88,34 @@ export default class ResultadosComponent implements OnInit {
     );
   }
 
+  get totalVotantes(): number {
+    return Math.max(
+      0,
+      ...(this.resultados?.emitidos ?? []).map((item) => item.total),
+    );
+  }
+
+  opcionesCarrera(
+    carrera: EstadisticaCarrera,
+    dignidadId: string,
+  ): EstadisticaCarrera['opciones'] {
+    return carrera.opciones.filter(
+      (opcion) => opcion.dignidadId === dignidadId,
+    );
+  }
+
+  opcionCarreraLabel(
+    opcion: EstadisticaCarrera['opciones'][number],
+  ): string {
+    if (opcion.tipo === 'BLANCO') return 'Voto blanco';
+    if (opcion.tipo === 'NULO') return 'Voto nulo';
+    const elector = opcion.candidatura?.elector;
+    const lista = opcion.candidatura?.lista;
+    return `${elector?.apellidos ?? ''} ${elector?.nombres ?? ''}${
+      lista ? ` - ${lista.codigo} ${lista.nombre}` : ''
+    }`.trim();
+  }
+
   opcionLabel(conteo: ConteoVoto): string {
     if (conteo.tipo === 'BLANCO') return 'Voto blanco';
     if (conteo.tipo === 'NULO') return 'Voto nulo';
@@ -106,6 +138,112 @@ export default class ResultadosComponent implements OnInit {
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
+  }
+
+  exportarResultadosCsv(): void {
+    if (!this.resultados) return;
+    const rows: Array<Array<string | number>> = [
+      ['Eleccion', this.resultados.eleccion.nombre],
+      ['Padron habilitado', this.resultados.padronHabilitado],
+      ['Votantes', this.totalVotantes],
+      [],
+      ['Dignidad', 'Opcion', 'Tipo', 'Votos', 'Porcentaje'],
+    ];
+    for (const dignidad of this.resultados.dignidades) {
+      const emitidos = this.emitidosPorDignidad(dignidad.id);
+      for (const conteo of this.conteosPorDignidad(dignidad.id)) {
+        rows.push([
+          dignidad.nombre,
+          this.opcionLabel(conteo),
+          conteo.tipo,
+          conteo.total,
+          `${this.porcentaje(conteo.total, emitidos)}%`,
+        ]);
+      }
+    }
+    this._downloadCsv('resultados-consolidados.csv', rows);
+  }
+
+  exportarCarrerasCsv(): void {
+    if (!this.resultados) return;
+    const rows: Array<Array<string | number>> = [
+      ['Eleccion', this.resultados.eleccion.nombre],
+      [],
+      [
+        'Carrera',
+        'Habilitados',
+        'Votantes',
+        'Participacion',
+        'Dignidad',
+        'Opcion',
+        'Votos',
+      ],
+    ];
+    for (const carrera of this.resultados.estadisticasCarrera) {
+      if (!carrera.publicable) {
+        rows.push([
+          carrera.carrera,
+          carrera.habilitados,
+          carrera.votantes,
+          `${carrera.porcentaje}%`,
+          'Detalle protegido',
+          '',
+          '',
+        ]);
+        continue;
+      }
+      for (const dignidad of this.resultados.dignidades) {
+        const opciones = this.opcionesCarrera(carrera, dignidad.id);
+        if (!opciones.length) {
+          rows.push([
+            carrera.carrera,
+            carrera.habilitados,
+            carrera.votantes,
+            `${carrera.porcentaje}%`,
+            dignidad.nombre,
+            'Sin datos',
+            0,
+          ]);
+        }
+        for (const opcion of opciones) {
+          rows.push([
+            carrera.carrera,
+            carrera.habilitados,
+            carrera.votantes,
+            `${carrera.porcentaje}%`,
+            dignidad.nombre,
+            this.opcionCarreraLabel(opcion),
+            opcion.total,
+          ]);
+        }
+      }
+    }
+    this._downloadCsv('resultados-por-carrera.csv', rows);
+  }
+
+  imprimirResumen(): void {
+    window.print();
+  }
+
+  private _downloadCsv(
+    filename: string,
+    rows: Array<Array<string | number>>,
+  ): void {
+    const content = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`)
+          .join(','),
+      )
+      .join('\r\n');
+    const url = URL.createObjectURL(
+      new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8' }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   private _notify(message: string): void {

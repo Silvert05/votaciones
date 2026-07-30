@@ -433,14 +433,11 @@ export class PadronesService {
   }
 
   async publicarPadron(eleccionId: string, actor: Actor) {
-    this.correo.asegurarConfigurado();
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
       select: {
         id: true,
-        nombre: true,
         estado: true,
-        configuracion: { select: { nombreInstitucion: true } },
       },
     });
 
@@ -457,48 +454,15 @@ export class PadronesService {
       );
     }
 
-    const electoresHabilitados = await this.prisma.padronElectoral.findMany({
+    const habilitados = await this.prisma.padronElectoral.count({
       where: { eleccionId, estado: EstadoPadronElector.HABILITADO },
-      select: {
-        id: true,
-        credencialHash: true,
-        credencialEnviadaAt: true,
-        elector: {
-          select: {
-            identificacion: true,
-            nombres: true,
-            apellidos: true,
-            email: true,
-            activo: true,
-          },
-        },
-      },
     });
-    const habilitados = electoresHabilitados.length;
 
     if (!habilitados) {
       throw new BadRequestException(
         'No hay electores habilitados para publicar.',
       );
     }
-
-    const sinCorreo = electoresHabilitados.filter(
-      (row) => !row.elector.email?.trim(),
-    );
-    if (sinCorreo.length) {
-      const ejemplos = sinCorreo
-        .slice(0, 5)
-        .map((row) => row.elector.identificacion)
-        .join(', ');
-      throw new BadRequestException(
-        `No se puede publicar: ${sinCorreo.length} elector(es) habilitado(s) no tienen correo. Revise: ${ejemplos}.`,
-      );
-    }
-
-    const pendientes = electoresHabilitados.filter(
-      (row) => !row.credencialHash || !row.credencialEnviadaAt,
-    );
-    const credenciales = await this.prepararCredenciales(pendientes);
 
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
@@ -523,30 +487,15 @@ export class PadronesService {
         });
       }
 
-      for (const credencial of credenciales) {
-        await tx.padronElectoral.update({
-          where: { id: credencial.padronId },
-          data: {
-            credencialHash: credencial.hash,
-            credencialGeneradaAt: now,
-            credencialEnviadaAt: null,
-            credencialRevocadaAt: null,
-            credencialEnvioError: null,
-            credencialVersion: { increment: 1 },
-          },
-        });
-      }
     });
-
-    const envios = await this.enviarCredenciales(eleccion, credenciales);
 
     await this.audit(AuditTabla.PADRONES, AuditOperacion.ESTADO, eleccionId, {
       datosAnteriores: { estadoEleccion: eleccion.estado },
-      datosNuevos: { publicado: true, habilitados, ...envios },
+      datosNuevos: { publicado: true, habilitados },
       actor,
     });
 
-    return { publicado: true, habilitados, ...envios };
+    return { publicado: true, habilitados };
   }
 
   async listCredenciales(eleccionId: string) {

@@ -13,17 +13,388 @@
 }
 
 .venp-gradient {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--venp-primary, #183f84);
+    animation: venp-header-colors 5s steps(1, end) infinite;
+}
+
+.venp-gradient::before,
+.venp-preview-gradient::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    opacity: 0.86;
+    background-image:
+        linear-gradient(90deg, rgba(2, 6, 23, 0.64), rgba(2, 6, 23, 0.38)),
+        url('/img/hero.jpg');
+    background-position: center 44%;
+    background-size: cover;
+    filter: saturate(0.8) contrast(1.06);
+}
+
+.venp-gradient > *,
+.venp-preview-gradient > * {
+    position: relative;
+    z-index: 1;
+}
+
+.venp-preview-gradient {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--venp-primary, #183f84);
+}
+
+.venp-home-overlay {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(4, 23, 56, 0.94) 0%,
+            rgba(4, 23, 56, 0.82) 48%,
+            rgba(4, 23, 56, 0.54) 76%,
+            rgba(4, 23, 56, 0.38) 100%
+        );
+}
+
+.venp-home-accent {
+    position: absolute;
+    top: 5.5rem;
+    right: -4rem;
+    width: 11rem;
+    height: 22rem;
+    border: 16px solid var(--venp-secondary, #ea580c);
+    border-radius: 999px;
+    opacity: 0.96;
+    transform: rotate(18deg);
+}
+
+.venp-home-feature {
+    position: relative;
+    overflow: hidden;
+}
+
+.venp-home-feature::after {
+    position: absolute;
+    right: -3rem;
+    bottom: -3rem;
+    width: 8rem;
+    height: 8rem;
+    border: 20px solid rgba(148, 163, 184, 0.12);
+    border-radius: 999px;
+    content: '';
+}
+
+.venp-reveal {
+    animation: venp-reveal 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.venp-delay-2 {
+    animation-delay: 140ms;
+}
+
+.venp-float-soft {
+    animation: venp-float 5s ease-in-out infinite;
+}
+
+.venp-live-pulse {
+    animation: venp-live-colors 2.4s ease-in-out infinite;
+}
+
+.venp-live-ring {
+    animation: venp-live-ring 2.4s ease-out infinite;
+}
+
+@keyframes venp-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes venp-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+}
+
+@keyframes venp-live-colors {
+    0%, 100% {
+        background-color: var(--venp-primary, #183f84);
+        box-shadow: 0 0 0 0 rgba(24, 63, 132, 0.28);
+    }
+    50% {
+        background-color: var(--venp-secondary, #ea580c);
+        box-shadow: 0 0 0 7px rgba(234, 88, 12, 0);
+    }
+}
+
+@keyframes venp-live-ring {
+    0% {
+        opacity: 0.75;
+        transform: scale(0.8);
+    }
+    75%, 100% {
+        opacity: 0;
+        transform: scale(1.8);
+    }
+}
+
+@keyframes venp-header-colors {
+    0%, 49.99% {
+        background-color: var(--venp-primary, #183f84);
+    }
+    50%, 99.99% {
+        background-color: var(--venp-secondary, #ea580c);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .venp-reveal,
+    .venp-float-soft,
+    .venp-live-pulse,
+    .venp-live-ring,
+    .venp-gradient {
+        animation: none !important;
+    }
+}
+
+.venp-bg-primary { background-color: var(--venp-primary, #183f84) !important; }
+.venp-bg-secondary { background-color: var(--venp-secondary, #ea580c) !important; }
+.venp-text-primary { color: var(--venp-primary, #183f84) !important; }
+.venp-text-secondary { color: var(--venp-secondary, #ea580c) !important; }
+.venp-border-primary { border-color: var(--venp-primary, #183f84) !important; }
+.venp-bg-accent { background-color: var(--venp-accent, #f3eadc) !important; }
+
+.venp-user-canvas {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(circle at 8% 10%, rgba(29, 78, 216, 0.08), transparent 28rem),
+        radial-gradient(circle at 92% 82%, rgba(234, 88, 12, 0.08), transparent 28rem),
+        #f8fafc;
+}
+
+.venp-user-canvas::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    opacity: 0.38;
+    background-image:
+        linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
+.venp-premium-card {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.10),
+        0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.venp-brand-rule {
+    height: 6px;
     background: linear-gradient(
-        120deg,
-        var(--venp-primary, #1d4ed8),
-        var(--venp-secondary, #0ea5e9)
+        90deg,
+        var(--venp-primary, #1d4ed8) 0 72%,
+        var(--venp-secondary, #ea580c) 72% 100%
     );
 }
 
-.venp-bg-primary { background-color: var(--venp-primary, #1d4ed8) !important; }
-.venp-text-primary { color: var(--venp-primary, #1d4ed8) !important; }
-.venp-border-primary { border-color: var(--venp-primary, #1d4ed8) !important; }
-.venp-bg-accent { background-color: var(--venp-accent, #f59e0b) !important; }
+.venp-choice-card {
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.venp-choice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.11);
+}
+
+.venp-icon-panel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(12px);
+}
+
+.venp-section-kicker {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    line-height: 1rem;
+    text-transform: uppercase;
+}
+
+.venp-soft-panel {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 18px;
+    background: rgba(248, 250, 252, 0.82);
+}
+
+.dark .venp-user-canvas {
+    background:
+        radial-gradient(circle at 8% 10%, rgba(29, 78, 216, 0.18), transparent 28rem),
+        radial-gradient(circle at 92% 82%, rgba(234, 88, 12, 0.15), transparent 28rem),
+        #0f172a;
+}
+
+.dark .venp-premium-card,
+.dark .venp-choice-card {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.94);
+}
+
+.dark .venp-soft-panel {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(30, 41, 59, 0.7);
+}
+
+.venp-admin-shell {
+    background:
+        radial-gradient(circle at 92% 8%, rgba(234, 88, 12, 0.07), transparent 24rem),
+        radial-gradient(circle at 5% 90%, rgba(24, 63, 132, 0.08), transparent 28rem),
+        #f4f7fb;
+}
+
+.venp-admin-topbar {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06) !important;
+}
+
+.venp-admin-topbar::after {
+    position: absolute;
+    right: 2rem;
+    bottom: 0;
+    width: 7rem;
+    height: 3px;
+    border-radius: 999px 999px 0 0;
+    content: '';
+    background: var(--venp-secondary, #ea580c);
+}
+
+.venp-admin-nav {
+    border-right: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 12px 0 36px rgba(15, 23, 42, 0.05);
+}
+
+.venp-admin-content > router-outlet + * {
+    min-height: 100%;
+    animation: venp-reveal 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.venp-admin-content .bg-card.rounded.shadow,
+.venp-admin-content .bg-card.rounded-lg.shadow,
+.venp-admin-content .bg-card.rounded-xl.shadow {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 20px !important;
+    box-shadow:
+        0 18px 44px rgba(15, 23, 42, 0.07),
+        0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.venp-admin-content table thead,
+.venp-admin-content .mat-mdc-header-row {
+    background: rgba(24, 63, 132, 0.055);
+}
+
+.venp-admin-content .mat-mdc-header-cell {
+    color: #183f84;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+}
+
+.venp-admin-page {
+    position: relative;
+    isolation: isolate;
+}
+
+.venp-admin-page::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    opacity: 0.3;
+    background-image:
+        linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(to bottom, black, transparent 48rem);
+}
+
+.venp-admin-surface {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow:
+        0 24px 58px rgba(15, 23, 42, 0.08),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.venp-admin-icon {
+    background: #183f84;
+    box-shadow: inset 0 -5px 0 #ea580c;
+}
+
+.venp-admin-report,
+.venp-admin-metric {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+button.venp-admin-report {
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+button.venp-admin-report:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 63, 132, 0.38);
+    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.1);
+}
+
+.venp-admin-metric {
+    position: relative;
+    overflow: hidden;
+}
+
+.venp-admin-metric::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    content: '';
+    background: #183f84;
+}
+
+.dark .venp-admin-shell {
+    background: #0f172a;
+}
+
+.dark .venp-admin-surface,
+.dark .venp-admin-report,
+.dark .venp-admin-metric {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.94);
+}
 
 landing-layout {
     display: flex;

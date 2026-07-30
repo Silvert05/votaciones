@@ -88,4 +88,23 @@ export interface ResultadosResponse {
   dignidades: Array<Pick<Dignidad, 'id' | 'nombre' | 'cantidadGanadores'>>;
   emitidos: ResultadoDignidad[];
   conteos: ConteoVoto[];
+  minimoPrivacidadCarrera: number;
+  estadisticasCarrera: EstadisticaCarrera[];
+}
+
+export interface EstadisticaCarrera {
+  carreraId: string;
+  carrera: string;
+  habilitados: number;
+  votantes: number;
+  porcentaje: number;
+  publicable: boolean;
+  opciones: Array<{
+    dignidadId: string;
+    candidaturaId: string | null;
+    tipo: TipoVoto;
+    opcionKey: string;
+    total: number;
+    candidatura: ConteoVoto['candidatura'];
+  }>;
 }

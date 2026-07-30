@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { PublicThemeService } from '../../services/public-theme.service';
@@ -13,7 +12,6 @@ import { LandingEleccion, VenpService } from '../../services/venp.service';
 })
 export default class HomeComponent implements OnInit, OnDestroy {
   private _venp = inject(VenpService);
-  private _sanitizer = inject(DomSanitizer);
   private _cdr = inject(ChangeDetectorRef);
   private _publicTheme = inject(PublicThemeService);
   readonly theme = this._publicTheme.theme;
@@ -22,7 +20,6 @@ export default class HomeComponent implements OnInit, OnDestroy {
   eleccion: LandingEleccion | null = null;
   countdown = '';
   votacionFinalizada = false;
-  videoPath: SafeResourceUrl | null = null;
   private _timer: any = null;
 
   ngOnInit(): void {
@@ -35,10 +32,6 @@ export default class HomeComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.eleccion = this._elegirActiva(data);
         this._publicTheme.apply(this.eleccion?.configuracion);
-        const videoUrl = this.eleccion?.configuracion?.videoUrl;
-        this.videoPath = videoUrl
-          ? this._sanitizer.bypassSecurityTrustResourceUrl(videoUrl)
-          : null;
         this._setupCountdown();
       },
       error: () => (this.eleccion = null),
@@ -59,10 +52,6 @@ export default class HomeComponent implements OnInit, OnDestroy {
 
   get colorSecundario(): string {
     return this.theme().colorSecundario;
-  }
-
-  get colorAcento(): string {
-    return this.theme().colorAcento;
   }
 
   onImageError(event: Event): void {

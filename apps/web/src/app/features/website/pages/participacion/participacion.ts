@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
@@ -13,13 +13,20 @@ import {
   ApexPlotOptions,
   NgApexchartsModule,
 } from 'ng-apexcharts';
-import { Subscription, interval, startWith, switchMap } from 'rxjs';
+import {
+  Subscription,
+  finalize,
+  interval,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { ParticipacionPublica, VenpService } from '../../services/venp.service';
 import { PublicThemeService } from '../../services/public-theme.service';
 
 @Component({
   selector: 'app-participacion',
-  imports: [DecimalPipe, MatIconModule, NgApexchartsModule],
+  imports: [DatePipe, DecimalPipe, MatIconModule, NgApexchartsModule],
   templateUrl: './participacion.html',
 })
 export default class ParticipacionComponent implements OnInit, OnDestroy {
@@ -29,12 +36,14 @@ export default class ParticipacionComponent implements OnInit, OnDestroy {
   private _sub?: Subscription;
 
   cargando = true;
+  actualizando = false;
+  ultimaActualizacion: Date | null = null;
   data: ParticipacionPublica | null = null;
 
   // ---- Radial gauge (ApexCharts) ----
   radialSeries: number[] = [0];
   radialChart: ApexChart = { type: 'radialBar', height: 300, fontFamily: 'inherit' };
-  radialColors = ['#1d4ed8'];
+  radialColors = ['#183f84'];
   radialLabels = ['Participación'];
   radialPlot: ApexPlotOptions = {
     radialBar: {
@@ -52,15 +61,7 @@ export default class ParticipacionComponent implements OnInit, OnDestroy {
       },
     },
   };
-  radialFill: ApexFill = {
-    type: 'gradient',
-    gradient: {
-      shade: 'light',
-      type: 'horizontal',
-      gradientToColors: ['#0ea5e9'],
-      stops: [0, 100],
-    },
-  };
+  radialFill: ApexFill = { type: 'solid' };
 
   ngOnInit(): void {
     this._venp.listElecciones().subscribe({
@@ -77,22 +78,27 @@ export default class ParticipacionComponent implements OnInit, OnDestroy {
         this._theme.apply(activa.configuracion);
         const theme = this._theme.theme();
         this.radialColors = [theme.colorPrimario];
-        this.radialFill = {
-          ...this.radialFill,
-          gradient: {
-            ...this.radialFill.gradient,
-            gradientToColors: [theme.colorSecundario],
-          },
-        };
         this._sub = interval(15000)
           .pipe(
             startWith(0),
-            switchMap(() => this._venp.participacion(activa.id)),
+            tap(() => {
+              this.actualizando = true;
+              this._cdr.detectChanges();
+            }),
+            switchMap(() =>
+              this._venp.participacion(activa.id).pipe(
+                finalize(() => {
+                  this.actualizando = false;
+                  this._cdr.detectChanges();
+                }),
+              ),
+            ),
           )
           .subscribe({
             next: (d) => {
               this.data = d;
               this.radialSeries = [d.porcentaje];
+              this.ultimaActualizacion = new Date();
               this.cargando = false;
               this._cdr.detectChanges();
             },

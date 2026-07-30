@@ -2,23 +2,13 @@
 <div class="flex w-full min-w-0 flex-auto flex-col">
 
   <!-- HERO -->
-  <section class="relative flex min-h-[560px] items-center overflow-hidden">
+  <section class="relative flex min-h-[620px] items-center overflow-hidden">
 
     <!-- Imagen de fondo -->
     <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/img/hero.jpg');"></div>
 
-    <!-- Degradado sobre la imagen -->
-    <div
-  class="absolute inset-0"
-  style="
-    background: linear-gradient(
-      135deg,
-      rgba(14, 46, 97, 0.75) 0%,
-      rgba(245, 75, 10, 0.75) 100%
-     
-    );
-  "
-></div>
+    <!-- Capa azul institucional: evita mezclar azul y naranja -->
+    <div class="venp-home-overlay absolute inset-0"></div>
 
 
     <!-- Patrón decorativo -->
@@ -32,7 +22,7 @@
       "></div>
 
     <!-- Contenido del hero -->
-    <div class="relative z-10 mx-auto w-full max-w-screen-xl px-6 py-16 text-center md:px-10 lg:px-12">
+    <div class="relative z-10 mx-auto w-full max-w-screen-xl px-6 py-20 md:px-10 lg:px-12">
 
       @if (cargando) {
 
@@ -42,32 +32,28 @@
 
       } @else if (eleccion) {
 
-      <div class="mx-auto max-w-4xl text-white">
+      <div class="grid items-center gap-12 text-left text-white lg:grid-cols-[1.25fr_.75fr]">
+        <div class="venp-reveal">
 
-        @if (theme().escudoUrl) {
-        <img [src]="theme().escudoUrl" (error)="onImageError($event)" alt="Escudo institucional"
-          class="mx-auto mb-6 h-24 w-24 rounded-2xl bg-white p-2 object-contain shadow-2xl">
-        }
-
-        <p class="mb-3 text-sm font-bold uppercase tracking-[.25em] text-white/75">
+        <p class="mb-3 text-sm font-bold uppercase tracking-[.25em] text-orange-300">
           Portal electoral institucional
         </p>
 
-        <h1 class="text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
+        <h1 class="text-5xl font-black leading-[1.04] tracking-tight md:text-6xl lg:text-7xl">
           {{ eleccion.nombre }}
         </h1>
 
-        <p class="mt-4 text-lg font-semibold text-white/90">
+        <p class="mt-5 text-xl font-bold text-white/90 md:text-2xl">
           {{ theme().nombreInstitucion }}
         </p>
 
         @if (theme().mensajeBienvenida) {
-        <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
+        <p class="mt-4 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
           {{ theme().mensajeBienvenida }}
         </p>
         }
 
-        <div class="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div class="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
 
           @if (eleccion.votarDisponible && !votacionFinalizada) {
           <a routerLink="/votar" [queryParams]="{ eleccion: eleccion.id }"
@@ -89,13 +75,26 @@
         </div>
 
         @if (countdown && eleccion.votarDisponible) {
-        <div class="mx-auto mt-7 w-fit rounded-2xl bg-slate-950/35 px-7 py-4 backdrop-blur">
+        <div class="mt-7 w-fit rounded-2xl border border-white/15 bg-slate-950/40 px-7 py-4 shadow-xl backdrop-blur">
           <div class="text-3xl font-black tabular-nums">
             {{ countdown }}
           </div>
 
           <div class="mt-1 text-xs text-white/75">
             Tiempo restante de la jornada
+          </div>
+        </div>
+        }
+
+        </div>
+
+        @if (theme().escudoUrl) {
+        <div class="venp-reveal venp-delay-2 relative mx-auto hidden w-full max-w-sm items-center justify-center lg:flex">
+          <span class="absolute h-80 w-80 rounded-full border border-white/15"></span>
+          <span class="absolute h-64 w-64 rounded-full border border-orange-400/45"></span>
+          <div class="venp-float-soft relative flex h-72 w-72 items-center justify-center p-2">
+            <img [src]="theme().escudoUrl" (error)="onImageError($event)" alt="Escudo institucional"
+              class="max-h-full max-w-full object-contain drop-shadow-[0_24px_34px_rgba(0,0,0,.42)]">
           </div>
         </div>
         }
@@ -126,8 +125,41 @@
 
   </section>
 
+  <!-- Garantías del proceso -->
+  <section class="relative z-20 -mt-9 px-6 md:px-10 lg:px-12">
+    <div class="venp-premium-card mx-auto grid max-w-5xl grid-cols-1 overflow-hidden sm:grid-cols-3">
+      <div class="flex items-center gap-4 border-b p-5 sm:border-b-0 sm:border-r">
+        <span class="venp-bg-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white">
+          <mat-icon [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
+        </span>
+        <div>
+          <div class="font-black text-slate-900 dark:text-white">Acceso protegido</div>
+          <div class="text-secondary text-xs">Credenciales personales</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 border-b p-5 sm:border-b-0 sm:border-r">
+        <span class="venp-bg-secondary flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white">
+          <mat-icon [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+        </span>
+        <div>
+          <div class="font-black text-slate-900 dark:text-white">Voto secreto</div>
+          <div class="text-secondary text-xs">Decisión privada y segura</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 p-5">
+        <span class="venp-bg-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white">
+          <mat-icon [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
+        </span>
+        <div>
+          <div class="font-black text-slate-900 dark:text-white">Proceso verificable</div>
+          <div class="text-secondary text-xs">Información oficial publicada</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- INFORMACIÓN ELECTORAL -->
-  <section class="bg-white px-6 py-16 dark:bg-transparent md:px-10 lg:px-12">
+  <section class="venp-user-canvas px-6 pb-20 pt-24 md:px-10 lg:px-12">
 
     <div class="mx-auto max-w-screen-xl">
 
@@ -144,18 +176,40 @@
       </div>
 
       <!-- Tarjetas -->
-      <div class="grid gap-6 md:grid-cols-3">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+
+        <!-- Cronograma -->
+        <a routerLink="/actividades"
+          class="venp-home-feature venp-premium-card group p-7 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
+
+          <span class="venp-bg-primary flex h-13 w-13 items-center justify-center rounded-2xl text-white shadow-lg">
+            <mat-icon [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+          </span>
+
+          <p class="venp-section-kicker venp-text-secondary mt-6">Fechas oficiales</p>
+
+          <h3 class="mt-2 text-xl font-black">
+            Cronograma
+          </h3>
+
+          <p class="text-secondary mt-2 text-sm leading-relaxed">
+            Consulta cada etapa y fecha clave del proceso electoral.
+          </p>
+
+        </a>
 
         <!-- Participación -->
         <a routerLink="/participacion"
-          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+          class="venp-home-feature venp-premium-card group p-7 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
           <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-white"
             [style.background]="colorPrimario">
             <mat-icon [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
           </span>
 
-          <h3 class="mt-5 text-xl font-bold">
+          <p class="venp-section-kicker venp-text-secondary mt-6">Avance electoral</p>
+
+          <h3 class="mt-2 text-xl font-black">
             Participación
           </h3>
 
@@ -167,14 +221,16 @@
 
         <!-- Candidatos -->
         <a routerLink="/candidatos"
-          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+          class="venp-home-feature venp-premium-card group p-7 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
           <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-white"
             [style.background]="colorSecundario">
             <mat-icon [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
           </span>
 
-          <h3 class="mt-5 text-xl font-bold">
+          <p class="venp-section-kicker venp-text-secondary mt-6">Oferta electoral</p>
+
+          <h3 class="mt-2 text-xl font-black">
             Candidatos
           </h3>
 
@@ -186,14 +242,16 @@
 
         <!-- Resultados -->
         <a routerLink="/resultados"
-          class="group rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+          class="venp-home-feature venp-premium-card group p-7 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
-          <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-slate-950"
-            [style.background]="colorAcento">
+          <span class="flex h-13 w-13 items-center justify-center rounded-2xl text-white shadow-lg"
+            [style.background]="colorSecundario">
             <mat-icon [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
           </span>
 
-          <h3 class="mt-5 text-xl font-bold">
+          <p class="venp-section-kicker venp-text-secondary mt-6">Publicación oficial</p>
+
+          <h3 class="mt-2 text-xl font-black">
             Resultados
           </h3>
 
@@ -205,40 +263,40 @@
 
       </div>
 
-      <!-- Video institucional -->
-      @if (videoPath) {
-
-      <div class="mt-14 overflow-hidden rounded-3xl border bg-slate-950 shadow-xl">
-
-        <div class="grid lg:grid-cols-[.7fr_1.3fr]">
-
-          <div class="flex flex-col justify-center p-8 text-white lg:p-10">
-
-            <p class="text-sm font-bold uppercase tracking-[.2em] text-cyan-300">
-              Contenido institucional
-            </p>
-
-            <h2 class="mt-3 text-3xl font-extrabold">
-              Conoce el proceso de votación
-            </h2>
-
-            <p class="mt-3 text-slate-300">
-              Este video es administrado desde la configuración del proceso
-              electoral.
-            </p>
-
+      <!-- Bloque institucional e instructivo -->
+      <div class="mt-14 grid overflow-hidden rounded-[2rem] bg-slate-950 shadow-2xl lg:grid-cols-[1.05fr_.95fr]">
+        <div class="relative min-h-80 overflow-hidden">
+          <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/img/hero.jpg');"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-slate-950/20 to-slate-950/70"></div>
+          <div class="absolute bottom-6 left-6 rounded-2xl border border-white/20 bg-slate-950/55 px-5 py-4 text-white backdrop-blur">
+            <p class="venp-section-kicker text-orange-300">Instituto Yavirac</p>
+            <p class="mt-1 font-bold">Identidad, participación y comunidad</p>
           </div>
-
-          <iframe [src]="videoPath" class="aspect-video h-full min-h-72 w-full" title="Video institucional"
-            allowfullscreen></iframe>
-
         </div>
 
-      </div>
+        <div class="relative flex flex-col justify-center p-8 text-white sm:p-12">
+          <span class="venp-bg-secondary absolute right-0 top-0 h-2 w-28 rounded-bl-full"></span>
+          <p class="venp-section-kicker text-orange-300">Antes de sufragar</p>
+          <h2 class="mt-3 text-3xl font-black sm:text-4xl">Prepárate para votar</h2>
+          <p class="mt-4 max-w-xl leading-relaxed text-slate-300">
+            Revisa el cronograma, conoce a las candidaturas y sigue el instructivo para completar tu voto sin inconvenientes.
+          </p>
 
-      }
+          <div class="mt-7 grid gap-3 sm:grid-cols-2">
+            <a routerLink="/instructivo"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-black text-slate-900 transition hover:bg-slate-100">
+              <mat-icon [svgIcon]="'heroicons_outline:book-open'"></mat-icon>
+              Ver instructivo
+            </a>
+            <a routerLink="/candidatos"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 px-5 py-3 font-bold text-white transition hover:bg-white/10">
+              <mat-icon [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+              Conocer candidatos
+            </a>
+          </div>
+        </div>
+      </div>
 
     </div>
 
   </section>
-

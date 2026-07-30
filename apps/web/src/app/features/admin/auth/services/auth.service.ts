@@ -11,6 +11,16 @@ import {
 
 const TOKEN_KEY = 'access_token';
 const USER_KEY = 'auth_user';
+const ADMIN_HOME = '/admin/elecciones/jornada';
+const HIDDEN_ADMIN_ROUTES = [
+  '/admin/dashboard',
+  '/admin/seguridad/perfiles',
+  '/admin/seguridad/opciones',
+  '/admin/elecciones/votacion',
+  '/admin/elecciones/escrutinio',
+  '/admin/elecciones/impugnaciones',
+  '/admin/elecciones/resultados-finales',
+];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -21,9 +31,14 @@ export class AuthService {
   /** Usuario autenticado (reactivo). */
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
-  readonly menu = computed<MenuItem[]>(() => this._user()?.menu ?? []);
+  readonly menu = computed<MenuItem[]>(() =>
+    this._filterVisibleMenu(this._user()?.menu ?? []),
+  );
   readonly rutasPermitidas = computed<string[]>(
-    () => this._user()?.rutasPermitidas ?? [],
+    () =>
+      (this._user()?.rutasPermitidas ?? []).filter(
+        (ruta) => !this._isHiddenRoute(ruta),
+      ),
   );
 
   /** Inicia sesión. Puede devolver el flujo de cambio forzado de contraseña. */
@@ -109,7 +124,10 @@ export class AuthService {
     }
 
     const normalized = this._normalizeUrl(url);
-    if (normalized === '/admin/dashboard' || normalized === '/admin/perfil') {
+    if (this._isHiddenRoute(normalized)) {
+      return false;
+    }
+    if (normalized === ADMIN_HOME || normalized === '/admin/perfil') {
       return true;
     }
 
@@ -156,5 +174,27 @@ export class AuthService {
   private _normalizeUrl(url: string): string {
     const [path] = url.split('?');
     return path.replace(/\/$/, '') || '/';
+  }
+
+  private _isHiddenRoute(url: string): boolean {
+    const normalized = this._normalizeUrl(url);
+    return HIDDEN_ADMIN_ROUTES.some(
+      (ruta) => normalized === ruta || normalized.startsWith(`${ruta}/`),
+    );
+  }
+
+  private _filterVisibleMenu(items: MenuItem[]): MenuItem[] {
+    return items
+      .filter((item) => !item.link || !this._isHiddenRoute(item.link))
+      .map((item) => ({
+        ...item,
+        children: item.children
+          ? this._filterVisibleMenu(item.children)
+          : undefined,
+      }))
+      .filter(
+        (item) =>
+          item.type !== 'group' || (item.children?.length ?? 0) > 0,
+      );
   }
 }

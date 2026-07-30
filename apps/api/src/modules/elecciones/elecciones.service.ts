@@ -142,6 +142,9 @@ export class EleccionesService {
           descripcion: this.emptyToNull(dto.descripcion),
           tipo: dto.tipo,
           fechaConvocatoria: this.toDate(dto.fechaConvocatoria),
+          // Cada proceso nace con una jornada propia y vacía. Nunca reutiliza
+          // eventos, votos ni estados de la elección anterior.
+          jornada: { create: {} },
         },
         select: eleccionDetailSelect,
       });
@@ -530,6 +533,11 @@ export class EleccionesService {
     );
     this.ensureOrder(dates.fechaInicioCampania, dates.fechaFinCampania, 'La campania debe cerrar despues de iniciar.');
     this.ensureOrder(dates.fechaInicioVotacion, dates.fechaFinVotacion, 'La votacion debe cerrar despues de iniciar.');
+    this.ensureOrder(
+      dates.fechaFinVotacion,
+      dates.fechaPublicacionResultados,
+      'Los resultados deben publicarse despues del cierre de la votacion.',
+    );
 
     if (dates.fechaPublicacionPadron && dates.fechaInicioVotacion) {
       const min = new Date(dates.fechaInicioVotacion);

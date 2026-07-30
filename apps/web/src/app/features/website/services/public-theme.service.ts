@@ -15,9 +15,9 @@ const DEFAULT_THEME: PublicTheme = {
   nombreInstitucion: 'Instituto Superior Tecnológico Yavirac',
   logoUrl: '/img/logo.png',
   escudoUrl: '/img/logo.png',
-  colorPrimario: '#1d4ed8',
-  colorSecundario: '#0ea5e9',
-  colorAcento: '#f59e0b',
+  colorPrimario: '#183f84',
+  colorSecundario: '#ea580c',
+  colorAcento: '#f3eadc',
   mensajeBienvenida: 'Bienvenido al portal electoral del Instituto Yavirac.',
 };
 

@@ -1,4 +1,4 @@
-<div class="flex min-h-full w-full flex-col bg-gray-50 dark:bg-gray-900">
+<div class="venp-user-canvas flex min-h-full w-full flex-col">
     @if (loading || working) {
         <mat-progress-bar
             class="!absolute left-0 right-0 top-0 z-50"
@@ -9,16 +9,16 @@
     <!-- Cabecera de la eleccion -->
     @if (eleccion && fase !== 'seleccion') {
         <div class="venp-gradient text-white shadow-md">
-            <div class="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-6 text-center sm:flex-row sm:text-left">
+            <div class="mx-auto flex max-w-screen-xl flex-col items-center gap-5 px-6 py-8 text-center sm:flex-row sm:text-left">
                 @if (eleccion.configuracion?.escudoUrl) {
                     <img
                         [src]="eleccion.configuracion?.escudoUrl"
                         alt="escudo"
-                        class="h-16 w-16 shrink-0 rounded-lg bg-white/95 object-contain p-1.5 shadow"
+                        class="h-20 w-20 shrink-0 rounded-2xl bg-white/95 object-contain p-2 shadow-xl"
                     />
                 }
                 <div class="flex-auto">
-                    <h1 class="text-xl font-bold leading-tight sm:text-2xl">
+                    <h1 class="text-2xl font-black leading-tight sm:text-3xl">
                         {{ eleccion.nombre }}
                     </h1>
                     @if (eleccion.configuracion?.nombreInstitucion) {
@@ -31,7 +31,7 @@
                     </p>
                 </div>
                 @if (countdown && fase !== 'listo') {
-                    <div class="shrink-0 rounded-xl bg-white/15 px-5 py-2 text-center">
+                    <div class="shrink-0 rounded-2xl border border-white/20 bg-white/15 px-6 py-3 text-center shadow-lg backdrop-blur">
                         <div class="text-[10px] uppercase tracking-wide text-white/70">
                             Finaliza en
                         </div>
@@ -45,21 +45,24 @@
     }
 
     <!-- Contenedor principal centrado -->
-    <div class="mx-auto flex w-full max-w-6xl flex-auto flex-col justify-center px-4 py-8 sm:px-6 sm:py-10">
+    <div class="mx-auto flex w-full max-w-screen-xl flex-auto flex-col justify-center px-4 py-10 sm:px-6 sm:py-14">
         
         <!-- Seleccion de eleccion -->
         @if (fase === 'seleccion') {
             <div class="w-full">
-                <div class="mb-8 text-center">
-                    <h1 class="venp-text-primary text-3xl font-extrabold sm:text-4xl">
+                <div class="mb-10 text-center">
+                    <div class="venp-bg-primary mx-auto flex h-16 w-16 items-center justify-center rounded-3xl text-white shadow-xl">
+                        <mat-icon class="icon-size-9" [svgIcon]="'heroicons_outline:finger-print'" />
+                    </div>
+                    <h1 class="mt-5 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-white">
                         Módulo de Votación
                     </h1>
-                    <p class="text-secondary mt-2">
+                    <p class="text-secondary mx-auto mt-3 max-w-xl text-base">
                         Selecciona el proceso electoral en el que deseas votar
                     </p>
                 </div>
                 @if (!elecciones.length && !loading) {
-                    <div class="text-secondary bg-card mx-auto max-w-lg rounded-2xl border p-10 text-center shadow-sm">
+                    <div class="text-secondary venp-premium-card mx-auto max-w-lg p-10 text-center">
                         <mat-icon
                             class="text-secondary mx-auto mb-3 icon-size-12"
                             [svgIcon]="'heroicons_outline:inbox'"
@@ -69,23 +72,24 @@
                         </p>
                     </div>
                 }
-                <div class="mx-auto grid max-w-4xl grid-cols-1 gap-5 md:grid-cols-2">
+                <div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
                     @for (e of elecciones; track e.id) {
                         <button
                             type="button"
-                            class="group bg-card rounded-2xl border p-6 text-left shadow-sm transition-all duration-200 hover:border-[#1d4ed8] hover:shadow-lg"
+                            class="group venp-premium-card relative overflow-hidden p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                             (click)="elegir(e)"
                         >
-                            <div class="flex items-start gap-4">
+                            <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+                            <div class="flex items-start gap-5">
                                 @if (e.configuracion?.escudoUrl) {
                                     <img
                                         [src]="e.configuracion?.escudoUrl"
                                         alt="escudo"
-                                        class="h-12 w-12 shrink-0 rounded-lg object-contain"
+                                        class="h-16 w-16 shrink-0 rounded-2xl bg-white object-contain p-1.5 shadow"
                                     />
                                 }
                                 <div class="flex-auto">
-                                    <div class="text-lg font-bold leading-tight">
+                                    <div class="text-xl font-black leading-tight">
                                         {{ e.nombre }}
                                     </div>
                                     <div class="text-secondary mt-1 text-sm">
@@ -93,7 +97,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="mt-4 inline-flex items-center gap-2 font-semibold text-[#1d4ed8] transition-all group-hover:gap-3">
+                            <div class="venp-text-primary mt-6 inline-flex items-center gap-2 font-bold transition-all group-hover:gap-3">
                                 <mat-icon [svgIcon]="'heroicons_outline:finger-print'" />
                                 Ingresar a votar
                                 <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-right'" />
@@ -106,17 +110,21 @@
 
         <!-- Login del votante -->
         @if (fase === 'login') {
-            <div class="mx-auto max-w-md w-full">
+            <div class="mx-auto w-full max-w-xl">
                 <div class="mb-6 text-center">
-                    <h2 class="text-2xl font-bold text-gray-800 sm:text-3xl dark:text-gray-100">
+                    <div class="venp-bg-primary mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg">
+                        <mat-icon class="icon-size-7" [svgIcon]="'heroicons_outline:shield-check'" />
+                    </div>
+                    <h2 class="mt-5 text-2xl font-black text-gray-800 sm:text-3xl dark:text-gray-100">
                         Bienvenido al Módulo de Votación
                     </h2>
                     <p class="text-secondary mt-2">
                         Utilice su número de cédula y contraseña para ingresar a votar
                     </p>
                 </div>
-                <div class="bg-card rounded-2xl border p-6 shadow-lg sm:p-8">
-                    <h3 class="mb-5 text-lg font-bold">
+                <div class="venp-premium-card relative overflow-hidden p-6 sm:p-9">
+                    <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+                    <h3 class="mb-6 text-lg font-black">
                         Ingrese sus credenciales
                     </h3>
                     <div class="flex flex-col gap-5">
@@ -124,14 +132,14 @@
                             <label class="mb-1.5 block text-sm font-medium">Número de cédula (DNI)</label>
                             <div class="relative">
                                 <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'heroicons_outline:identification'" />
-                                <input class="w-full rounded-xl border border-gray-300 bg-transparent py-3 pl-10 pr-3 outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/20 dark:border-gray-700" type="text" [formControl]="identificacionCtrl" placeholder="0102030405" />
+                                <input class="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-10 pr-3 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-gray-700 dark:bg-slate-900" type="text" [formControl]="identificacionCtrl" placeholder="0102030405" />
                             </div>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium">Contraseña</label>
                             <div class="relative">
                                 <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'heroicons_outline:lock-closed'" />
-                                <input class="w-full rounded-xl border border-gray-300 bg-transparent py-3 pl-10 pr-11 outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/20 dark:border-gray-700" [type]="verPassword ? 'text' : 'password'" [formControl]="passwordCtrl" placeholder="••••••••" (keyup.enter)="ingresar()" />
+                                <input class="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-10 pr-11 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-gray-700 dark:bg-slate-900" [type]="verPassword ? 'text' : 'password'" [formControl]="passwordCtrl" placeholder="••••••••" (keyup.enter)="ingresar()" />
                                 <button type="button" class="text-secondary absolute right-3 top-1/2 -translate-y-1/2" (click)="verPassword = !verPassword">
                                     <mat-icon class="icon-size-5" [svgIcon]="verPassword ? 'heroicons_outline:eye-slash' : 'heroicons_outline:eye'" />
                                 </button>
@@ -143,7 +151,7 @@
                         </button>
                     </div>
                     <div class="mt-5 text-center">
-                        <a [routerLink]="'/instructivo'" class="inline-flex items-center gap-1 text-sm font-medium text-[#1d4ed8] hover:underline">
+                        <a [routerLink]="'/instructivo'" class="venp-text-primary inline-flex items-center gap-1 text-sm font-bold hover:underline">
                             <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:question-mark-circle'" />
                             ¿Cómo votar? Ver instructivo
                         </a>
@@ -154,7 +162,7 @@
 
         <!-- Cedula de votacion -->
         @if (fase === 'cedula' && cedulaActual) {
-            <div class="mx-auto max-w-3xl w-full">
+            <div class="mx-auto w-full max-w-5xl">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="text-secondary flex items-center gap-2 text-sm">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'" />
@@ -170,19 +178,20 @@
                     <div class="venp-bg-primary h-full transition-all duration-300" [style.width.%]="((cedulaIndex + 1) / totalCedulas) * 100"></div>
                 </div>
 
-                <div class="bg-card rounded-2xl border p-6 shadow-sm sm:p-8">
-                    <h2 class="text-center text-2xl font-bold">
+                <div class="venp-premium-card relative overflow-hidden p-6 sm:p-9">
+                    <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+                    <h2 class="text-center text-2xl font-black sm:text-3xl">
                         {{ cedulaActual.nombre }}
                     </h2>
                     <p class="text-secondary mt-1 text-center">
                         Marque su preferencia. Si no marca ninguna, se tomará como <strong>"Voto en Blanco"</strong>.
                     </p>
 
-                    <div class="mt-6 flex flex-col gap-3">
+                    <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
                         @for (c of cedulaActual.candidaturas; track c.id) {
                             <label
-                                class="flex cursor-pointer items-center gap-4 rounded-xl border-2 p-3 transition-all hover:bg-gray-50 sm:p-4 dark:hover:bg-gray-800"
-                                [style.borderColor]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id ? '#1d4ed8' : 'transparent'"
+                                class="venp-choice-card flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-4 transition-all sm:p-5"
+                                [style.borderColor]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id ? 'var(--venp-primary)' : 'transparent'"
                                 [class.bg-blue-50]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id"
                             >
                                 <input type="radio" class="h-5 w-5 accent-[#1d4ed8]" [checked]="seleccion(cedulaActual.id) === 'CANDIDATO:' + c.id" (change)="marcar(cedulaActual.id, 'CANDIDATO:' + c.id)" />
@@ -201,10 +210,10 @@
                             </label>
                         }
 
-                        <div class="mt-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="mt-2 grid grid-cols-1 gap-3 md:col-span-2 sm:grid-cols-2">
                             <label
                                 class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition hover:bg-gray-50 dark:hover:bg-gray-800"
-                                [style.borderColor]="seleccion(cedulaActual.id) === 'BLANCO' ? '#1d4ed8' : 'transparent'"
+                                [style.borderColor]="seleccion(cedulaActual.id) === 'BLANCO' ? 'var(--venp-primary)' : 'transparent'"
                                 [class.bg-blue-50]="seleccion(cedulaActual.id) === 'BLANCO'"
                             >
                                 <input type="radio" class="h-5 w-5 accent-[#1d4ed8]" [checked]="seleccion(cedulaActual.id) === 'BLANCO'" (change)="marcar(cedulaActual.id, 'BLANCO')" />
@@ -212,7 +221,7 @@
                             </label>
                             <label
                                 class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition hover:bg-gray-50 dark:hover:bg-gray-800"
-                                [style.borderColor]="seleccion(cedulaActual.id) === 'NULO' ? '#1d4ed8' : 'transparent'"
+                                [style.borderColor]="seleccion(cedulaActual.id) === 'NULO' ? 'var(--venp-primary)' : 'transparent'"
                                 [class.bg-blue-50]="seleccion(cedulaActual.id) === 'NULO'"
                             >
                                 <input type="radio" class="h-5 w-5 accent-[#1d4ed8]" [checked]="seleccion(cedulaActual.id) === 'NULO'" (change)="marcar(cedulaActual.id, 'NULO')" />
@@ -236,14 +245,15 @@
 
         <!-- Confirmacion -->
         @if (fase === 'confirmar') {
-            <div class="mx-auto max-w-2xl w-full">
+            <div class="mx-auto w-full max-w-3xl">
                 <div class="mb-6 text-center">
                     <h2 class="text-2xl font-bold sm:text-3xl">Confirme su voto</h2>
                     <p class="text-secondary mt-1">
                         Revise sus selecciones antes de emitir. Esta acción no se puede deshacer.
                     </p>
                 </div>
-                <div class="bg-card overflow-hidden rounded-2xl border shadow-sm">
+                <div class="venp-premium-card relative overflow-hidden">
+                    <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
                     <div class="divide-y">
                         @for (r of resumen(); track r.dignidad) {
                             <div class="flex items-center justify-between gap-4 p-4">
@@ -266,17 +276,15 @@
 
         <!-- Listo / Mensaje de confirmacion -->
         @if (fase === 'listo') {
-            <div class="mx-auto max-w-2xl w-full">
-                <h2 class="mb-8 text-center text-2xl font-light text-gray-600 sm:text-3xl dark:text-gray-300">
-                    Mensaje de confirmación
-                </h2>
-                <div class="bg-card rounded-2xl border p-8 shadow-lg sm:p-10">
-                    <div class="flex items-start gap-5">
-                        <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0ea5e9] shadow-lg">
+            <div class="mx-auto w-full max-w-2xl">
+                <div class="venp-premium-card relative overflow-hidden p-8 sm:p-10">
+                    <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+                    <div class="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
+                        <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg">
                             <mat-icon class="text-white icon-size-10" [svgIcon]="'heroicons_solid:check'" />
                         </div>
                         <div class="flex-auto pt-1">
-                            <div class="text-lg font-bold text-gray-800 dark:text-gray-100">
+                            <div class="text-xl font-black text-gray-800 dark:text-gray-100">
                                 Estimado(a) Elector(a):
                             </div>
                             <p class="text-secondary mt-1">
@@ -287,6 +295,12 @@
                 </div>
 
                 <div class="mt-8 flex flex-col items-center gap-4">
+                    @if (comprobante) {
+                        <button type="button" (click)="descargarComprobante()" class="venp-bg-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white">
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'" />
+                            Descargar nuevamente mi certificado
+                        </button>
+                    }
                     <div class="text-secondary flex items-center gap-3">
                         <svg class="h-5 w-5 animate-spin text-[#1d4ed8]" viewBox="0 0 24 24" fill="none">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

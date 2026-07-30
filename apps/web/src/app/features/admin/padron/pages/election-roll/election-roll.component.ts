@@ -223,17 +223,14 @@ export default class ElectionRollComponent implements OnInit {
     }
     this._institutionalDialog.confirm({
       title: 'Publicar padrón electoral',
-      message: 'Se generará una contraseña única y se enviará al correo de cada elector habilitado. Los electores sin correo impedirán la publicación.',
+      message: 'El padrón quedará publicado. Las credenciales se generarán posteriormente y solo desde Jornada electoral.',
       confirmText: 'Publicar padrón',
       icon: 'heroicons_outline:user-group',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._padronService.publicar(eleccionId).subscribe({
         next: (res) => {
-          const detalle = res.fallidas
-            ? ` Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}.`
-            : ` Credenciales enviadas: ${res.enviadas}.`;
-          this._notify(`Padrón publicado con ${res.habilitados} electores.${detalle}`);
+          this._notify(`Padrón publicado con ${res.habilitados} electores.`);
           this.loadPadron();
           this.loadElecciones();
         },

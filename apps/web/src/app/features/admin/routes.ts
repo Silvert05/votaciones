@@ -49,10 +49,6 @@ const routes: Routes = [
     },
     children: [
       {
-        path: 'dashboard',
-        loadComponent: () => import('./dashboard/dashboard.component')
-      },
-      {
         path: 'perfil',
         loadComponent: () => import('./profile/profile.component')
       },
@@ -72,18 +68,7 @@ const routes: Routes = [
         loadComponent: () =>
           import('./users/pages/users-list/users-list.component')
       },
-      {
-        path: 'seguridad/perfiles',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./security/pages/perfiles/perfiles-list.component')
-      },
-      {
-        path: 'seguridad/opciones',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./security/pages/opciones/opciones-list.component')
-      },
+      // Perfiles y opciones no forman parte del flujo operativo visible.
       {
         path: 'seguridad/auditoria',
         canActivate: [roleGuard(['ADMIN']), optionGuard],
@@ -145,38 +130,16 @@ const routes: Routes = [
           import('./jornada/pages/jornada/jornada.component')
       },
       {
-        path: 'elecciones/votacion',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./votacion/pages/votacion/votacion.component')
-      },
-      {
         path: 'elecciones/resultados',
         canActivate: [roleGuard(['ADMIN']), optionGuard],
         loadComponent: () =>
           import('./votacion/pages/resultados/resultados.component')
       },
-      {
-        path: 'elecciones/escrutinio',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./escrutinio/pages/escrutinio/escrutinio.component')
-      },
-      {
-        path: 'elecciones/impugnaciones',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./escrutinio/pages/impugnaciones/impugnaciones.component')
-      },
-      {
-        path: 'elecciones/resultados-finales',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
-        loadComponent: () =>
-          import('./escrutinio/pages/resultados-finales/resultados-finales.component')
-      },
+      // Votacion administrativa, escrutinio, impugnaciones y resultados finales
+      // quedan centralizados en Jornada electoral. Se conserva Resultados.
       {
         path: '',
-        redirectTo: 'dashboard',
+        redirectTo: 'elecciones/jornada',
         pathMatch: 'full'
       },
       {
@@ -186,8 +149,8 @@ const routes: Routes = [
         data: {
           title: 'Página administrativa no encontrada',
           description: 'La sección solicitada no existe dentro del panel.',
-          homeLink: '/admin/dashboard',
-          homeLabel: 'Volver al panel'
+          homeLink: '/admin/elecciones/jornada',
+          homeLabel: 'Volver a la jornada electoral'
         }
       }
     ],

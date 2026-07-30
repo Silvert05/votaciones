@@ -124,10 +124,10 @@
             <mat-label>Codigo</mat-label>
             <input matInput formControlName="codigo">
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Color</mat-label>
-            <input matInput formControlName="color" placeholder="#2563eb">
-          </mat-form-field>
+          <label class="flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2">
+            <input class="h-11 w-14 cursor-pointer rounded border-0 bg-transparent p-0" type="color" formControlName="color">
+            <span><span class="block text-sm font-semibold">Color de la lista</span><span class="text-xs text-secondary">Toca la muestra para elegir</span></span>
+          </label>
         </div>
 
         <mat-form-field appearance="outline">

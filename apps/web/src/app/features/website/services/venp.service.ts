@@ -95,6 +95,26 @@ export interface VotoSeleccion {
     candidaturaId?: string | null;
 }
 
+export interface ComprobanteVotacion {
+    codigo: string;
+    emitidoAt: string;
+    elector: {
+        identificacion: string;
+        nombres: string;
+        apellidos: string;
+    };
+    eleccion: {
+        nombre: string;
+        institucion: string | null;
+    };
+}
+
+export interface EmitirVotoResponse {
+    registrado: boolean;
+    dignidades: number;
+    comprobante: ComprobanteVotacion;
+}
+
 export interface ResultadosPublicos {
     eleccion: { id: string; nombre: string; estado: string };
     padronHabilitado: number;
@@ -128,6 +148,36 @@ export interface ResultadosPublicos {
     }>;
     fechaInicio: string | null;
     fechaFin: string | null;
+    minimoPrivacidadCarrera: number;
+    estadisticasCarrera: Array<{
+        carreraId: string;
+        carrera: string;
+        habilitados: number;
+        votantes: number;
+        porcentaje: number;
+        publicable: boolean;
+        opciones: Array<{
+            dignidadId: string;
+            candidaturaId: string | null;
+            tipo: 'CANDIDATO' | 'BLANCO' | 'NULO';
+            opcionKey: string;
+            total: number;
+            candidatura: {
+                id: string;
+                elector: {
+                    identificacion: string;
+                    nombres: string;
+                    apellidos: string;
+                    fotoUrl: string | null;
+                };
+                lista: {
+                    codigo: string;
+                    nombre: string;
+                    color: string | null;
+                } | null;
+            } | null;
+        }>;
+    }>;
 }
 
 export interface ParticipacionPublica {
@@ -219,8 +269,8 @@ export class VenpService {
 
     emitir(
         votos: VotoSeleccion[]
-    ): Observable<{ registrado: boolean; dignidades: number }> {
-        return this._http.post<{ registrado: boolean; dignidades: number }>(
+    ): Observable<EmitirVotoResponse> {
+        return this._http.post<EmitirVotoResponse>(
             '/publico/votante/emitir',
             { votos },
             { headers: this._votoHeaders() }
