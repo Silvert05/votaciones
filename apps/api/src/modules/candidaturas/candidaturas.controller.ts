@@ -26,6 +26,7 @@ import {
 import {
   CreateListaDto,
   QueryListasDto,
+  SetDignidadListaEstadoDto,
   UpdateListaDto,
 } from './dto/lista.dto';
 import { CandidaturasService } from './candidaturas.service';
@@ -91,6 +92,39 @@ export class CandidaturasController {
       user,
       ip,
     });
+  }
+
+  @Get('elecciones/:eleccionId/listas/:listaId/dignidades')
+  @ApiOperation({ summary: 'Listar dignidades habilitadas para una lista' })
+  listDignidadesPorLista(
+    @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
+    @Param('listaId', ParseUUIDPipe) listaId: string,
+  ) {
+    return this.candidaturasService.listDignidadesPorLista(
+      eleccionId,
+      listaId,
+    );
+  }
+
+  @Patch('elecciones/:eleccionId/listas/:listaId/dignidades/:dignidadId')
+  @ApiOperation({
+    summary: 'Habilitar o inhabilitar una dignidad para una lista',
+  })
+  setDignidadHabilitadaEnLista(
+    @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
+    @Param('listaId', ParseUUIDPipe) listaId: string,
+    @Param('dignidadId', ParseUUIDPipe) dignidadId: string,
+    @Body() dto: SetDignidadListaEstadoDto,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.candidaturasService.setDignidadHabilitadaEnLista(
+      eleccionId,
+      listaId,
+      dignidadId,
+      dto,
+      { user, ip },
+    );
   }
 
   @Get('elecciones/:eleccionId')

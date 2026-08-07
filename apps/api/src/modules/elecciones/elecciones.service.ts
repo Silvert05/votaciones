@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from 'prisma/generated/client';
+import { CronogramaElectoral, Prisma } from 'prisma/generated/client';
 import {
   EstadoEleccion,
   TipoEleccion,
@@ -135,6 +135,12 @@ export class EleccionesService {
   }
 
   async create(dto: CreateEleccionDto, actor: Actor) {
+    this.ensureNotPast(
+      'La convocatoria',
+      this.toDate(dto.fechaConvocatoria),
+      null,
+    );
+
     const created = await this.prisma.$transaction(async (tx) => {
       const eleccion = await tx.eleccion.create({
         data: {
@@ -172,6 +178,14 @@ export class EleccionesService {
 
   async update(id: string, dto: UpdateEleccionDto, actor: Actor) {
     const before = await this.findOne(id);
+
+    if (dto.fechaConvocatoria !== undefined) {
+      this.ensureNotPast(
+        'La convocatoria',
+        this.toDate(dto.fechaConvocatoria),
+        before.fechaConvocatoria,
+      );
+    }
 
     const eleccion = await this.prisma.eleccion.update({
       where: { id },
@@ -247,11 +261,11 @@ export class EleccionesService {
     actor: Actor,
   ) {
     await this.ensureEleccion(eleccionId);
-    this.validateCronograma(dto);
 
     const before = await this.prisma.cronogramaElectoral.findUnique({
       where: { eleccionId },
     });
+    this.validateCronograma(dto, before);
 
     const data = this.toCronogramaData(dto);
     const cronograma = await this.prisma.cronogramaElectoral.upsert({
@@ -523,8 +537,32 @@ export class EleccionesService {
     return dignidad;
   }
 
-  private validateCronograma(dto: UpsertCronogramaDto) {
+  private validateCronograma(
+    dto: UpsertCronogramaDto,
+    before: CronogramaElectoral | null,
+  ) {
     const dates = this.toCronogramaData(dto);
+
+    const camposFecha: Array<[keyof typeof dates, string]> = [
+      ['fechaConvocatoria', 'La convocatoria'],
+      ['fechaPublicacionPadron', 'La publicacion del padron'],
+      ['fechaInicioInscripcion', 'El inicio de inscripcion de candidaturas'],
+      ['fechaFinInscripcion', 'El cierre de inscripcion de candidaturas'],
+      ['fechaInicioImpugnacionCandidaturas', 'El inicio de impugnacion de candidaturas'],
+      ['fechaFinImpugnacionCandidaturas', 'El cierre de impugnacion de candidaturas'],
+      ['fechaPublicacionCandidaturas', 'La publicacion de candidaturas'],
+      ['fechaInicioCampania', 'El inicio de campania'],
+      ['fechaFinCampania', 'El cierre de campania'],
+      ['fechaInicioVotacion', 'El inicio de la votacion'],
+      ['fechaFinVotacion', 'El cierre de la votacion'],
+      ['fechaPublicacionResultados', 'La publicacion de resultados'],
+      ['fechaFinImpugnacionResultados', 'El cierre de impugnacion de resultados'],
+      ['fechaResultadosFinales', 'Los resultados finales'],
+    ];
+    for (const [campo, label] of camposFecha) {
+      this.ensureNotPast(label, dates[campo], before?.[campo]);
+    }
+
     this.ensureOrder(dates.fechaInicioInscripcion, dates.fechaFinInscripcion, 'La inscripcion debe cerrar despues de iniciar.');
     this.ensureOrder(
       dates.fechaInicioImpugnacionCandidaturas,
@@ -567,6 +605,20 @@ export class EleccionesService {
   ) {
     if (start && end && start > end) {
       throw new BadRequestException(message);
+    }
+  }
+
+  private ensureNotPast(
+    label: string,
+    next: Date | null | undefined,
+    previous: Date | null | undefined,
+  ) {
+    if (!next) return;
+    const changed = !previous || previous.getTime() !== next.getTime();
+    if (changed && next.getTime() < Date.now()) {
+      throw new BadRequestException(
+        `${label} no puede ser anterior a la fecha y hora actual.`,
+      );
     }
   }
 

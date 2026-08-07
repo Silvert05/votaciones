@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { finalize } from 'rxjs';
 import {
   ConfiguracionEleccion,
@@ -41,7 +41,8 @@ const CONFIG_FIELDS: Array<keyof UpsertConfiguracionPayload> = [
 export default class ElectionConfigComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _electionsService = inject(ElectionsService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
 
   elecciones: Eleccion[] = [];
   selectedId: string | null = null;
@@ -76,7 +77,12 @@ export default class ElectionConfigComponent implements OnInit {
     this.loading = true;
     this._electionsService
       .list({ page: 1, limit: 100 })
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (res) => {
           this.elecciones = res.data;
@@ -84,7 +90,7 @@ export default class ElectionConfigComponent implements OnInit {
             this.selectedIdCtrl.setValue(res.data[0].id);
           }
         },
-        error: () => this._notify('No se pudieron cargar las elecciones.'),
+        error: () => this._notifyError('No se pudieron cargar las elecciones.'),
       });
   }
 
@@ -92,10 +98,15 @@ export default class ElectionConfigComponent implements OnInit {
     this.loading = true;
     this._electionsService
       .getConfiguracion(id)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (config) => this.patchConfig(config),
-        error: () => this._notify('No se pudo cargar la configuracion.'),
+        error: () => this._notifyError('No se pudo cargar la configuracion.'),
       });
   }
 
@@ -121,7 +132,7 @@ export default class ElectionConfigComponent implements OnInit {
           this._notify('Configuracion guardada.');
         },
         error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo guardar.')),
+          this._notifyError(this.errorMessage(err, 'No se pudo guardar.')),
       });
   }
 
@@ -156,7 +167,11 @@ export default class ElectionConfigComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private errorMessage(err: any, fallback: string): string {

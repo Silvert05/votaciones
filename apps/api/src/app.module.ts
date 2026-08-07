@@ -12,6 +12,7 @@ import { VotacionModule } from './modules/votacion/votacion.module';
 import { JornadaModule } from './modules/jornada/jornada.module';
 import { PublicoModule } from './modules/publico/publico.module';
 import { EscrutinioModule } from './modules/escrutinio/escrutinio.module';
+import { ReportesModule } from './modules/reportes/reportes.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EscrutinioModule } from './modules/escrutinio/escrutinio.module';
     JornadaModule,
     PublicoModule,
     EscrutinioModule,
+    ReportesModule,
     AuthModule,
     UsersModule,
   ],

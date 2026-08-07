@@ -118,3 +118,14 @@ export const ESTADOS_CANDIDATURA: EstadoCandidatura[] = [
   'RECHAZADA',
   'RETIRADA',
 ];
+
+export interface DignidadListaEstado {
+  id: string;
+  nombre: string;
+  orden: number;
+  habilitado: boolean;
+}
+
+export interface SetDignidadListaEstadoPayload {
+  habilitado: boolean;
+}

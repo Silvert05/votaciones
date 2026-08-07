@@ -35,12 +35,15 @@ export const appConfig: ApplicationConfig = {
       useValue: {
         parse: {
           dateInput: 'D',
+          timeInput: 'HH:mm',
         },
         display: {
           dateInput: 'DDD',
           monthYearLabel: 'LLL yyyy',
           dateA11yLabel: 'DD',
           monthYearA11yLabel: 'LLLL yyyy',
+          timeInput: 'HH:mm',
+          timeOptionLabel: 'HH:mm',
         },
       },
     },

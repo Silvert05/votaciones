@@ -14,8 +14,6 @@ const USER_KEY = 'auth_user';
 const ADMIN_HOME = '/admin/elecciones/jornada';
 const HIDDEN_ADMIN_ROUTES = [
   '/admin/dashboard',
-  '/admin/seguridad/perfiles',
-  '/admin/seguridad/opciones',
   '/admin/elecciones/votacion',
   '/admin/elecciones/escrutinio',
   '/admin/elecciones/impugnaciones',

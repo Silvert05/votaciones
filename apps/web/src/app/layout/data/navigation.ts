@@ -50,6 +50,20 @@ export const AdminNavigation: FuseNavigationItem[] = [
         link: '/admin/usuarios',
       },
       {
+        id: 'settings.perfiles',
+        title: 'Roles y perfiles',
+        type: 'basic',
+        icon: 'heroicons_outline:identification',
+        link: '/admin/seguridad/perfiles',
+      },
+      {
+        id: 'settings.opciones',
+        title: 'Catálogo de pantallas',
+        type: 'basic',
+        icon: 'heroicons_outline:squares-2x2',
+        link: '/admin/seguridad/opciones',
+      },
+      {
         id: 'settings.auditoria',
         title: 'Auditoría',
         type: 'basic',

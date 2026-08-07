@@ -53,4 +53,24 @@ export class VotacionService {
       `/votacion/elecciones/${eleccionId}/resultados`,
     );
   }
+
+  reporteActaPorLista(eleccionId: string): Observable<Blob> {
+    return this._http.get(`/reportes/elecciones/${eleccionId}/acta-lista`, {
+      responseType: 'blob',
+    });
+  }
+
+  reporteParticipacionPorTipo(eleccionId: string): Observable<Blob> {
+    return this._http.get(
+      `/reportes/elecciones/${eleccionId}/participacion-tipo`,
+      { responseType: 'blob' },
+    );
+  }
+
+  reporteActaPorDignidades(eleccionId: string): Observable<Blob> {
+    return this._http.get(
+      `/reportes/elecciones/${eleccionId}/acta-dignidades`,
+      { responseType: 'blob' },
+    );
+  }
 }

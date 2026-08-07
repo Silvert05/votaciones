@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -109,4 +110,10 @@ export class UpdateListaDto {
   @IsOptional()
   @IsString()
   observacion?: string | null;
+}
+
+export class SetDignidadListaEstadoDto {
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  habilitado: boolean;
 }

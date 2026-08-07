@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, NgForm, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -20,7 +20,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   animations: fuseAnimations,
 })
-export default class LoginComponent implements OnInit {
+export default class LoginComponent implements OnInit, OnDestroy {
   @ViewChild('loginNgForm') loginNgForm: NgForm;
 
   loginForm: FormGroup;
@@ -30,6 +30,18 @@ export default class LoginComponent implements OnInit {
     type: 'success',
     message: '',
   };
+  currentYear = new Date().getFullYear();
+
+  // Carrusel institucional: coloca tus 3 imagenes en apps/web/public/img/login-carousel/
+  // con estos mismos nombres (o cambia las rutas aqui) para que se muestren automaticamente.
+  readonly slides: string[] = [
+    'img/login-carousel/slide-1.jpg',
+    'img/login-carousel/slide-2.jpg',
+    'img/login-carousel/slide-3.jpg',
+  ];
+  currentSlide = 0;
+  private _slideInterval?: ReturnType<typeof setInterval>;
+
   private _formBuilder = inject(FormBuilder);
   private _authService = inject(AuthService);
   private _router = inject(Router);
@@ -40,6 +52,26 @@ export default class LoginComponent implements OnInit {
       username: ['', [Validators.required]],
       password: ['', Validators.required],
     });
+
+    this._slideInterval = setInterval(() => this.nextSlide(), 6000);
+  }
+
+  ngOnDestroy(): void {
+    if (this._slideInterval) {
+      clearInterval(this._slideInterval);
+    }
+  }
+
+  nextSlide(): void {
+    this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+  }
+
+  goToSlide(index: number): void {
+    this.currentSlide = index;
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
   }
 
   login(): void {

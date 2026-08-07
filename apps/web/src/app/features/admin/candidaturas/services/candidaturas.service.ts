@@ -8,10 +8,12 @@ import {
   CandidaturasQuery,
   CreateCandidaturaPayload,
   CreateListaPayload,
+  DignidadListaEstado,
   EstadoEleccionResponse,
   ListaElectoral,
   ListasPaginated,
   ListasQuery,
+  SetDignidadListaEstadoPayload,
   UpdateCandidaturaPayload,
   UpdateListaPayload,
 } from '../models/candidatura.model';
@@ -60,6 +62,27 @@ export class CandidaturasService {
   ): Observable<ListaElectoral> {
     return this._http.patch<ListaElectoral>(
       `/candidaturas/elecciones/${eleccionId}/listas/${listaId}`,
+      payload,
+    );
+  }
+
+  listDignidadesPorLista(
+    eleccionId: string,
+    listaId: string,
+  ): Observable<DignidadListaEstado[]> {
+    return this._http.get<DignidadListaEstado[]>(
+      `/candidaturas/elecciones/${eleccionId}/listas/${listaId}/dignidades`,
+    );
+  }
+
+  setDignidadHabilitada(
+    eleccionId: string,
+    listaId: string,
+    dignidadId: string,
+    payload: SetDignidadListaEstadoPayload,
+  ): Observable<{ habilitado: boolean }> {
+    return this._http.patch<{ habilitado: boolean }>(
+      `/candidaturas/elecciones/${eleccionId}/listas/${listaId}/dignidades/${dignidadId}`,
       payload,
     );
   }

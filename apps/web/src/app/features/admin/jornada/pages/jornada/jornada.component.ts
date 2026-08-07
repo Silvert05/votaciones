@@ -1,12 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
@@ -38,7 +38,8 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   private _electionsService = inject(ElectionsService);
   private _jornadaService = inject(JornadaService);
   private _padronService = inject(PadronService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
   private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
@@ -79,7 +80,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
           this.selectedIdCtrl.setValue(res.data[0].id);
         }
       },
-      error: () => this._notify('No se pudieron cargar las elecciones.'),
+      error: () => this._notifyError('No se pudieron cargar las elecciones.'),
     });
   }
 
@@ -87,11 +88,16 @@ export default class JornadaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this._jornadaService
       .estado(id)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (estado) => this.applyEstado(estado),
         error: (err) =>
-          this._notify(this._msg(err, 'No se pudo cargar la jornada.')),
+          this._notifyError(this._msg(err, 'No se pudo cargar la jornada.')),
       });
   }
 
@@ -110,7 +116,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
         this.applyEstado(estado);
         this._notify('Accion aplicada correctamente.');
       },
-      error: (err: any) => this._notify(this._msg(err, 'No se pudo completar la accion.')),
+      error: (err: any) => this._notifyError(this._msg(err, 'No se pudo completar la accion.')),
     });
   }
 
@@ -154,7 +160,7 @@ export default class JornadaComponent implements OnInit, OnDestroy {
               this.loadEstado(eleccionId);
             },
             error: (err) =>
-              this._notify(
+              this._notifyError(
                 this._msg(
                   err,
                   'No se pudieron generar y enviar las credenciales.',
@@ -266,7 +272,11 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private _msg(err: any, fallback: string): string {

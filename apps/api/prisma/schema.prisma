@@ -355,8 +355,9 @@ model ListaElectoral {
   createdAt   DateTime             @default(now()) @map("created_at")
   updatedAt   DateTime             @updatedAt @map("updated_at")
 
-  eleccion     Eleccion      @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
-  candidaturas Candidatura[]
+  eleccion        Eleccion              @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  candidaturas    Candidatura[]
+  dignidadEstados ListaDignidadEstado[]
 
   @@unique([eleccionId, codigo])
   @@index([eleccionId])
@@ -406,17 +407,35 @@ model Dignidad {
   createdAt            DateTime    @default(now()) @map("created_at")
   updatedAt            DateTime    @updatedAt @map("updated_at")
 
-  eleccion               Eleccion               @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  eleccion               Eleccion                @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
   candidaturas           Candidatura[]
   votosEmitidos          VotoEmitido[]
   conteosVotos           ConteoVoto[]
   conteosVotosCarrera    ConteoVotoCarrera[]
   actasEscrutinio        ActaEscrutinio[]
   impugnacionesResultado ImpugnacionResultado[]
+  listaEstados           ListaDignidadEstado[]
 
   @@index([eleccionId])
   @@index([tipoElectorPermitido])
   @@map("dignidades")
+}
+
+model ListaDignidadEstado {
+  id         String   @id @default(uuid()) @db.Uuid
+  listaId    String   @map("lista_id") @db.Uuid
+  dignidadId String   @map("dignidad_id") @db.Uuid
+  habilitado Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  lista    ListaElectoral @relation(fields: [listaId], references: [id], onDelete: Cascade)
+  dignidad Dignidad       @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+
+  @@unique([listaId, dignidadId])
+  @@index([listaId])
+  @@index([dignidadId])
+  @@map("lista_dignidad_estados")
 }
 
 model VotoEmitido {

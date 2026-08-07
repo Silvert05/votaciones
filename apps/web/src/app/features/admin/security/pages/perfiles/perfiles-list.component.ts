@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
@@ -37,7 +37,8 @@ import { SecurityService } from '../../services/security.service';
 export default class PerfilesListComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _securityService = inject(SecurityService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = ['nombre', 'descripcion', 'opciones', 'usuarios', 'estado', 'acciones'];
 
@@ -67,12 +68,17 @@ export default class PerfilesListComponent implements OnInit {
     });
     this._securityService
       .listPerfiles()
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (perfiles) => {
           this.perfiles = perfiles;
         },
-        error: () => this._notify('No se pudieron cargar los perfiles.'),
+        error: () => this._notifyError('No se pudieron cargar los perfiles.'),
       });
   }
 
@@ -86,7 +92,7 @@ export default class PerfilesListComponent implements OnInit {
           descripcion: detalle.descripcion ?? '',
         });
       },
-      error: () => this._notify('No se pudo cargar el perfil.'),
+      error: () => this._notifyError('No se pudo cargar el perfil.'),
     });
   }
 
@@ -122,7 +128,7 @@ export default class PerfilesListComponent implements OnInit {
         this.load();
         this.select(perfil);
       },
-      error: (err) => this._notify(this._errorMessage(err, 'No se pudo guardar.')),
+      error: (err) => this._notifyError(this._errorMessage(err, 'No se pudo guardar.')),
     });
   }
 
@@ -133,7 +139,7 @@ export default class PerfilesListComponent implements OnInit {
         this.load();
       },
       error: (err) =>
-        this._notify(this._errorMessage(err, 'No se pudo cambiar el estado.')),
+        this._notifyError(this._errorMessage(err, 'No se pudo cambiar el estado.')),
     });
   }
 
@@ -163,7 +169,7 @@ export default class PerfilesListComponent implements OnInit {
           this.load();
         },
         error: (err) =>
-          this._notify(this._errorMessage(err, 'No se pudieron asignar opciones.')),
+          this._notifyError(this._errorMessage(err, 'No se pudieron asignar opciones.')),
       });
   }
 
@@ -184,7 +190,11 @@ export default class PerfilesListComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private _errorMessage(err: any, fallback: string): string {

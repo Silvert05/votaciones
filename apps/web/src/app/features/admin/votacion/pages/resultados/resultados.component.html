@@ -70,6 +70,36 @@
               <small class="text-secondary mt-1 block">Imprimir o guardar el resumen como PDF</small>
             </span>
           </button>
+          <button type="button" (click)="descargarActaPorLista()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+              <mat-icon [svgIcon]="'heroicons_outline:document-chart-bar'" />
+            </span>
+            <span>
+              <strong class="block">Acta por lista</strong>
+              <small class="text-secondary mt-1 block">PDF institucional con votos totales por lista</small>
+            </span>
+          </button>
+          <button type="button" (click)="descargarParticipacionPorTipo()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <mat-icon [svgIcon]="'heroicons_outline:user-group'" />
+            </span>
+            <span>
+              <strong class="block">Participación docentes/estudiantes</strong>
+              <small class="text-secondary mt-1 block">PDF con habilitados, votantes y % por tipo de elector</small>
+            </span>
+          </button>
+          <button type="button" (click)="descargarActaPorDignidades()"
+            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-700">
+              <mat-icon [svgIcon]="'heroicons_outline:clipboard-document-check'" />
+            </span>
+            <span>
+              <strong class="block">Acta por dignidad</strong>
+              <small class="text-secondary mt-1 block">PDF con candidatos, votos y ganador por dignidad</small>
+            </span>
+          </button>
         </div>
       </section>
 

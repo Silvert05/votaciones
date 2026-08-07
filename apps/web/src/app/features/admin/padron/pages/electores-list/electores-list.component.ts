@@ -13,7 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -54,7 +54,7 @@ import { PadronService } from '../../services/padron.service';
 export default class ElectoresListComponent implements OnInit {
     private _fb = inject(FormBuilder);
     private _padronService = inject(PadronService);
-    private _snackBar = inject(MatSnackBar);
+    private _notifyService = inject(NotifyService);
     private _changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly columns = [
@@ -115,7 +115,7 @@ export default class ElectoresListComponent implements OnInit {
                 this.jornadas = catalogos.jornadas;
                 this._changeDetectorRef.detectChanges();
             },
-            error: () => this._notify('No se pudieron cargar los catalogos.'),
+            error: () => this._notifyError('No se pudieron cargar los catalogos.'),
         });
         this.searchCtrl.valueChanges
             .pipe(debounceTime(350), distinctUntilChanged())
@@ -149,7 +149,7 @@ export default class ElectoresListComponent implements OnInit {
                     this.total = res.total;
                 },
                 error: () =>
-                    this._notify('No se pudieron cargar los electores.'),
+                    this._notifyError('No se pudieron cargar los electores.'),
             });
     }
 
@@ -254,7 +254,7 @@ export default class ElectoresListComponent implements OnInit {
                     this.load();
                 },
                 error: (err) =>
-                    this._notify(this.errorMessage(err, 'No se pudo guardar.')),
+                    this._notifyError(this.errorMessage(err, 'No se pudo guardar.')),
             });
     }
 
@@ -303,7 +303,7 @@ export default class ElectoresListComponent implements OnInit {
                     this.load();
                 },
                 error: (err) =>
-                    this._notify(
+                    this._notifyError(
                         this.errorMessage(err, 'No se pudo eliminar la foto.')
                     ),
             });
@@ -320,7 +320,7 @@ export default class ElectoresListComponent implements OnInit {
                     this.load();
                 },
                 error: (err) =>
-                    this._notify(
+                    this._notifyError(
                         this.errorMessage(err, 'No se pudo cambiar el estado.')
                     ),
             });
@@ -336,8 +336,12 @@ export default class ElectoresListComponent implements OnInit {
     }
 
     private _notify(message: string): void {
-        this._snackBar.open(message, 'Cerrar', { duration: 4000 });
-    }
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
+  }
 
     private errorMessage(err: any, fallback: string): string {
         const message = err?.error?.message || err?.message || fallback;

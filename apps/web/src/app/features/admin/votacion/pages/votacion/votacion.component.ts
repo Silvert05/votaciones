@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
 import { Eleccion } from '../../../elections/models/election.model';
@@ -37,7 +37,8 @@ type SeleccionValue = 'BLANCO' | 'NULO' | `CANDIDATO:${string}`;
 export default class VotacionComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _votacionService = inject(VotacionService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
   private _institutionalDialog = inject(InstitutionalDialogService);
 
   elecciones: Eleccion[] = [];
@@ -68,7 +69,7 @@ export default class VotacionComponent implements OnInit {
           this.selectedEleccionCtrl.setValue(res.data[0].id);
         }
       },
-      error: () => this._notify('No se pudieron cargar las elecciones.'),
+      error: () => this._notifyError('No se pudieron cargar las elecciones.'),
     });
   }
 
@@ -81,7 +82,7 @@ export default class VotacionComponent implements OnInit {
         this.loadElecciones();
       },
       error: (err) =>
-        this._notify(this.errorMessage(err, 'No se pudo abrir la votacion.')),
+        this._notifyError(this.errorMessage(err, 'No se pudo abrir la votacion.')),
     });
   }
 
@@ -101,7 +102,7 @@ export default class VotacionComponent implements OnInit {
           this.loadElecciones();
         },
         error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo cerrar la votación.')),
+          this._notifyError(this.errorMessage(err, 'No se pudo cerrar la votación.')),
       });
     });
   }
@@ -120,7 +121,12 @@ export default class VotacionComponent implements OnInit {
     this.loading = true;
     this._votacionService
       .tarjeton(eleccionId, this.identificacionCtrl.value?.trim())
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (tarjeton) => {
           this.tarjeton = tarjeton;
@@ -130,7 +136,7 @@ export default class VotacionComponent implements OnInit {
           }
         },
         error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo cargar el tarjeton.')),
+          this._notifyError(this.errorMessage(err, 'No se pudo cargar el tarjeton.')),
       });
   }
 
@@ -174,7 +180,7 @@ export default class VotacionComponent implements OnInit {
           this.identificacionCtrl.reset('');
         },
         error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudo registrar el voto.')),
+          this._notifyError(this.errorMessage(err, 'No se pudo registrar el voto.')),
       });
   }
 
@@ -200,7 +206,11 @@ export default class VotacionComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private errorMessage(err: any, fallback: string): string {

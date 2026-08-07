@@ -162,6 +162,26 @@
         }
       </form>
 
+      @if (selected) {
+      <div class="border-t px-4 pb-4 pt-3">
+        <div class="text-sm font-semibold">Dignidades habilitadas</div>
+        <p class="text-xs text-secondary">Desactiva una dignidad para que esta lista no pueda postular candidatos en ella.</p>
+        <div class="mt-2 flex flex-col gap-1">
+          @for (dignidad of dignidadesLista; track dignidad.id) {
+          <div class="flex items-center justify-between gap-2 py-1">
+            <span class="text-sm">{{ dignidad.nombre }}</span>
+            <mat-slide-toggle
+              [checked]="dignidad.habilitado"
+              (change)="toggleDignidad(dignidad)" />
+          </div>
+          }
+          @if (!dignidadesLista.length) {
+          <div class="py-2 text-xs text-secondary">Esta eleccion no tiene dignidades activas.</div>
+          }
+        </div>
+      </div>
+      }
+
       <div class="mt-4 flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selectedEleccionCtrl.value">
           <mat-icon [svgIcon]="'heroicons_solid:check'" />

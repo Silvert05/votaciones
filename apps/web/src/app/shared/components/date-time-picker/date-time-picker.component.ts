@@ -8,6 +8,7 @@ import {
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatTimepickerModule } from '@angular/material/timepicker';
 import { DateTime } from 'luxon';
 import { Subscription, merge } from 'rxjs';
 
@@ -18,6 +19,7 @@ import { Subscription, merge } from 'rxjs';
     MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
+    MatTimepickerModule,
   ],
   providers: [
     {
@@ -34,6 +36,7 @@ import { Subscription, merge } from 'rxjs';
           matInput
           readonly
           [required]="required"
+          [min]="today"
           [matDatepicker]="calendar"
           [formControl]="dateCtrl"
           (blur)="markTouched()"
@@ -50,12 +53,18 @@ import { Subscription, merge } from 'rxjs';
         <mat-label>Hora</mat-label>
         <input
           matInput
-          type="time"
-          step="60"
+          readonly
           [required]="required"
+          [matTimepicker]="clock"
           [formControl]="timeCtrl"
           (blur)="markTouched()"
         />
+        <mat-timepicker-toggle
+          matIconSuffix
+          [for]="clock"
+          aria-label="Abrir selector de hora"
+        />
+        <mat-timepicker #clock [interval]="900" />
       </mat-form-field>
     </div>
   `,
@@ -66,8 +75,11 @@ export class DateTimePickerComponent
   @Input() label = 'Fecha';
   @Input() required = false;
 
+  readonly today = DateTime.now().startOf('day');
   readonly dateCtrl = new FormControl<DateTime | null>(null);
-  readonly timeCtrl = new FormControl('08:00', { nonNullable: true });
+  readonly timeCtrl = new FormControl<DateTime | null>(
+    DateTime.now().set({ hour: 8, minute: 0, second: 0, millisecond: 0 }),
+  );
 
   private readonly _subscription: Subscription;
   private _onChange: (value: string | null) => void = () => {};
@@ -83,10 +95,16 @@ export class DateTimePickerComponent
   writeValue(value: string | null): void {
     const parsed = value ? DateTime.fromISO(value) : null;
     const valid = parsed?.isValid ? parsed : null;
+    const defaultTime = DateTime.now().set({
+      hour: 8,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+    });
     this.dateCtrl.setValue(valid?.startOf('day') ?? null, {
       emitEvent: false,
     });
-    this.timeCtrl.setValue(valid?.toFormat('HH:mm') ?? '08:00', {
+    this.timeCtrl.setValue(valid ?? defaultTime, {
       emitEvent: false,
     });
   }
@@ -120,15 +138,19 @@ export class DateTimePickerComponent
   private _emitValue(): void {
     const date = this.dateCtrl.value;
     const time = this.timeCtrl.value;
-    if (!date || !date.isValid || !time) {
+    if (!date || !date.isValid || !time || !time.isValid) {
       this._onChange(null);
       return;
     }
 
-    const [hour, minute] = time.split(':').map(Number);
     this._onChange(
       date
-        .set({ hour, minute, second: 0, millisecond: 0 })
+        .set({
+          hour: time.hour,
+          minute: time.minute,
+          second: 0,
+          millisecond: 0,
+        })
         .toFormat("yyyy-MM-dd'T'HH:mm"),
     );
   }

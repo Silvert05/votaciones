@@ -13,7 +13,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
@@ -21,6 +22,7 @@ import { InstitutionalDialogService } from 'app/shared/services/institutional-di
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
 import {
+  DignidadListaEstado,
   ESTADOS_LISTA,
   EstadoListaElectoral,
   ListaElectoral,
@@ -42,6 +44,7 @@ import { CandidaturasService } from '../../services/candidaturas.service';
     MatMenuModule,
     MatTooltipModule,
     MatProgressBarModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './listas.component.html',
 })
@@ -49,7 +52,7 @@ export default class ListasComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _electionsService = inject(ElectionsService);
   private _candidaturasService = inject(CandidaturasService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
   private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -59,6 +62,7 @@ export default class ListasComponent implements OnInit {
   elecciones: Eleccion[] = [];
   listas: ListaElectoral[] = [];
   selected: ListaElectoral | null = null;
+  dignidadesLista: DignidadListaEstado[] = [];
   total = 0;
   loading = false;
   saving = false;
@@ -105,7 +109,7 @@ export default class ListasComponent implements OnInit {
           this.selectedEleccionCtrl.setValue(res.data[0].id);
         }
       },
-      error: () => this._notify('No se pudieron cargar las elecciones.'),
+      error: () => this._notifyError('No se pudieron cargar las elecciones.'),
     });
   }
 
@@ -133,7 +137,7 @@ export default class ListasComponent implements OnInit {
           this.listas = res.data;
           this.total = res.total;
         },
-        error: () => this._notify('No se pudieron cargar las listas.'),
+        error: () => this._notifyError('No se pudieron cargar las listas.'),
       });
   }
 
@@ -164,12 +168,13 @@ export default class ListasComponent implements OnInit {
         this._notify('Inscripcion de candidaturas abierta.');
         this.loadElecciones();
       },
-      error: (err) => this._notify(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
+      error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
     });
   }
 
   newLista(): void {
     this.selected = null;
+    this.dignidadesLista = [];
     this.form.reset({
       codigo: '',
       nombre: '',
@@ -192,6 +197,41 @@ export default class ListasComponent implements OnInit {
       estado: lista.estado,
       observacion: lista.observacion ?? '',
     });
+    this.loadDignidadesLista();
+  }
+
+  loadDignidadesLista(): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId || !this.selected) {
+      this.dignidadesLista = [];
+      return;
+    }
+    this._candidaturasService
+      .listDignidadesPorLista(eleccionId, this.selected.id)
+      .subscribe({
+        next: (res) => (this.dignidadesLista = res),
+        error: () => this._notifyError('No se pudieron cargar las dignidades de la lista.'),
+      });
+  }
+
+  toggleDignidad(dignidad: DignidadListaEstado): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId || !this.selected) return;
+    const habilitado = !dignidad.habilitado;
+    this._candidaturasService
+      .setDignidadHabilitada(eleccionId, this.selected.id, dignidad.id, {
+        habilitado,
+      })
+      .subscribe({
+        next: () => {
+          dignidad.habilitado = habilitado;
+          this._notify(
+            `Dignidad ${habilitado ? 'habilitada' : 'inhabilitada'} para la lista.`,
+          );
+        },
+        error: (err) =>
+          this._notifyError(this.errorMessage(err, 'No se pudo cambiar el estado.')),
+      });
   }
 
   save(): void {
@@ -229,7 +269,7 @@ export default class ListasComponent implements OnInit {
         this._notify(isEdit ? 'Lista actualizada.' : 'Lista creada.');
         this.load();
       },
-      error: (err) => this._notify(this.errorMessage(err, 'No se pudo guardar.')),
+      error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo guardar.')),
     });
   }
 
@@ -252,7 +292,7 @@ export default class ListasComponent implements OnInit {
             this._notify(`Lista marcada como ${this.label(estado)}.`);
             this.load();
           },
-          error: (err) => this._notify(this.errorMessage(err, 'No se pudo cambiar el estado.')),
+          error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo cambiar el estado.')),
         });
     });
   }
@@ -275,7 +315,11 @@ export default class ListasComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private errorMessage(err: any, fallback: string): string {

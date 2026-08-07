@@ -9,7 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
@@ -46,7 +46,7 @@ export default class UsersListComponent implements OnInit {
   private _usersService = inject(UsersService);
   private _securityService = inject(SecurityService);
   private _dialog = inject(MatDialog);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
   private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -109,7 +109,7 @@ export default class UsersListComponent implements OnInit {
         this.total = res.total;
       },
       error: () => {
-        this._notify('No se pudieron cargar los usuarios.');
+        this._notifyError('No se pudieron cargar los usuarios.');
       },
     });
   }
@@ -169,7 +169,7 @@ export default class UsersListComponent implements OnInit {
         },
         error: (err) => {
           const message = err?.error?.message || 'No se pudo cambiar el estado.';
-          this._notify(Array.isArray(message) ? message.join(' ') : message);
+          this._notifyError(Array.isArray(message) ? message.join(' ') : message);
         },
       });
     });
@@ -192,6 +192,10 @@ export default class UsersListComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 }

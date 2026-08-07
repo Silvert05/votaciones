@@ -26,6 +26,7 @@ import {
 import {
   CreateListaDto,
   QueryListasDto,
+  SetDignidadListaEstadoDto,
   UpdateListaDto,
 } from './dto/lista.dto';
 
@@ -470,6 +471,63 @@ export class CandidaturasService {
     return lista;
   }
 
+  async listDignidadesPorLista(eleccionId: string, listaId: string) {
+    await this.ensureEleccion(eleccionId);
+    await this.findListaOrFail(eleccionId, listaId);
+
+    const [dignidades, estados] = await Promise.all([
+      this.prisma.dignidad.findMany({
+        where: { eleccionId, activo: true },
+        orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+        select: { id: true, nombre: true, orden: true },
+      }),
+      this.prisma.listaDignidadEstado.findMany({
+        where: { listaId },
+        select: { dignidadId: true, habilitado: true },
+      }),
+    ]);
+
+    const estadoPorDignidad = new Map(
+      estados.map((estado) => [estado.dignidadId, estado.habilitado]),
+    );
+
+    return dignidades.map((dignidad) => ({
+      ...dignidad,
+      habilitado: estadoPorDignidad.get(dignidad.id) ?? true,
+    }));
+  }
+
+  async setDignidadHabilitadaEnLista(
+    eleccionId: string,
+    listaId: string,
+    dignidadId: string,
+    dto: SetDignidadListaEstadoDto,
+    actor: Actor,
+  ) {
+    await this.ensureCanEdit(eleccionId);
+    await this.findListaOrFail(eleccionId, listaId);
+
+    const dignidad = await this.prisma.dignidad.findFirst({
+      where: { id: dignidadId, eleccionId },
+      select: { id: true },
+    });
+    if (!dignidad) throw new NotFoundException('Dignidad no encontrada.');
+
+    const estado = await this.prisma.listaDignidadEstado.upsert({
+      where: { listaId_dignidadId: { listaId, dignidadId } },
+      update: { habilitado: dto.habilitado },
+      create: { listaId, dignidadId, habilitado: dto.habilitado },
+      select: { id: true, listaId: true, dignidadId: true, habilitado: true },
+    });
+
+    await this.audit(AuditTabla.CANDIDATURAS, AuditOperacion.UPDATE, estado.id, {
+      datosNuevos: estado,
+      actor,
+    });
+
+    return estado;
+  }
+
   private async findCandidaturaOrFail(eleccionId: string, candidaturaId: string) {
     const candidatura = await this.prisma.candidatura.findFirst({
       where: { id: candidaturaId, eleccionId },
@@ -534,6 +592,16 @@ export class CandidaturasService {
       if (!lista) throw new BadRequestException('La lista no pertenece a la eleccion.');
       if (lista.estado === 'RECHAZADA' || lista.estado === 'RETIRADA') {
         throw new BadRequestException('La lista seleccionada no esta habilitada.');
+      }
+
+      const dignidadListaEstado = await this.prisma.listaDignidadEstado.findUnique({
+        where: { listaId_dignidadId: { listaId, dignidadId } },
+        select: { habilitado: true },
+      });
+      if (dignidadListaEstado && !dignidadListaEstado.habilitado) {
+        throw new BadRequestException(
+          'La dignidad esta inhabilitada para la lista seleccionada.',
+        );
       }
     }
 

@@ -1,11 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { finalize } from 'rxjs';
 import { Eleccion } from '../../../elections/models/election.model';
 import { ElectionsService } from '../../../elections/services/elections.service';
@@ -31,7 +31,8 @@ import { VotacionService } from '../../services/votacion.service';
 export default class ResultadosComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _votacionService = inject(VotacionService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
 
   elecciones: Eleccion[] = [];
   resultados: ResultadosResponse | null = null;
@@ -52,7 +53,7 @@ export default class ResultadosComponent implements OnInit {
           this.selectedEleccionCtrl.setValue(res.data[0].id);
         }
       },
-      error: () => this._notify('No se pudieron cargar las elecciones.'),
+      error: () => this._notifyError('No se pudieron cargar las elecciones.'),
     });
   }
 
@@ -65,13 +66,18 @@ export default class ResultadosComponent implements OnInit {
     this.loading = true;
     this._votacionService
       .resultados(eleccionId)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
       .subscribe({
         next: (res) => {
           this.resultados = res;
         },
         error: (err) =>
-          this._notify(this.errorMessage(err, 'No se pudieron cargar resultados.')),
+          this._notifyError(this.errorMessage(err, 'No se pudieron cargar resultados.')),
       });
   }
 
@@ -225,6 +231,36 @@ export default class ResultadosComponent implements OnInit {
     window.print();
   }
 
+  descargarActaPorLista(): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._votacionService.reporteActaPorLista(eleccionId).subscribe({
+      next: (blob) => this._downloadBlob('acta-por-lista.pdf', blob),
+      error: (err) =>
+        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
+    });
+  }
+
+  descargarParticipacionPorTipo(): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._votacionService.reporteParticipacionPorTipo(eleccionId).subscribe({
+      next: (blob) => this._downloadBlob('participacion-por-tipo.pdf', blob),
+      error: (err) =>
+        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
+    });
+  }
+
+  descargarActaPorDignidades(): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._votacionService.reporteActaPorDignidades(eleccionId).subscribe({
+      next: (blob) => this._downloadBlob('acta-por-dignidades.pdf', blob),
+      error: (err) =>
+        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
+    });
+  }
+
   private _downloadCsv(
     filename: string,
     rows: Array<Array<string | number>>,
@@ -246,8 +282,21 @@ export default class ResultadosComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
+  private _downloadBlob(filename: string, blob: Blob): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private errorMessage(err: any, fallback: string): string {

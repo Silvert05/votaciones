@@ -68,7 +68,18 @@ const routes: Routes = [
         loadComponent: () =>
           import('./users/pages/users-list/users-list.component')
       },
-      // Perfiles y opciones no forman parte del flujo operativo visible.
+      {
+        path: 'seguridad/perfiles',
+        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        loadComponent: () =>
+          import('./security/pages/perfiles/perfiles-list.component')
+      },
+      {
+        path: 'seguridad/opciones',
+        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        loadComponent: () =>
+          import('./security/pages/opciones/opciones-list.component')
+      },
       {
         path: 'seguridad/auditoria',
         canActivate: [roleGuard(['ADMIN']), optionGuard],

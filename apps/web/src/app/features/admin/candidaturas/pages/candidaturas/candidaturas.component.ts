@@ -13,7 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifyService } from 'app/shared/services/notify.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
@@ -53,7 +53,7 @@ export default class CandidaturasComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
   private _padronService = inject(PadronService);
   private _candidaturasService = inject(CandidaturasService);
-  private _snackBar = inject(MatSnackBar);
+  private _notifyService = inject(NotifyService);
   private _institutionalDialog = inject(InstitutionalDialogService);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -109,7 +109,7 @@ export default class CandidaturasComponent implements OnInit {
           this.selectedEleccionCtrl.setValue(res.data[0].id);
         }
       },
-      error: () => this._notify('No se pudieron cargar las elecciones.'),
+      error: () => this._notifyError('No se pudieron cargar las elecciones.'),
     });
   }
 
@@ -125,7 +125,7 @@ export default class CandidaturasComponent implements OnInit {
       next: (detalle) => {
         this.dignidades = detalle.dignidades.filter((d) => d.activo);
       },
-      error: () => this._notify('No se pudieron cargar las dignidades.'),
+      error: () => this._notifyError('No se pudieron cargar las dignidades.'),
     });
 
     this._padronService
@@ -134,7 +134,7 @@ export default class CandidaturasComponent implements OnInit {
         next: (res) => {
           this.padronHabilitado = res.data.filter((item) => item.publicado);
         },
-        error: () => this._notify('No se pudo cargar el padron habilitado.'),
+        error: () => this._notifyError('No se pudo cargar el padron habilitado.'),
       });
 
     this._candidaturasService
@@ -145,7 +145,7 @@ export default class CandidaturasComponent implements OnInit {
             (lista) => lista.estado !== 'RECHAZADA' && lista.estado !== 'RETIRADA',
           );
         },
-        error: () => this._notify('No se pudieron cargar las listas.'),
+        error: () => this._notifyError('No se pudieron cargar las listas.'),
       });
   }
 
@@ -175,7 +175,7 @@ export default class CandidaturasComponent implements OnInit {
           this.candidaturas = res.data;
           this.total = res.total;
         },
-        error: () => this._notify('No se pudieron cargar las candidaturas.'),
+        error: () => this._notifyError('No se pudieron cargar las candidaturas.'),
       });
   }
 
@@ -206,7 +206,7 @@ export default class CandidaturasComponent implements OnInit {
         this._notify('Inscripcion de candidaturas abierta.');
         this.loadElecciones();
       },
-      error: (err) => this._notify(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
+      error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
     });
   }
 
@@ -225,7 +225,7 @@ export default class CandidaturasComponent implements OnInit {
           this._notify('Calificación de candidaturas cerrada.');
           this.loadElecciones();
         },
-        error: (err) => this._notify(this.errorMessage(err, 'No se pudo cerrar la calificación.')),
+        error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo cerrar la calificación.')),
       });
     });
   }
@@ -276,7 +276,7 @@ export default class CandidaturasComponent implements OnInit {
         this._notify(this.selected ? 'Candidatura guardada.' : 'Candidatura creada.');
         this.load();
       },
-      error: (err) => this._notify(this.errorMessage(err, 'No se pudo guardar.')),
+      error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo guardar.')),
     });
   }
 
@@ -299,7 +299,7 @@ export default class CandidaturasComponent implements OnInit {
             this._notify(`Candidatura marcada como ${this.label(estado)}.`);
             this.load();
           },
-          error: (err) => this._notify(this.errorMessage(err, 'No se pudo calificar.')),
+          error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo calificar.')),
         });
     });
   }
@@ -321,7 +321,11 @@ export default class CandidaturasComponent implements OnInit {
   }
 
   private _notify(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 });
+    this._notifyService.success(message);
+  }
+
+  private _notifyError(message: string): void {
+    this._notifyService.error(message);
   }
 
   private errorMessage(err: any, fallback: string): string {
