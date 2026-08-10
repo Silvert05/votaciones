@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { LOGO_INSTITUCIONAL_BASE64 } from './logo-institucional.base64';
 
 // pdfmake no publica tipos propios; se usan alias locales laxos.
 export type Content = any;
@@ -72,27 +71,19 @@ export async function fetchImageDataUri(
   }
 }
 
-let defaultLogoDataUri: string | null;
+const DEFAULT_LOGO_DATA_URI = `data:image/png;base64,${LOGO_INSTITUCIONAL_BASE64}`;
 
 /**
- * Logo institucional embebido en el backend, usado en los reportes cuando la
- * eleccion no tiene logoUrl/escudoUrl configurados en Configuracion.
- * Solo se cachea el resultado exitoso: si la primera lectura falla (p. ej.
- * una condicion de carrera con la copia de assets al arrancar `nest start
- * --watch`), las llamadas siguientes reintentan en lugar de quedar con
- * `null` cacheado para siempre.
+ * Logo institucional usado en los reportes cuando la eleccion no tiene
+ * logoUrl/escudoUrl configurados en Configuracion. Va embebido como base64
+ * directamente en el codigo (ver `logo-institucional.base64.ts`) en lugar
+ * de leerse de disco: una lectura de archivo dependia de que `nest build`/
+ * `nest start --watch` hubiera copiado el asset a `dist/` antes de la
+ * primera peticion, y una falla transitoria ahi dejaba el logo ausente de
+ * forma permanente para toda la vida del proceso. Embebido no puede fallar.
  */
 export async function getDefaultLogoDataUri(): Promise<string | null> {
-  if (defaultLogoDataUri) return defaultLogoDataUri;
-  try {
-    const buffer = await readFile(
-      join(__dirname, 'assets', 'logo-institucional.png'),
-    );
-    defaultLogoDataUri = `data:image/png;base64,${buffer.toString('base64')}`;
-  } catch {
-    return null;
-  }
-  return defaultLogoDataUri;
+  return DEFAULT_LOGO_DATA_URI;
 }
 
 /**
