@@ -7,12 +7,57 @@
   </fuse-alert>
   }
 
+  @if (!isEdit) {
+  <mat-button-toggle-group class="w-full mb-3" [value]="modo" (change)="setModo($event.value)">
+    <mat-button-toggle class="flex-1" value="elector">Desde estudiante/profesor</mat-button-toggle>
+    <mat-button-toggle class="flex-1" value="manual">Manual</mat-button-toggle>
+  </mat-button-toggle-group>
+  }
+
+  @if (!isEdit && modo === 'elector') {
+    @if (!electorSeleccionado) {
+    <mat-form-field class="w-full">
+      <mat-label>Buscar estudiante o profesor</mat-label>
+      <input matInput [formControl]="electorSearchCtrl" [matAutocomplete]="autoElector"
+        placeholder="Nombre, apellido o cédula">
+      @if (buscandoElectores) {
+      <mat-progress-spinner matSuffix [diameter]="18" [mode]="'indeterminate'" />
+      }
+      <mat-autocomplete #autoElector="matAutocomplete">
+        @for (elector of electorResultados; track elector.id) {
+        <mat-option [value]="elector" (onSelectionChange)="seleccionarElector(elector)">
+          {{ elector.nombres }} {{ elector.apellidos }} — {{ elector.identificacion }}
+          ({{ elector.tipo === 'ESTUDIANTE' ? 'Estudiante' : elector.tipo === 'DOCENTE' ? 'Docente' : 'Estudiante/Docente' }})
+        </mat-option>
+        }
+      </mat-autocomplete>
+      <mat-hint>Escribe al menos 2 letras para buscar</mat-hint>
+    </mat-form-field>
+    } @else {
+    <div class="flex items-center justify-between gap-2 mb-3 p-3 rounded border">
+      <div>
+        <div class="font-medium">{{ electorSeleccionado.nombres }} {{ electorSeleccionado.apellidos }}</div>
+        <div class="text-sm text-secondary">
+          {{ electorSeleccionado.identificacion }} ·
+          {{ electorSeleccionado.tipo === 'ESTUDIANTE' ? 'Estudiante' : electorSeleccionado.tipo === 'DOCENTE' ? 'Docente' : 'Estudiante/Docente' }}
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="quitarElector()" matTooltip="Cambiar">
+        <mat-icon class="icon-size-5" [svgIcon]="'lucide:x'" />
+      </button>
+    </div>
+    }
+  }
+
   <form class="flex flex-col pt-2 space-y-2" [formGroup]="form">
     <mat-form-field class="w-full">
       <mat-label>Usuario</mat-label>
       <input matInput [formControlName]="'usuario'" placeholder="nombre de usuario">
       @if (form.get('usuario').hasError('required')) {
       <mat-error>El usuario es requerido</mat-error>
+      }
+      @if (!isEdit && modo === 'elector' && electorSeleccionado) {
+      <mat-hint>Generado automáticamente; edítalo si ya existe otro igual</mat-hint>
       }
     </mat-form-field>
 
@@ -59,7 +104,7 @@
       <mat-label>Contraseña temporal</mat-label>
       <input matInput [type]="showPassword ? 'text' : 'password'" [formControlName]="'password'">
       <button mat-icon-button type="button" (click)="showPassword = !showPassword" matSuffix>
-        <mat-icon class="icon-size-5" [svgIcon]="showPassword ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+        <mat-icon class="icon-size-5" [svgIcon]="showPassword ? 'lucide:eye-off' : 'lucide:eye'" />
       </button>
       @if (form.get('password').hasError('required')) {
       <mat-error>La contraseña es requerida</mat-error>
@@ -67,7 +112,11 @@
       @if (form.get('password').hasError('minlength')) {
       <mat-error>Debe tener al menos 6 caracteres</mat-error>
       }
+      @if (modo === 'elector') {
+      <mat-hint>La contraseña inicial es igual al usuario; el usuario deberá cambiarla en su primer ingreso</mat-hint>
+      } @else {
       <mat-hint>El usuario deberá cambiarla en su primer ingreso</mat-hint>
+      }
     </mat-form-field>
     }
   </form>

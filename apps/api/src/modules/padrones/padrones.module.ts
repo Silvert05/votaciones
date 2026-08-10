@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
 import { CorreoModule } from '../correo/correo.module';
+import { SeguridadModule } from '../seguridad/seguridad.module';
 import { PadronesController } from './padrones.controller';
 import { PadronesService } from './padrones.service';
 
 @Module({
-  imports: [AuditoriaModule, CorreoModule],
+  imports: [AuditoriaModule, CorreoModule, SeguridadModule],
   controllers: [PadronesController],
   providers: [PadronesService],
 })

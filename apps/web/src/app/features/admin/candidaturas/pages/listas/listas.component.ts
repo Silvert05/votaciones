@@ -282,7 +282,7 @@ export default class ListasComponent implements OnInit {
       inputLabel: 'Observación del cambio de estado',
       initialValue: lista.observacion ?? '',
       confirmText: 'Guardar cambio',
-      icon: 'heroicons_outline:clipboard-document-check',
+      icon: 'lucide:clipboard-check',
     }).subscribe((observacion) => {
       if (observacion === null) return;
       this._candidaturasService

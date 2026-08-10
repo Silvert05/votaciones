@@ -146,91 +146,6 @@ export default class ResultadosComponent implements OnInit {
       .join(' ');
   }
 
-  exportarResultadosCsv(): void {
-    if (!this.resultados) return;
-    const rows: Array<Array<string | number>> = [
-      ['Eleccion', this.resultados.eleccion.nombre],
-      ['Padron habilitado', this.resultados.padronHabilitado],
-      ['Votantes', this.totalVotantes],
-      [],
-      ['Dignidad', 'Opcion', 'Tipo', 'Votos', 'Porcentaje'],
-    ];
-    for (const dignidad of this.resultados.dignidades) {
-      const emitidos = this.emitidosPorDignidad(dignidad.id);
-      for (const conteo of this.conteosPorDignidad(dignidad.id)) {
-        rows.push([
-          dignidad.nombre,
-          this.opcionLabel(conteo),
-          conteo.tipo,
-          conteo.total,
-          `${this.porcentaje(conteo.total, emitidos)}%`,
-        ]);
-      }
-    }
-    this._downloadCsv('resultados-consolidados.csv', rows);
-  }
-
-  exportarCarrerasCsv(): void {
-    if (!this.resultados) return;
-    const rows: Array<Array<string | number>> = [
-      ['Eleccion', this.resultados.eleccion.nombre],
-      [],
-      [
-        'Carrera',
-        'Habilitados',
-        'Votantes',
-        'Participacion',
-        'Dignidad',
-        'Opcion',
-        'Votos',
-      ],
-    ];
-    for (const carrera of this.resultados.estadisticasCarrera) {
-      if (!carrera.publicable) {
-        rows.push([
-          carrera.carrera,
-          carrera.habilitados,
-          carrera.votantes,
-          `${carrera.porcentaje}%`,
-          'Detalle protegido',
-          '',
-          '',
-        ]);
-        continue;
-      }
-      for (const dignidad of this.resultados.dignidades) {
-        const opciones = this.opcionesCarrera(carrera, dignidad.id);
-        if (!opciones.length) {
-          rows.push([
-            carrera.carrera,
-            carrera.habilitados,
-            carrera.votantes,
-            `${carrera.porcentaje}%`,
-            dignidad.nombre,
-            'Sin datos',
-            0,
-          ]);
-        }
-        for (const opcion of opciones) {
-          rows.push([
-            carrera.carrera,
-            carrera.habilitados,
-            carrera.votantes,
-            `${carrera.porcentaje}%`,
-            dignidad.nombre,
-            this.opcionCarreraLabel(opcion),
-            opcion.total,
-          ]);
-        }
-      }
-    }
-    this._downloadCsv('resultados-por-carrera.csv', rows);
-  }
-
-  imprimirResumen(): void {
-    window.print();
-  }
-
   descargarActaPorLista(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
@@ -261,27 +176,6 @@ export default class ResultadosComponent implements OnInit {
     });
   }
 
-  private _downloadCsv(
-    filename: string,
-    rows: Array<Array<string | number>>,
-  ): void {
-    const content = rows
-      .map((row) =>
-        row
-          .map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`)
-          .join(','),
-      )
-      .join('\r\n');
-    const url = URL.createObjectURL(
-      new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8' }),
-    );
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   private _downloadBlob(filename: string, blob: Blob): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -289,10 +183,6 @@ export default class ResultadosComponent implements OnInit {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
-  }
-
-  private _notify(message: string): void {
-    this._notifyService.success(message);
   }
 
   private _notifyError(message: string): void {

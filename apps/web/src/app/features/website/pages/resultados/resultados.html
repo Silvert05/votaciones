@@ -4,7 +4,7 @@
   <div class="venp-gradient w-full text-white">
     <div class="mx-auto w-full max-w-screen-xl px-6 py-14 text-center lg:px-10">
       <div class="venp-icon-panel mx-auto h-14 w-14">
-        <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:trophy'" />
+        <mat-icon class="icon-size-8" [svgIcon]="'lucide:trophy'" />
       </div>
       <p class="venp-section-kicker mt-5 text-white/70">Publicación oficial</p>
       <h1 class="mt-2 text-3xl font-black tracking-tight sm:text-5xl">
@@ -31,13 +31,13 @@
         <button
           class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200"
           type="button" (click)="exportarPdf()">
-          <mat-icon class="icon-size-5 text-red-600" [svgIcon]="'heroicons_outline:document-arrow-down'" />
+          <mat-icon class="icon-size-5 text-red-600" [svgIcon]="'lucide:file-down'" />
           Exportar a PDF
         </button>
         <button
           class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200"
           type="button" (click)="imprimir()">
-          <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:printer'" /> Imprimir
+          <mat-icon class="icon-size-5" [svgIcon]="'lucide:printer'" /> Imprimir
         </button>
       </div>
     </div>
@@ -73,7 +73,7 @@
 
     @if (!elecciones.length && !loading) {
     <div class="venp-premium-card mt-8 p-10 text-center text-secondary">
-      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:chart-bar'" />
+      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'lucide:chart-bar'" />
       <p class="font-medium">Aún no hay resultados publicados.</p>
       <p class="text-sm mt-1">Los resultados aparecen cuando la jornada de votación se cierra y se generan.</p>
     </div>
@@ -189,7 +189,7 @@
           <div class="border-b border-slate-200 p-6 dark:border-slate-700">
             <div class="flex items-start gap-4">
               <span class="venp-bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg">
-                <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
+                <mat-icon [svgIcon]="'lucide:graduation-cap'" />
               </span>
               <div class="min-w-0 flex-auto">
                 <h3 class="text-lg font-black leading-tight">{{ carrera.carrera }}</h3>
@@ -210,7 +210,7 @@
           <div class="p-6">
             @if (!carrera.publicable) {
               <div class="venp-soft-panel flex items-start gap-3 p-4">
-                <mat-icon class="venp-text-secondary shrink-0" [svgIcon]="'heroicons_outline:lock-closed'" />
+                <mat-icon class="venp-text-secondary shrink-0" [svgIcon]="'lucide:lock'" />
                 <p class="text-secondary text-sm leading-relaxed">
                   El detalle de preferencias permanece protegido hasta alcanzar el mínimo institucional de privacidad.
                 </p>

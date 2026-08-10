@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NotifyService } from 'app/shared/services/notify.service';
 import { finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
@@ -31,6 +32,7 @@ interface PasoInfo {
     MatFormFieldModule,
     MatSelectModule,
     MatProgressBarModule,
+    MatTooltipModule,
   ],
   templateUrl: './jornada.component.html',
 })
@@ -50,11 +52,11 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   selectedIdCtrl = new FormControl<string>('', { nonNullable: true });
 
   pasos: PasoInfo[] = [
-    { numero: 1, titulo: 'Inicializar Jornada', icono: 'heroicons_outline:play' },
-    { numero: 2, titulo: 'Puesta a Cero', icono: 'heroicons_outline:scale' },
-    { numero: 3, titulo: 'Iniciar Votacion', icono: 'heroicons_outline:cursor-arrow-rays' },
-    { numero: 4, titulo: 'Cierre de Votacion', icono: 'heroicons_outline:lock-closed' },
-    { numero: 5, titulo: 'Resultados Electorales', icono: 'heroicons_outline:chart-bar' },
+    { numero: 1, titulo: 'Inicializar Jornada', icono: 'lucide:play' },
+    { numero: 2, titulo: 'Puesta a Cero', icono: 'lucide:scale' },
+    { numero: 3, titulo: 'Iniciar Votacion', icono: 'lucide:mouse-pointer-click' },
+    { numero: 4, titulo: 'Cierre de Votacion', icono: 'lucide:lock' },
+    { numero: 5, titulo: 'Resultados Electorales', icono: 'lucide:chart-bar' },
   ];
 
   countdown = '';
@@ -111,13 +113,21 @@ export default class JornadaComponent implements OnInit, OnDestroy {
 
   private _run(obs: any): void {
     this.working = true;
-    obs.pipe(finalize(() => (this.working = false))).subscribe({
-      next: (estado: JornadaEstado) => {
-        this.applyEstado(estado);
-        this._notify('Accion aplicada correctamente.');
-      },
-      error: (err: any) => this._notifyError(this._msg(err, 'No se pudo completar la accion.')),
-    });
+    this._changeDetectorRef.detectChanges();
+    obs
+      .pipe(
+        finalize(() => {
+          this.working = false;
+          this._changeDetectorRef.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (estado: JornadaEstado) => {
+          this.applyEstado(estado);
+          this._notify('Accion aplicada correctamente.');
+        },
+        error: (err: any) => this._notifyError(this._msg(err, 'No se pudo completar la accion.')),
+      });
   }
 
   inicializar(): void {
@@ -135,6 +145,24 @@ export default class JornadaComponent implements OnInit, OnDestroy {
     this._run(this._jornadaService.iniciarVotacion(this.estado.eleccion.id));
   }
 
+  iniciarVotacionAnticipada(): void {
+    if (!this.estado) return;
+    const eleccionId = this.estado.eleccion.id;
+    const fecha = this.inicioProgramado
+      ? new Date(this.inicioProgramado).toLocaleString('es-EC')
+      : 'la fecha configurada en el cronograma';
+    this._institutionalDialog.confirm({
+      title: 'Iniciar votación antes de lo programado',
+      message: `Vas a abrir la votación antes de lo programado en el cronograma (${fecha}). Los electores ya podrán votar. ¿Continuar?`,
+      confirmText: 'Iniciar anticipadamente',
+      danger: true,
+    }).subscribe((confirmed) => {
+      if (confirmed) {
+        this._run(this._jornadaService.iniciarVotacion(eleccionId, { forzar: true }));
+      }
+    });
+  }
+
   generarEnviarCredenciales(): void {
     if (!this.estado) return;
     const eleccionId = this.estado.eleccion.id;
@@ -144,14 +172,20 @@ export default class JornadaComponent implements OnInit, OnDestroy {
         message:
           'Se generará una contraseña única para cada elector pendiente y se enviará a su correo institucional.',
         confirmText: 'Generar y enviar',
-        icon: 'heroicons_outline:envelope',
+        icon: 'lucide:mail',
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.working = true;
+        this._changeDetectorRef.detectChanges();
         this._padronService
           .reenviarCredencialesPendientes(eleccionId)
-          .pipe(finalize(() => (this.working = false)))
+          .pipe(
+            finalize(() => {
+              this.working = false;
+              this._changeDetectorRef.detectChanges();
+            }),
+          )
           .subscribe({
             next: (res) => {
               this._notify(
@@ -183,9 +217,45 @@ export default class JornadaComponent implements OnInit, OnDestroy {
     });
   }
 
+  cerrarVotacionAnticipada(): void {
+    if (!this.estado) return;
+    const eleccionId = this.estado.eleccion.id;
+    const fecha = this.cierreProgramado
+      ? new Date(this.cierreProgramado).toLocaleString('es-EC')
+      : 'la fecha configurada en el cronograma';
+    this._institutionalDialog.confirm({
+      title: 'Cerrar votación antes de lo programado',
+      message: `Vas a cerrar la votación antes de lo programado en el cronograma (${fecha}). Los electores ya no podrán votar. ¿Continuar?`,
+      confirmText: 'Cerrar anticipadamente',
+      danger: true,
+    }).subscribe((confirmed) => {
+      if (confirmed) {
+        this._run(this._jornadaService.cerrarVotacion(eleccionId, { forzar: true }));
+      }
+    });
+  }
+
   generarResultados(): void {
     if (!this.estado) return;
     this._run(this._jornadaService.generarResultados(this.estado.eleccion.id));
+  }
+
+  generarResultadosAnticipado(): void {
+    if (!this.estado) return;
+    const eleccionId = this.estado.eleccion.id;
+    const fecha = this.publicacionProgramada
+      ? new Date(this.publicacionProgramada).toLocaleString('es-EC')
+      : 'la fecha configurada en el cronograma';
+    this._institutionalDialog.confirm({
+      title: 'Publicar resultados antes de lo programado',
+      message: `Vas a publicar los resultados antes de lo programado en el cronograma (${fecha}). ¿Continuar?`,
+      confirmText: 'Publicar anticipadamente',
+      danger: true,
+    }).subscribe((confirmed) => {
+      if (confirmed) {
+        this._run(this._jornadaService.generarResultados(eleccionId, { forzar: true }));
+      }
+    });
   }
 
   reactivarLink(): void {
@@ -196,14 +266,15 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   reiniciar(): void {
     if (!this.estado) return;
     const eleccionId = this.estado.eleccion.id;
-    this._institutionalDialog.confirm({
+    this._institutionalDialog.prompt({
       title: 'Reiniciar jornada electoral',
-      message: 'Esta acción elimina todos los votos registrados y reabre la configuración. No se puede deshacer.',
+      message: 'Esta acción elimina todos los votos registrados y reabre la configuración. No se puede deshacer. Indique el motivo del reinicio.',
+      inputLabel: 'Motivo del reinicio',
       confirmText: 'Reiniciar y borrar votos',
-      danger: true,
-      icon: 'heroicons_outline:exclamation-triangle',
-    }).subscribe((confirmed) => {
-      if (confirmed) this._run(this._jornadaService.reiniciar(eleccionId));
+      required: true,
+      icon: 'lucide:triangle-alert',
+    }).subscribe((motivo) => {
+      if (motivo) this._run(this._jornadaService.reiniciar(eleccionId, motivo));
     });
   }
 

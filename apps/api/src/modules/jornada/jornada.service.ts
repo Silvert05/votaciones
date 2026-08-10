@@ -9,7 +9,11 @@ import { PrismaService } from 'src/prisma';
 import { AuditOperacion, AuditTabla } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
-import { IniciarVotacionDto, PasoJornadaDto } from './dto/jornada.dto';
+import {
+  IniciarVotacionDto,
+  PasoJornadaDto,
+  ReiniciarJornadaDto,
+} from './dto/jornada.dto';
 
 interface Actor {
   user: AuthUser;
@@ -164,7 +168,7 @@ export class JornadaService {
       );
     }
     const now = new Date();
-    if (now < fechaInicio) {
+    if (!dto.forzar && now < fechaInicio) {
       throw new BadRequestException(
         `La votacion se habilitara automaticamente desde ${fechaInicio.toLocaleString('es-EC')}.`,
       );
@@ -227,7 +231,7 @@ export class JornadaService {
         'Configure la fecha de cierre en el cronograma.',
       );
     }
-    if (new Date() < fechaFin) {
+    if (!dto.forzar && new Date() < fechaFin) {
       throw new BadRequestException(
         `La votacion permanecera abierta hasta ${fechaFin.toLocaleString('es-EC')}.`,
       );
@@ -287,7 +291,7 @@ export class JornadaService {
         'Configure la fecha de publicacion de resultados en el cronograma.',
       );
     }
-    if (new Date() < fechaPublicacion) {
+    if (!dto.forzar && new Date() < fechaPublicacion) {
       throw new BadRequestException(
         `Los resultados podran publicarse desde ${fechaPublicacion.toLocaleString('es-EC')}.`,
       );
@@ -350,7 +354,7 @@ export class JornadaService {
     return this.obtenerEstado(eleccionId);
   }
 
-  async reiniciar(eleccionId: string, actor: Actor) {
+  async reiniciar(eleccionId: string, dto: ReiniciarJornadaDto, actor: Actor) {
     const jornada = await this.ensureJornada(eleccionId);
     const eleccion = await this.getEleccion(eleccionId);
 
@@ -358,6 +362,20 @@ export class JornadaService {
       await tx.conteoVoto.deleteMany({ where: { eleccionId } });
       await tx.votoEmitido.deleteMany({ where: { eleccionId } });
       await tx.jornadaEvento.deleteMany({ where: { jornadaId: jornada.id } });
+      // Las credenciales quedan invalidadas y "pendientes" de nuevo: sin esto,
+      // el padron sigue marcado como generado/enviado del ciclo anterior y
+      // "Reenviar pendientes" no encuentra nada que reenviar tras reiniciar.
+      await tx.padronElectoral.updateMany({
+        where: { eleccionId },
+        data: {
+          credencialHash: null,
+          credencialGeneradaAt: null,
+          credencialEnviadaAt: null,
+          credencialRevocadaAt: null,
+          credencialEnvioError: null,
+          credencialVersion: { increment: 1 },
+        },
+      });
       await tx.jornadaElectoral.update({
         where: { id: jornada.id },
         data: {
@@ -385,14 +403,14 @@ export class JornadaService {
             eleccionId,
             estadoAnterior: eleccion.estado,
             estadoNuevo: EstadoEleccion.CANDIDATURAS_CALIFICADAS,
-            comentario: 'Reinicio de la jornada electoral.',
+            comentario: `Reinicio de la jornada electoral. Motivo: ${dto.motivo.trim()}`,
             usuario: actor.user.usuario,
           },
         });
       }
     });
 
-    await this.audit(eleccionId, 'REINICIAR', actor);
+    await this.audit(eleccionId, 'REINICIAR', actor, { motivo: dto.motivo.trim() });
     return this.obtenerEstado(eleccionId);
   }
 
@@ -516,12 +534,17 @@ export class JornadaService {
     };
   }
 
-  private audit(eleccionId: string, paso: string, actor: Actor) {
+  private audit(
+    eleccionId: string,
+    paso: string,
+    actor: Actor,
+    extra?: Record<string, unknown>,
+  ) {
     return this.auditoria.registrar({
       tabla: AuditTabla.JORNADAS_ELECTORALES,
       operacion: AuditOperacion.ESTADO,
       registroId: eleccionId,
-      datosNuevos: { paso },
+      datosNuevos: { paso, ...extra },
       usuario: actor.user.usuario,
       ip: actor.ip,
     });

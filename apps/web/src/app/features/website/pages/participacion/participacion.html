@@ -4,7 +4,7 @@
   <div class="venp-gradient w-full text-white">
     <div class="mx-auto w-full max-w-screen-xl px-6 py-14 text-center lg:px-10">
       <div class="venp-icon-panel mx-auto h-14 w-14">
-        <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:chart-pie'" />
+        <mat-icon class="icon-size-8" [svgIcon]="'lucide:chart-pie'" />
       </div>
       <p class="venp-section-kicker mt-5 text-white/70">Transparencia en tiempo real</p>
       <h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Participación electoral</h1>
@@ -36,7 +36,7 @@
 
     @else if (!data) {
     <div class="venp-premium-card mx-auto max-w-lg p-10 text-center text-secondary">
-      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'heroicons_outline:chart-pie'" />
+      <mat-icon class="icon-size-12 mx-auto mb-3 text-secondary" [svgIcon]="'lucide:chart-pie'" />
       <p class="font-medium">No hay datos de participación disponibles.</p>
     </div>
     }
@@ -56,19 +56,19 @@
       <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div class="venp-premium-card venp-reveal relative flex flex-col justify-center overflow-hidden p-6">
           <span class="venp-bg-primary absolute inset-y-0 left-0 w-1.5"></span>
-          <mat-icon class="venp-text-primary mb-3 icon-size-8" [svgIcon]="'heroicons_outline:users'" />
+          <mat-icon class="venp-text-primary mb-3 icon-size-8" [svgIcon]="'lucide:users'" />
           <div class="text-4xl font-extrabold">{{ data.padronHabilitado }}</div>
           <div class="text-sm text-secondary mt-1">Electores hábiles</div>
         </div>
         <div class="venp-premium-card venp-reveal venp-delay-2 relative flex flex-col justify-center overflow-hidden p-6">
           <span class="absolute inset-y-0 left-0 w-1.5 bg-emerald-500"></span>
-          <mat-icon class="mb-3 text-green-600 icon-size-8" [svgIcon]="'heroicons_outline:check-badge'" />
+          <mat-icon class="mb-3 text-green-600 icon-size-8" [svgIcon]="'lucide:badge-check'" />
           <div class="text-4xl font-extrabold">{{ data.votantes }}</div>
           <div class="text-sm text-secondary mt-1">Han votado</div>
         </div>
         <div class="venp-premium-card venp-reveal venp-delay-2 relative flex flex-col justify-center overflow-hidden p-6">
           <span class="venp-bg-secondary absolute inset-y-0 left-0 w-1.5"></span>
-          <mat-icon class="venp-text-secondary mb-3 icon-size-8" [svgIcon]="'heroicons_outline:chart-pie'" />
+          <mat-icon class="venp-text-secondary mb-3 icon-size-8" [svgIcon]="'lucide:chart-pie'" />
           <div class="text-4xl font-extrabold">{{ data.porcentaje | number: '1.0-2' }}%</div>
           <div class="text-sm text-secondary mt-1">Porcentaje</div>
         </div>
@@ -90,7 +90,7 @@
     <div class="venp-premium-card mt-8 p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="venp-bg-primary flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow">
-          <mat-icon [svgIcon]="'heroicons_outline:chart-bar-square'" />
+          <mat-icon [svgIcon]="'lucide:file-chart-column'" />
         </div>
         <div>
           <p class="venp-section-kicker venp-text-secondary">Detalle consolidado</p>

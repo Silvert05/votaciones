@@ -21,6 +21,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
 import {
   CreateImpugnacionResultadoDto,
+  IniciarSegundaVueltaDto,
   ObservacionActaDto,
   ResolverImpugnacionResultadoDto,
 } from './dto/escrutinio.dto';
@@ -52,6 +53,9 @@ const actaSelect = {
   votosNulos: true,
   estado: true,
   observacion: true,
+  vuelta: true,
+  empatado: true,
+  empateCandidaturaIds: true,
   cerradaAt: true,
   aprobadaAt: true,
   createdAt: true,
@@ -62,6 +66,8 @@ const actaSelect = {
       nombre: true,
       cantidadGanadores: true,
       orden: true,
+      vuelta: true,
+      pausadaSegundaVuelta: true,
     },
   },
   detalles: {
@@ -104,9 +110,12 @@ const impugnacionSelect = {
   actaId: true,
   presentadoPor: true,
   fundamento: true,
+  respaldoIdentificaciones: true,
+  respaldoValidos: true,
   estado: true,
   resolucion: true,
   fechaPresentacion: true,
+  fechaLimiteResolucion: true,
   fechaResolucion: true,
   createdAt: true,
   updatedAt: true,
@@ -142,6 +151,8 @@ export class EscrutinioService {
         nombre: true,
         cantidadGanadores: true,
         orden: true,
+        vuelta: true,
+        pausadaSegundaVuelta: true,
       },
     });
     const actas = await this.prisma.actaEscrutinio.findMany({
@@ -184,6 +195,8 @@ export class EscrutinioService {
           id: true,
           nombre: true,
           orden: true,
+          vuelta: true,
+          cantidadGanadores: true,
         },
       });
       if (!dignidades.length) {
@@ -211,12 +224,17 @@ export class EscrutinioService {
           detalle.find((item) => item.tipo === TipoVoto.BLANCO)?.total ?? 0;
         const votosNulos =
           detalle.find((item) => item.tipo === TipoVoto.NULO)?.total ?? 0;
+        const { empatado, empatadosIds } = this.detectarEmpate(
+          detalle,
+          dignidad.cantidadGanadores,
+        );
 
         const existing = await tx.actaEscrutinio.findUnique({
           where: {
-            eleccionId_dignidadId: {
+            eleccionId_dignidadId_vuelta: {
               eleccionId,
               dignidadId: dignidad.id,
+              vuelta: dignidad.vuelta,
             },
           },
           select: { id: true, estado: true },
@@ -236,6 +254,8 @@ export class EscrutinioService {
                 votosValidos,
                 votosBlancos,
                 votosNulos,
+                empatado,
+                empateCandidaturaIds: empatadosIds,
               },
               select: { id: true },
             })
@@ -243,12 +263,15 @@ export class EscrutinioService {
               data: {
                 eleccionId,
                 dignidadId: dignidad.id,
-                numeroActa: this.numeroActa(eleccionId, index),
+                numeroActa: this.numeroActa(eleccionId, index, dignidad.vuelta),
+                vuelta: dignidad.vuelta,
                 totalPadron,
                 totalVotantes,
                 votosValidos,
                 votosBlancos,
                 votosNulos,
+                empatado,
+                empateCandidaturaIds: empatadosIds,
               },
               select: { id: true },
             });
@@ -357,7 +380,9 @@ export class EscrutinioService {
       );
     }
 
+    await this.reactivarDignidadesPausadas(eleccionId);
     await this.ensureActasAprobadas(eleccionId);
+    await this.ensureSinEmpatesPendientes(eleccionId);
     await this.cambiarEstado(
       eleccionId,
       eleccion.estado,
@@ -365,6 +390,112 @@ export class EscrutinioService {
       'Publicacion de resultados provisionales',
       actor,
     );
+    return this.resumen(eleccionId);
+  }
+
+  async iniciarSegundaVuelta(
+    eleccionId: string,
+    dignidadId: string,
+    dto: IniciarSegundaVueltaDto,
+    actor: Actor,
+  ) {
+    const eleccion = await this.getEleccion(eleccionId);
+    const dignidad = await this.prisma.dignidad.findFirst({
+      where: { id: dignidadId, eleccionId },
+      select: { id: true, nombre: true, vuelta: true, activo: true },
+    });
+    if (!dignidad) {
+      throw new NotFoundException('Dignidad no encontrada en esta eleccion.');
+    }
+
+    const acta = await this.prisma.actaEscrutinio.findUnique({
+      where: {
+        eleccionId_dignidadId_vuelta: {
+          eleccionId,
+          dignidadId,
+          vuelta: dignidad.vuelta,
+        },
+      },
+      select: { id: true, estado: true, empatado: true, empateCandidaturaIds: true },
+    });
+    if (!acta || acta.estado !== EstadoActaEscrutinio.APROBADA) {
+      throw new BadRequestException(
+        'Solo se puede iniciar una segunda vuelta desde un acta aprobada.',
+      );
+    }
+    if (!acta.empatado || !acta.empateCandidaturaIds.length) {
+      throw new BadRequestException(
+        'Esta dignidad no presenta un empate que requiera segunda vuelta.',
+      );
+    }
+
+    const plazoHoras = dto.plazoHoras ?? 72;
+    const fechaFinVotacion = new Date(Date.now() + plazoHoras * 60 * 60 * 1000);
+    const empatadosIds = acta.empateCandidaturaIds;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.candidatura.updateMany({
+        where: {
+          eleccionId,
+          dignidadId,
+          estado: EstadoCandidatura.CALIFICADA,
+          id: { notIn: empatadosIds },
+        },
+        data: { excluidaSegundaVuelta: true },
+      });
+
+      await tx.votoEmitido.deleteMany({ where: { eleccionId, dignidadId } });
+      await tx.conteoVoto.deleteMany({ where: { eleccionId, dignidadId } });
+      await tx.$executeRaw(Prisma.sql`
+        DELETE FROM "conteos_votos_carrera"
+        WHERE "eleccion_id" = ${eleccionId}::uuid AND "dignidad_id" = ${dignidadId}::uuid
+      `);
+
+      await tx.dignidad.update({
+        where: { id: dignidadId },
+        data: { vuelta: { increment: 1 } },
+      });
+
+      await tx.dignidad.updateMany({
+        where: { eleccionId, id: { not: dignidadId }, activo: true },
+        data: { activo: false, pausadaSegundaVuelta: true },
+      });
+
+      await tx.jornadaElectoral.update({
+        where: { eleccionId },
+        data: { linkVotacionActivo: true, fechaFinVotacion },
+      });
+
+      if (
+        eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA
+      ) {
+        await tx.eleccion.update({
+          where: { id: eleccionId },
+          data: { estado: EstadoEleccion.VOTACION_ABIERTA },
+        });
+        await tx.historialEstadoEleccion.create({
+          data: {
+            eleccionId,
+            estadoAnterior: eleccion.estado,
+            estadoNuevo: EstadoEleccion.VOTACION_ABIERTA,
+            comentario: `Reapertura de votacion para segunda vuelta (Art. 18) en dignidad "${dignidad.nombre}"`,
+            usuario: actor.user.usuario,
+          },
+        });
+      }
+    });
+
+    await this.audit(
+      AuditTabla.ACTAS_ESCRUTINIO,
+      AuditOperacion.ESTADO,
+      dignidadId,
+      {
+        datosAnteriores: { vuelta: dignidad.vuelta, empatadosIds },
+        datosNuevos: { vuelta: dignidad.vuelta + 1, fechaFinVotacion },
+        actor,
+      },
+    );
+
     return this.resumen(eleccionId);
   }
 
@@ -383,14 +514,67 @@ export class EscrutinioService {
       );
     }
 
+    const proclamacion = await this.prisma.historialEstadoEleccion.findFirst({
+      where: { eleccionId, estadoNuevo: EstadoEleccion.RESULTADOS_PROVISIONALES },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    if (proclamacion) {
+      const limiteImpugnacion = new Date(
+        proclamacion.createdAt.getTime() + 24 * 60 * 60 * 1000,
+      );
+      if (new Date() > limiteImpugnacion) {
+        throw new BadRequestException(
+          'El plazo de 24 horas para impugnar los resultados provisionales (Art. 19) ya vencio.',
+        );
+      }
+    }
+
+    const identificaciones = [
+      ...new Set(
+        dto.respaldoIdentificaciones
+          .map((identificacion) => identificacion.trim())
+          .filter(Boolean),
+      ),
+    ];
+    const padronHabilitado = await this.prisma.padronElectoral.count({
+      where: {
+        eleccionId,
+        publicado: true,
+        estado: EstadoPadronElector.HABILITADO,
+      },
+    });
+    const respaldoValidos = await this.prisma.padronElectoral.count({
+      where: {
+        eleccionId,
+        publicado: true,
+        estado: EstadoPadronElector.HABILITADO,
+        elector: { identificacion: { in: identificaciones } },
+      },
+    });
+    const minimoRequerido = Math.ceil(padronHabilitado * 0.1);
+    if (respaldoValidos < minimoRequerido) {
+      throw new BadRequestException(
+        `La impugnacion requiere el respaldo de al menos el 10% del padron electoral (Art. 19): ${minimoRequerido} electores habilitados. Se identificaron ${respaldoValidos} validos.`,
+      );
+    }
+
     const dignidadId = this.emptyToNull(dto.dignidadId);
     let actaId: string | null = null;
     if (dignidadId) {
+      const dignidad = await this.prisma.dignidad.findUnique({
+        where: { id: dignidadId },
+        select: { vuelta: true },
+      });
+      if (!dignidad) {
+        throw new BadRequestException('La dignidad no existe.');
+      }
       const acta = await this.prisma.actaEscrutinio.findUnique({
         where: {
-          eleccionId_dignidadId: {
+          eleccionId_dignidadId_vuelta: {
             eleccionId,
             dignidadId,
+            vuelta: dignidad.vuelta,
           },
         },
         select: { id: true },
@@ -409,6 +593,9 @@ export class EscrutinioService {
           actaId,
           presentadoPor: dto.presentadoPor.trim(),
           fundamento: dto.fundamento.trim(),
+          respaldoIdentificaciones: identificaciones,
+          respaldoValidos,
+          fechaLimiteResolucion: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
         select: impugnacionSelect,
       });
@@ -501,6 +688,7 @@ export class EscrutinioService {
     }
 
     await this.ensureActasAprobadas(eleccionId);
+    await this.ensureSinEmpatesPendientes(eleccionId);
     const pendientes = await this.prisma.impugnacionResultado.count({
       where: { eleccionId, estado: EstadoImpugnacionResultado.PENDIENTE },
     });
@@ -574,6 +762,63 @@ export class EscrutinioService {
     return detalles;
   }
 
+  private async ensureSinEmpatesPendientes(eleccionId: string) {
+    const dignidades = await this.prisma.dignidad.findMany({
+      where: { eleccionId, activo: true },
+      select: { id: true, nombre: true, vuelta: true },
+    });
+    const actas = await this.prisma.actaEscrutinio.findMany({
+      where: { eleccionId },
+      select: { dignidadId: true, vuelta: true, empatado: true },
+    });
+    const empatadas = dignidades.filter((dignidad) =>
+      actas.some(
+        (acta) =>
+          acta.dignidadId === dignidad.id &&
+          acta.vuelta === dignidad.vuelta &&
+          acta.empatado,
+      ),
+    );
+    if (empatadas.length) {
+      throw new BadRequestException(
+        `Existe empate sin resolver (Art. 18) en: ${empatadas
+          .map((dignidad) => dignidad.nombre)
+          .join(', ')}. Inicie la segunda vuelta antes de publicar resultados.`,
+      );
+    }
+  }
+
+  private async reactivarDignidadesPausadas(eleccionId: string) {
+    const hayPausadas = await this.prisma.dignidad.findFirst({
+      where: { eleccionId, pausadaSegundaVuelta: true },
+      select: { id: true },
+    });
+    if (!hayPausadas) return;
+
+    const activas = await this.prisma.dignidad.findMany({
+      where: { eleccionId, activo: true },
+      select: { id: true, vuelta: true },
+    });
+    const actas = await this.prisma.actaEscrutinio.findMany({
+      where: { eleccionId },
+      select: { dignidadId: true, vuelta: true, empatado: true },
+    });
+    const algunaPendiente = activas.some((dignidad) =>
+      actas.some(
+        (acta) =>
+          acta.dignidadId === dignidad.id &&
+          acta.vuelta === dignidad.vuelta &&
+          acta.empatado,
+      ),
+    );
+    if (algunaPendiente) return;
+
+    await this.prisma.dignidad.updateMany({
+      where: { eleccionId, pausadaSegundaVuelta: true },
+      data: { activo: true, pausadaSegundaVuelta: false },
+    });
+  }
+
   private async ensureActasAprobadas(eleccionId: string) {
     const dignidades = await this.prisma.dignidad.findMany({
       where: { eleccionId, activo: true },
@@ -620,7 +865,11 @@ export class EscrutinioService {
         votosValidos: acta.votosValidos,
         votosBlancos: acta.votosBlancos,
         votosNulos: acta.votosNulos,
-        ganadores,
+        vuelta: acta.vuelta,
+        empatado: acta.empatado,
+        empateCandidaturaIds: acta.empateCandidaturaIds,
+        esVigente: acta.vuelta === acta.dignidad.vuelta,
+        ganadores: acta.empatado ? [] : ganadores,
       };
     });
   }
@@ -677,8 +926,39 @@ export class EscrutinioService {
     return eleccion;
   }
 
-  private numeroActa(eleccionId: string, orden: number): string {
-    return `ACT-${eleccionId.slice(0, 8).toUpperCase()}-${String(orden + 1).padStart(3, '0')}`;
+  private numeroActa(
+    eleccionId: string,
+    orden: number,
+    vuelta = 1,
+  ): string {
+    const base = `ACT-${eleccionId.slice(0, 8).toUpperCase()}-${String(orden + 1).padStart(3, '0')}`;
+    return vuelta > 1 ? `${base}-V${vuelta}` : base;
+  }
+
+  /**
+   * Art. 18: si dos o mas candidaturas empatan en el limite de puestos
+   * ganadores de una dignidad, se requiere una segunda votacion entre ellas.
+   */
+  private detectarEmpate(
+    detalle: DetalleActaGenerado[],
+    cantidadGanadores: number,
+  ): { empatado: boolean; empatadosIds: string[] } {
+    const candidatos = detalle
+      .filter((item) => item.tipo === TipoVoto.CANDIDATO)
+      .sort((a, b) => b.total - a.total);
+    if (candidatos.length <= cantidadGanadores) {
+      return { empatado: false, empatadosIds: [] };
+    }
+    const totalLimite = candidatos[cantidadGanadores - 1]?.total ?? 0;
+    const totalSiguiente = candidatos[cantidadGanadores]?.total ?? -1;
+    if (totalLimite <= 0 || totalLimite !== totalSiguiente) {
+      return { empatado: false, empatadosIds: [] };
+    }
+    const empatadosIds = candidatos
+      .filter((item) => item.total === totalLimite)
+      .map((item) => item.candidaturaId!)
+      .filter((id): id is string => Boolean(id));
+    return { empatado: true, empatadosIds };
   }
 
   private emptyToNull(value?: string | null): string | null {

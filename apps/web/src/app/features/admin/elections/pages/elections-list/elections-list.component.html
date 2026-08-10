@@ -5,28 +5,18 @@
       <p class="mt-2 text-secondary">Procesos institucionales, convocatoria y estados oficiales</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="newEleccion()">
-      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <mat-icon [svgIcon]="'lucide:plus'" />
       <span class="ml-1">Nueva eleccion</span>
     </button>
   </div>
 
   <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
     <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border-b">
         <mat-form-field appearance="outline">
           <mat-label>Buscar</mat-label>
           <input matInput [formControl]="searchCtrl" placeholder="Nombre o descripcion">
-          <mat-icon matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select [formControl]="tipoCtrl" (selectionChange)="onFilterChange()">
-            <mat-option value="">Todos</mat-option>
-            @for (tipo of tipos; track tipo) {
-            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
-            }
-          </mat-select>
+          <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -79,16 +69,16 @@
           <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
           <td mat-cell *matCellDef="let e" class="text-right">
             <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
-              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+              <mat-icon [svgIcon]="'lucide:ellipsis-vertical'" />
             </button>
             <mat-menu #menu="matMenu">
               <button mat-menu-item (click)="select(e)">
-                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
                 <span>Editar</span>
               </button>
               @for (estado of nextStates(e); track estado) {
               <button mat-menu-item (click)="cambiarEstado(e, estado)">
-                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:arrow-path-rounded-square'" />
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:refresh-ccw-dot'" />
                 <span>Pasar a {{ label(estado) }}</span>
               </button>
               }
@@ -128,15 +118,6 @@
           <textarea matInput rows="3" formControlName="descripcion"></textarea>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="tipo">
-            @for (tipo of tipos; track tipo) {
-            <mat-option [value]="tipo">{{ label(tipo) }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
         <app-date-time-picker label="Fecha de convocatoria" formControlName="fechaConvocatoria" />
 
         <mat-form-field appearance="outline">
@@ -153,7 +134,7 @@
 
       <div class="mt-4 flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
-          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <mat-icon [svgIcon]="'lucide:check'" />
           <span class="ml-1">{{ selected ? 'Guardar' : 'Crear' }}</span>
         </button>
       </div>

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpsertCronogramaDto {
   @ApiPropertyOptional()
@@ -71,4 +71,13 @@ export class UpsertCronogramaDto {
   @IsOptional()
   @IsString()
   fechaResultadosFinales?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Lugar/plataforma de votacion (Art. 10.7 del reglamento).',
+    example: 'Plataforma de voto electronico: https://votaciones.yavirac.edu.ec',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  lugarVotacion?: string | null;
 }

@@ -2,7 +2,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div class="flex items-center gap-4">
       <span class="venp-admin-icon flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg">
-        <mat-icon class="icon-size-7" [svgIcon]="'heroicons_outline:chart-bar-square'" />
+        <mat-icon class="icon-size-7" [svgIcon]="'lucide:file-chart-column'" />
       </span>
       <div>
         <p class="venp-section-kicker text-orange-600">Analítica institucional</p>
@@ -11,7 +11,7 @@
       </div>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="loadResultados()" [disabled]="!selectedEleccionCtrl.value">
-      <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
+      <mat-icon [svgIcon]="'lucide:refresh-cw'" />
       <span class="ml-1">Actualizar</span>
     </button>
   </div>
@@ -36,69 +36,21 @@
     <div class="p-5 sm:p-7">
       <section class="mb-7">
         <div class="mb-4">
-          <p class="venp-section-kicker text-orange-600">Centro de reportes</p>
+          <p class="venp-section-kicker text-orange-600">Reportes</p>
           <h2 class="mt-1 text-xl font-black">Documentos disponibles</h2>
         </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <button type="button" (click)="exportarResultadosCsv()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
-              <mat-icon [svgIcon]="'heroicons_outline:table-cells'" />
-            </span>
-            <span>
-              <strong class="block">Resultados consolidados</strong>
-              <small class="text-secondary mt-1 block">CSV por dignidad, opción y porcentaje</small>
-            </span>
+        <div class="flex flex-wrap gap-3">
+          <button matButton="outlined" type="button" (click)="descargarActaPorLista()">
+            <mat-icon [svgIcon]="'lucide:file-chart-column'" />
+            <span class="ml-1">Acta por lista</span>
           </button>
-          <button type="button" (click)="exportarCarrerasCsv()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
-              <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
-            </span>
-            <span>
-              <strong class="block">Estadística por carrera</strong>
-              <small class="text-secondary mt-1 block">CSV de participación y preferencias agregadas</small>
-            </span>
+          <button matButton="outlined" type="button" (click)="descargarParticipacionPorTipo()">
+            <mat-icon [svgIcon]="'lucide:users-round'" />
+            <span class="ml-1">Participación docentes/estudiantes</span>
           </button>
-          <button type="button" (click)="imprimirResumen()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
-              <mat-icon [svgIcon]="'heroicons_outline:printer'" />
-            </span>
-            <span>
-              <strong class="block">Informe ejecutivo</strong>
-              <small class="text-secondary mt-1 block">Imprimir o guardar el resumen como PDF</small>
-            </span>
-          </button>
-          <button type="button" (click)="descargarActaPorLista()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-              <mat-icon [svgIcon]="'heroicons_outline:document-chart-bar'" />
-            </span>
-            <span>
-              <strong class="block">Acta por lista</strong>
-              <small class="text-secondary mt-1 block">PDF institucional con votos totales por lista</small>
-            </span>
-          </button>
-          <button type="button" (click)="descargarParticipacionPorTipo()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-              <mat-icon [svgIcon]="'heroicons_outline:user-group'" />
-            </span>
-            <span>
-              <strong class="block">Participación docentes/estudiantes</strong>
-              <small class="text-secondary mt-1 block">PDF con habilitados, votantes y % por tipo de elector</small>
-            </span>
-          </button>
-          <button type="button" (click)="descargarActaPorDignidades()"
-            class="venp-admin-report group flex items-start gap-4 rounded-2xl p-5 text-left">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-700">
-              <mat-icon [svgIcon]="'heroicons_outline:clipboard-document-check'" />
-            </span>
-            <span>
-              <strong class="block">Acta por dignidad</strong>
-              <small class="text-secondary mt-1 block">PDF con candidatos, votos y ganador por dignidad</small>
-            </span>
+          <button matButton="outlined" type="button" (click)="descargarActaPorDignidades()">
+            <mat-icon [svgIcon]="'lucide:clipboard-check'" />
+            <span class="ml-1">Acta por dignidad</span>
           </button>
         </div>
       </section>
@@ -171,7 +123,7 @@
           <article class="venp-admin-report overflow-hidden rounded-2xl">
             <div class="flex items-center gap-4 border-b p-5">
               <span class="venp-admin-icon flex h-11 w-11 items-center justify-center rounded-xl text-white">
-                <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" />
+                <mat-icon [svgIcon]="'lucide:graduation-cap'" />
               </span>
               <div class="min-w-0 flex-auto">
                 <h3 class="truncate font-black">{{ carrera.carrera }}</h3>
@@ -182,7 +134,7 @@
             <div class="p-5">
               @if (!carrera.publicable) {
                 <div class="flex items-start gap-2 rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
-                  <mat-icon class="shrink-0 icon-size-5" [svgIcon]="'heroicons_outline:lock-closed'" />
+                  <mat-icon class="shrink-0 icon-size-5" [svgIcon]="'lucide:lock'" />
                   Preferencias protegidas por el mínimo de privacidad.
                 </div>
               } @else {

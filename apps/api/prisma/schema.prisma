@@ -51,6 +51,12 @@ enum TipoElector {
   AMBOS
 }
 
+enum Genero {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
 enum EstadoPadronElector {
   HABILITADO
   INHABILITADO
@@ -60,6 +66,7 @@ enum EstadoPadronElector {
 enum EstadoListaElectoral {
   BORRADOR
   INSCRITA
+  OBSERVADA
   CALIFICADA
   RECHAZADA
   RETIRADA
@@ -67,6 +74,7 @@ enum EstadoListaElectoral {
 
 enum EstadoCandidatura {
   INSCRITA
+  OBSERVADA
   CALIFICADA
   RECHAZADA
   RETIRADA
@@ -105,6 +113,7 @@ model Usuario {
   password        String    @map("password") @db.VarChar(255)
   rol             Rol       @default(USER)
   perfilId        String?   @map("perfil_id") @db.Uuid
+  electorId       String?   @unique @map("elector_id") @db.Uuid
   activo          Boolean   @default(true)
   email           String    @db.VarChar(150)
   cambiarPassword Boolean   @default(false) @map("cambiar_password")
@@ -112,7 +121,8 @@ model Usuario {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  perfil Perfil? @relation(fields: [perfilId], references: [id], onDelete: SetNull)
+  perfil  Perfil?  @relation(fields: [perfilId], references: [id], onDelete: SetNull)
+  elector Elector? @relation(fields: [electorId], references: [id], onDelete: SetNull)
 
   @@index([usuario])
   @@index([perfilId])
@@ -194,6 +204,7 @@ model Eleccion {
   conteosVotosCarrera    ConteoVotoCarrera[]
   actasEscrutinio        ActaEscrutinio[]
   impugnacionesResultado ImpugnacionResultado[]
+  impugnacionesCandidaturas ImpugnacionCandidatura[]
   historialEstados       HistorialEstadoEleccion[]
 
   @@index([estado])
@@ -287,6 +298,7 @@ model Elector {
   apellidos      String      @db.VarChar(120)
   email          String?     @db.VarChar(180)
   fotoUrl        String?     @map("foto_url") @db.Text
+  genero         Genero?
   tipo           TipoElector
   facultad       String?     @db.VarChar(160)
   carreraId      String?     @map("carrera_id") @db.Uuid
@@ -300,6 +312,7 @@ model Elector {
   padrones      PadronElectoral[]
   candidaturas  Candidatura[]
   votosEmitidos VotoEmitido[]
+  usuario       Usuario?
   carrera       Carrera?          @relation(fields: [carreraId], references: [id], onDelete: SetNull)
   nivel         Nivel?            @relation(fields: [nivelId], references: [id], onDelete: SetNull)
   paralelo      Paralelo?         @relation(fields: [paraleloId], references: [id], onDelete: SetNull)
@@ -374,16 +387,20 @@ model Candidatura {
   orden       Int               @default(0)
   estado      EstadoCandidatura @default(INSCRITA)
   observacion String?           @db.Text
+  plazoSubsanacionAt DateTime?  @map("plazo_subsanacion_at")
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
 
-  eleccion     Eleccion                @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
-  dignidad     Dignidad                @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
-  elector      Elector                 @relation(fields: [electorId], references: [id], onDelete: Restrict)
-  lista        ListaElectoral?         @relation(fields: [listaId], references: [id], onDelete: SetNull)
-  conteosVotos ConteoVoto[]
+  excluidaSegundaVuelta Boolean @default(false) @map("excluida_segunda_vuelta")
+
+  eleccion      Eleccion                 @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  dignidad      Dignidad                 @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
+  elector       Elector                  @relation(fields: [electorId], references: [id], onDelete: Restrict)
+  lista         ListaElectoral?          @relation(fields: [listaId], references: [id], onDelete: SetNull)
+  conteosVotos  ConteoVoto[]
   conteosVotosCarrera ConteoVotoCarrera[]
-  detallesActa DetalleActaEscrutinio[]
+  detallesActa  DetalleActaEscrutinio[]
+  impugnaciones ImpugnacionCandidatura[]
 
   @@unique([eleccionId, dignidadId, electorId])
   @@index([eleccionId])
@@ -404,6 +421,8 @@ model Dignidad {
   requiereLista        Boolean     @default(true) @map("requiere_lista")
   orden                Int         @default(0)
   activo               Boolean     @default(true)
+  vuelta               Int         @default(1)
+  pausadaSegundaVuelta Boolean     @default(false) @map("pausada_segunda_vuelta")
   createdAt            DateTime    @default(now()) @map("created_at")
   updatedAt            DateTime    @updatedAt @map("updated_at")
 
@@ -517,6 +536,9 @@ model ActaEscrutinio {
   votosNulos    Int                  @default(0) @map("votos_nulos")
   estado        EstadoActaEscrutinio @default(BORRADOR)
   observacion   String?              @db.Text
+  vuelta        Int                  @default(1)
+  empatado      Boolean              @default(false)
+  empateCandidaturaIds String[]      @default([]) @map("empate_candidatura_ids")
   cerradaAt     DateTime?            @map("cerrada_at")
   aprobadaAt    DateTime?            @map("aprobada_at")
   createdAt     DateTime             @default(now()) @map("created_at")
@@ -527,7 +549,7 @@ model ActaEscrutinio {
   detalles      DetalleActaEscrutinio[]
   impugnaciones ImpugnacionResultado[]
 
-  @@unique([eleccionId, dignidadId])
+  @@unique([eleccionId, dignidadId, vuelta])
   @@unique([numeroActa])
   @@index([eleccionId])
   @@index([dignidadId])
@@ -562,9 +584,12 @@ model ImpugnacionResultado {
   actaId            String?                    @map("acta_id") @db.Uuid
   presentadoPor     String                     @map("presentado_por") @db.VarChar(160)
   fundamento        String                     @db.Text
+  respaldoIdentificaciones String[]            @default([]) @map("respaldo_identificaciones")
+  respaldoValidos   Int                        @default(0) @map("respaldo_validos")
   estado            EstadoImpugnacionResultado @default(PENDIENTE)
   resolucion        String?                    @db.Text
   fechaPresentacion DateTime                   @default(now()) @map("fecha_presentacion")
+  fechaLimiteResolucion DateTime?              @map("fecha_limite_resolucion")
   fechaResolucion   DateTime?                  @map("fecha_resolucion")
   createdAt         DateTime                   @default(now()) @map("created_at")
   updatedAt         DateTime                   @updatedAt @map("updated_at")
@@ -578,6 +603,31 @@ model ImpugnacionResultado {
   @@index([actaId])
   @@index([estado])
   @@map("impugnaciones_resultados")
+}
+
+// Art. 14: impugnacion contra la resolucion de calificacion de una
+// candidatura o lista. Resolucion de ultima instancia por el Consejo Electoral.
+model ImpugnacionCandidatura {
+  id                String                     @id @default(uuid()) @db.Uuid
+  eleccionId        String                     @map("eleccion_id") @db.Uuid
+  candidaturaId     String                     @map("candidatura_id") @db.Uuid
+  presentadoPor     String                     @map("presentado_por") @db.VarChar(160)
+  correoNotificacion String                    @map("correo_notificacion") @db.VarChar(160)
+  fundamento        String                     @db.Text
+  estado            EstadoImpugnacionResultado @default(PENDIENTE)
+  resolucion        String?                    @db.Text
+  fechaPresentacion DateTime                   @default(now()) @map("fecha_presentacion")
+  fechaResolucion   DateTime?                  @map("fecha_resolucion")
+  createdAt         DateTime                   @default(now()) @map("created_at")
+  updatedAt         DateTime                   @updatedAt @map("updated_at")
+
+  eleccion    Eleccion    @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+  candidatura Candidatura @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+
+  @@index([eleccionId])
+  @@index([candidaturaId])
+  @@index([estado])
+  @@map("impugnaciones_candidaturas")
 }
 
 model JornadaElectoral {
@@ -631,6 +681,7 @@ model CronogramaElectoral {
   fechaPublicacionResultados         DateTime? @map("fecha_publicacion_resultados")
   fechaFinImpugnacionResultados      DateTime? @map("fecha_fin_impugnacion_resultados")
   fechaResultadosFinales             DateTime? @map("fecha_resultados_finales")
+  lugarVotacion                      String?   @map("lugar_votacion") @db.VarChar(255)
   createdAt                          DateTime  @default(now()) @map("created_at")
   updatedAt                          DateTime  @updatedAt @map("updated_at")
 

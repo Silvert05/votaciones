@@ -52,7 +52,7 @@
             <div class="w-full">
                 <div class="mb-10 text-center">
                     <div class="venp-bg-primary mx-auto flex h-16 w-16 items-center justify-center rounded-3xl text-white shadow-xl">
-                        <mat-icon class="icon-size-9" [svgIcon]="'heroicons_outline:finger-print'" />
+                        <mat-icon class="icon-size-9" [svgIcon]="'lucide:fingerprint'" />
                     </div>
                     <h1 class="mt-5 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-white">
                         Módulo de Votación
@@ -65,7 +65,7 @@
                     <div class="text-secondary venp-premium-card mx-auto max-w-lg p-10 text-center">
                         <mat-icon
                             class="text-secondary mx-auto mb-3 icon-size-12"
-                            [svgIcon]="'heroicons_outline:inbox'"
+                            [svgIcon]="'lucide:inbox'"
                         />
                         <p class="font-medium">
                             No hay votaciones abiertas en este momento.
@@ -98,9 +98,9 @@
                                 </div>
                             </div>
                             <div class="venp-text-primary mt-6 inline-flex items-center gap-2 font-bold transition-all group-hover:gap-3">
-                                <mat-icon [svgIcon]="'heroicons_outline:finger-print'" />
+                                <mat-icon [svgIcon]="'lucide:fingerprint'" />
                                 Ingresar a votar
-                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-right'" />
+                                <mat-icon class="icon-size-5" [svgIcon]="'lucide:arrow-right'" />
                             </div>
                         </button>
                     }
@@ -113,7 +113,7 @@
             <div class="mx-auto w-full max-w-xl">
                 <div class="mb-6 text-center">
                     <div class="venp-bg-primary mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg">
-                        <mat-icon class="icon-size-7" [svgIcon]="'heroicons_outline:shield-check'" />
+                        <mat-icon class="icon-size-7" [svgIcon]="'lucide:shield-check'" />
                     </div>
                     <h2 class="mt-5 text-2xl font-black text-gray-800 sm:text-3xl dark:text-gray-100">
                         Bienvenido al Módulo de Votación
@@ -131,28 +131,28 @@
                         <div>
                             <label class="mb-1.5 block text-sm font-medium">Número de cédula (DNI)</label>
                             <div class="relative">
-                                <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'heroicons_outline:identification'" />
+                                <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'lucide:id-card'" />
                                 <input class="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-10 pr-3 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-gray-700 dark:bg-slate-900" type="text" [formControl]="identificacionCtrl" placeholder="0102030405" />
                             </div>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium">Contraseña</label>
                             <div class="relative">
-                                <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'heroicons_outline:lock-closed'" />
+                                <mat-icon class="text-secondary pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 icon-size-5" [svgIcon]="'lucide:lock'" />
                                 <input class="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-10 pr-11 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-gray-700 dark:bg-slate-900" [type]="verPassword ? 'text' : 'password'" [formControl]="passwordCtrl" placeholder="••••••••" (keyup.enter)="ingresar()" />
                                 <button type="button" class="text-secondary absolute right-3 top-1/2 -translate-y-1/2" (click)="verPassword = !verPassword">
-                                    <mat-icon class="icon-size-5" [svgIcon]="verPassword ? 'heroicons_outline:eye-slash' : 'heroicons_outline:eye'" />
+                                    <mat-icon class="icon-size-5" [svgIcon]="verPassword ? 'lucide:eye-off' : 'lucide:eye'" />
                                 </button>
                             </div>
                         </div>
                         <button class="venp-bg-primary inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-base font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-60" [disabled]="working" (click)="ingresar()">
                             <span>INGRESAR</span>
-                            <mat-icon [svgIcon]="'heroicons_outline:arrow-right'" />
+                            <mat-icon [svgIcon]="'lucide:arrow-right'" />
                         </button>
                     </div>
                     <div class="mt-5 text-center">
                         <a [routerLink]="'/instructivo'" class="venp-text-primary inline-flex items-center gap-1 text-sm font-bold hover:underline">
-                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:question-mark-circle'" />
+                            <mat-icon class="icon-size-4" [svgIcon]="'lucide:help-circle'" />
                             ¿Cómo votar? Ver instructivo
                         </a>
                     </div>
@@ -165,7 +165,7 @@
             <div class="mx-auto w-full max-w-5xl">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="text-secondary flex items-center gap-2 text-sm">
-                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'" />
+                        <mat-icon class="icon-size-5" [svgIcon]="'lucide:file-text'" />
                         Cédula {{ cedulaIndex + 1 }} de {{ totalCedulas }}
                     </div>
                     <div class="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
@@ -232,11 +232,11 @@
 
                     <div class="mt-8 flex justify-between">
                         <button type="button" [disabled]="cedulaIndex === 0" (click)="anterior()" class="inline-flex items-center gap-1 rounded-xl border px-5 py-2.5 font-medium hover:bg-gray-50 disabled:opacity-40 dark:hover:bg-gray-800">
-                            <mat-icon [svgIcon]="'heroicons_outline:arrow-left'" /><span>Anterior</span>
+                            <mat-icon [svgIcon]="'lucide:arrow-left'" /><span>Anterior</span>
                         </button>
                         <button type="button" (click)="siguiente()" class="venp-bg-primary inline-flex items-center gap-1 rounded-xl px-6 py-2.5 font-semibold text-white transition hover:opacity-90 active:scale-[0.99]">
                             <span>{{ cedulaIndex === totalCedulas - 1 ? 'Revisar voto' : 'Siguiente' }}</span>
-                            <mat-icon [svgIcon]="'heroicons_outline:arrow-right'" />
+                            <mat-icon [svgIcon]="'lucide:arrow-right'" />
                         </button>
                     </div>
                 </div>
@@ -265,10 +265,10 @@
                 </div>
                 <div class="mt-6 flex flex-col justify-between gap-3 sm:flex-row">
                     <button type="button" (click)="fase = 'cedula'; cedulaIndex = 0" class="inline-flex items-center justify-center gap-1 rounded-xl border px-5 py-3 font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-left'" /><span>Volver a revisar</span>
+                        <mat-icon [svgIcon]="'lucide:arrow-left'" /><span>Volver a revisar</span>
                     </button>
                     <button type="button" [disabled]="working" (click)="confirmar()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-8 py-3 font-bold text-white transition hover:bg-green-700 active:scale-[0.99] disabled:opacity-60">
-                        <mat-icon [svgIcon]="'heroicons_outline:check-circle'" /><span>Emitir mi voto</span>
+                        <mat-icon [svgIcon]="'lucide:check-circle'" /><span>Emitir mi voto</span>
                     </button>
                 </div>
             </div>
@@ -281,7 +281,7 @@
                     <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
                     <div class="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
                         <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg">
-                            <mat-icon class="text-white icon-size-10" [svgIcon]="'heroicons_solid:check'" />
+                            <mat-icon class="text-white icon-size-10" [svgIcon]="'lucide:check'" />
                         </div>
                         <div class="flex-auto pt-1">
                             <div class="text-xl font-black text-gray-800 dark:text-gray-100">
@@ -297,7 +297,7 @@
                 <div class="mt-8 flex flex-col items-center gap-4">
                     @if (comprobante) {
                         <button type="button" (click)="descargarComprobante()" class="venp-bg-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white">
-                            <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'" />
+                            <mat-icon [svgIcon]="'lucide:download'" />
                             Descargar nuevamente mi certificado
                         </button>
                     }
@@ -309,7 +309,7 @@
                         <span class="text-sm">Volviendo al inicio de sesión en <strong>{{ redirectSegundos }}s</strong>…</span>
                     </div>
                     <button type="button" (click)="volverALogin()" class="inline-flex items-center gap-2 rounded-xl border px-6 py-2.5 font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'" />
+                        <mat-icon [svgIcon]="'lucide:log-out'" />
                         Finalizar ahora
                     </button>
                 </div>

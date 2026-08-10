@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import {
   FormBuilder,
@@ -35,6 +36,7 @@ import { CandidaturasService } from '../../services/candidaturas.service';
   selector: 'admin-candidaturas',
   imports: [
     ReactiveFormsModule,
+    DatePipe,
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
@@ -217,7 +219,7 @@ export default class CandidaturasComponent implements OnInit {
       title: 'Cerrar calificación',
       message: 'Las candidaturas inscritas pasarán a la etapa de candidaturas calificadas.',
       confirmText: 'Cerrar calificación',
-      icon: 'heroicons_outline:check-badge',
+      icon: 'lucide:badge-check',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._candidaturasService.cerrarCalificacion(eleccionId).subscribe({
@@ -289,7 +291,7 @@ export default class CandidaturasComponent implements OnInit {
       inputLabel: 'Observación de calificación',
       initialValue: candidatura.observacion ?? '',
       confirmText: 'Guardar calificación',
-      icon: 'heroicons_outline:clipboard-document-check',
+      icon: 'lucide:clipboard-check',
     }).subscribe((observacion) => {
       if (observacion === null) return;
       this._candidaturasService
@@ -302,6 +304,68 @@ export default class CandidaturasComponent implements OnInit {
           error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo calificar.')),
         });
     });
+  }
+
+  subsanar(candidatura: Candidatura): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._institutionalDialog.prompt({
+      title: 'Subsanar candidatura observada',
+      message: 'Registre la documentacion corregida presentada dentro del plazo de 24 horas (Art. 13).',
+      inputLabel: 'Notas de subsanacion',
+      confirmText: 'Registrar subsanacion',
+      icon: 'lucide:file-up',
+    }).subscribe((observacion) => {
+      if (observacion === null) return;
+      this._candidaturasService
+        .subsanar(eleccionId, candidatura.id, { observacion: observacion || null })
+        .subscribe({
+          next: () => {
+            this._notify('Candidatura subsanada, vuelve a quedar inscrita para revision.');
+            this.load();
+          },
+          error: (err) =>
+            this._notifyError(this.errorMessage(err, 'No se pudo registrar la subsanacion.')),
+        });
+    });
+  }
+
+  impugnarCalificacion(candidatura: Candidatura): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._institutionalDialog
+      .prompt({
+        title: 'Impugnar calificacion',
+        message:
+          'Indique quien presenta la impugnacion y el correo de notificacion en el formato "Nombre <correo@dominio>". La resolucion del Consejo Electoral es de ultima instancia (Art. 14).',
+        inputLabel: 'Presentado por <correo>',
+        confirmText: 'Registrar impugnacion',
+        icon: 'lucide:scale',
+      })
+      .subscribe((entrada) => {
+        if (!entrada) return;
+        const match = entrada.match(/^(.*)<(.+)>$/);
+        const presentadoPor = (match?.[1] ?? entrada).trim() || 'Sin especificar';
+        const correoNotificacion = (match?.[2] ?? '').trim();
+        if (!correoNotificacion) {
+          this._notifyError('Formato esperado: "Nombre <correo@dominio>".');
+          return;
+        }
+        this._candidaturasService
+          .impugnarCalificacion(eleccionId, candidatura.id, {
+            presentadoPor,
+            correoNotificacion,
+            fundamento: 'Impugnacion a la calificacion registrada desde el panel administrativo.',
+          })
+          .subscribe({
+            next: () => {
+              this._notify('Impugnacion a la calificacion registrada.');
+              this.load();
+            },
+            error: (err) =>
+              this._notifyError(this.errorMessage(err, 'No se pudo registrar la impugnacion.')),
+          });
+      });
   }
 
   label(value: string | null | undefined): string {
@@ -317,6 +381,7 @@ export default class CandidaturasComponent implements OnInit {
     const base = 'inline-flex rounded px-2 py-1 text-xs font-semibold';
     if (estado === 'CALIFICADA') return `${base} bg-green-100 text-green-700`;
     if (estado === 'RECHAZADA' || estado === 'RETIRADA') return `${base} bg-red-100 text-red-700`;
+    if (estado === 'OBSERVADA') return `${base} bg-amber-100 text-amber-800`;
     return `${base} bg-blue-100 text-blue-700`;
   }
 

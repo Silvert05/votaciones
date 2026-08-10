@@ -27,7 +27,7 @@
     </mat-form-field>
 
     <mat-form-field class="md:w-48" appearance="outline">
-      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" />
+      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'lucide:search'" />
       <input matInput [formControl]="usuarioCtrl" placeholder="Usuario">
     </mat-form-field>
 
@@ -46,7 +46,7 @@
     </mat-form-field>
 
     <button mat-button (click)="clearFilters()">
-      <mat-icon [svgIcon]="'heroicons_solid:x-mark'" />
+      <mat-icon [svgIcon]="'lucide:x'" />
       <span>Limpiar</span>
     </button>
   </div>
@@ -94,7 +94,7 @@
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let l" class="text-right">
           <button mat-icon-button (click)="toggle(l)" [matTooltip]="'Ver detalle'">
-            <mat-icon [svgIcon]="expandedId === l.id ? 'heroicons_solid:chevron-up' : 'heroicons_solid:chevron-down'" />
+            <mat-icon [svgIcon]="expandedId === l.id ? 'lucide:chevron-up' : 'lucide:chevron-down'" />
           </button>
         </td>
       </ng-container>

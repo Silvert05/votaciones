@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { VenpService } from '../../services/venp.service';
 
 interface Paso {
   icono: string;
@@ -14,45 +15,48 @@ interface Paso {
   templateUrl: './instructivo.html',
 })
 export default class InstructivoComponent {
+  private readonly venpService = inject(VenpService);
+  descargando = false;
+
   pasos: Paso[] = [
     {
-      icono: 'heroicons_outline:cursor-arrow-rays',
+      icono: 'lucide:mouse-pointer-click',
       titulo: 'Ingrese al portal y presione VOTAR',
       detalle:
         'Desde la página de inicio, ubique el proceso electoral activo y presione el botón VOTAR para abrir el módulo de votación.',
     },
     {
-      icono: 'heroicons_outline:identification',
+      icono: 'lucide:id-card',
       titulo: 'Autentíquese con sus credenciales',
       detalle:
         'Escriba su número de cédula (DNI) y la contraseña que recibió. Presione INGRESAR. Sus datos identifican que usted está habilitado en el padrón, pero su voto siempre será secreto.',
     },
     {
-      icono: 'heroicons_outline:document-text',
+      icono: 'lucide:file-text',
       titulo: 'Lea cada cédula de votación',
       detalle:
         'Verá una cédula por cada dignidad o cargo a elegir. En la parte superior se indica el cargo y cuántas opciones puede elegir.',
     },
     {
-      icono: 'heroicons_outline:hand-raised',
+      icono: 'lucide:hand',
       titulo: 'Marque su preferencia',
       detalle:
         'Seleccione al candidato de su preferencia. También puede elegir "Voto en blanco" o "Voto nulo". Si no marca ninguna opción, se registrará como voto en blanco.',
     },
     {
-      icono: 'heroicons_outline:arrow-right',
+      icono: 'lucide:arrow-right',
       titulo: 'Avance por todas las cédulas',
       detalle:
         'Use el botón "Siguiente" para pasar a la próxima cédula, o "Anterior" para revisar la previa. La barra de progreso le indica cuántas cédulas faltan.',
     },
     {
-      icono: 'heroicons_outline:clipboard-document-check',
+      icono: 'lucide:clipboard-check',
       titulo: 'Revise y confirme su voto',
       detalle:
         'Al terminar verá un resumen de todas sus selecciones. Revíselo con cuidado y presione "Emitir mi voto". Esta acción no se puede deshacer.',
     },
     {
-      icono: 'heroicons_outline:check-circle',
+      icono: 'lucide:check-circle',
       titulo: 'Reciba la confirmación',
       detalle:
         'Aparecerá el mensaje "Su participación ha sido registrada satisfactoriamente". ¡Listo! Su voto ya fue contabilizado de forma secreta.',
@@ -67,6 +71,21 @@ export default class InstructivoComponent {
   ];
 
   imprimir(): void {
-    window.print();
+    if (this.descargando) return;
+    this.descargando = true;
+    this.venpService.descargarInstructivo().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = 'instructivo-votacion.pdf';
+        enlace.click();
+        URL.revokeObjectURL(url);
+        this.descargando = false;
+      },
+      error: () => {
+        this.descargando = false;
+      },
+    });
   }
 }

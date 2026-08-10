@@ -280,4 +280,10 @@ export class VenpService {
     logout(): void {
         this._setToken(null);
     }
+
+    descargarInstructivo(): Observable<Blob> {
+        return this._http.get('/publico/instructivo', {
+            responseType: 'blob',
+        });
+    }
 }

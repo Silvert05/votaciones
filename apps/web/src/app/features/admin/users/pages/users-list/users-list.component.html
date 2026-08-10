@@ -6,7 +6,7 @@
       <p class="mt-2 text-secondary">Gestiona las cuentas de acceso al sistema</p>
     </div>
     <button matButton="filled" color="primary" (click)="create()">
-      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <mat-icon [svgIcon]="'lucide:plus'" />
       <span class="ml-1">Nuevo usuario</span>
     </button>
   </div>
@@ -14,7 +14,7 @@
   <!-- Filtros -->
   <div class="mt-6 flex flex-col md:flex-row gap-3">
     <mat-form-field class="flex-auto">
-      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" />
+      <mat-icon matPrefix class="icon-size-5" [svgIcon]="'lucide:search'" />
       <input matInput [formControl]="searchCtrl" placeholder="Buscar por usuario, nombre o email">
     </mat-form-field>
 
@@ -62,7 +62,15 @@
 
       <ng-container matColumnDef="nombre">
         <th mat-header-cell *matHeaderCellDef>Nombre</th>
-        <td mat-cell *matCellDef="let u">{{ u.nombre }}</td>
+        <td mat-cell *matCellDef="let u">
+          <div>{{ u.nombre }}</div>
+          @if (u.elector) {
+          <div class="text-xs text-secondary">
+            {{ u.elector.tipo === 'ESTUDIANTE' ? 'Estudiante' : u.elector.tipo === 'DOCENTE' ? 'Docente' : 'Estudiante/Docente' }}:
+            {{ u.elector.nombres }} {{ u.elector.apellidos }}
+          </div>
+          }
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="email">
@@ -101,20 +109,20 @@
         <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
         <td mat-cell *matCellDef="let u" class="text-right">
           <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
-            <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+            <mat-icon [svgIcon]="'lucide:ellipsis-vertical'" />
           </button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="edit(u)">
-              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
               <span>Editar</span>
             </button>
             <button mat-menu-item (click)="resetPassword(u)">
-              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:key'" />
+              <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:key'" />
               <span>Resetear contraseña</span>
             </button>
             <button [attr.color]="u.activo ? 'warn' : 'primary'" mat-menu-item (click)="toggleActivo(u)">
               <mat-icon class="icon-size-5 mr-2"
-                [svgIcon]="u.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+                [svgIcon]="u.activo ? 'lucide:lock' : 'lucide:lock-open'" />
               <span>{{ u.activo ? 'Desactivar' : 'Activar' }}</span>
             </button>
           </mat-menu>

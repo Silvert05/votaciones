@@ -31,6 +31,7 @@ import {
     CatalogoInstitucional,
     Elector,
     ElectoresQuery,
+    Genero,
 } from '../../models/padron.model';
 import { PadronService } from '../../services/padron.service';
 
@@ -66,6 +67,11 @@ export default class ElectoresListComponent implements OnInit {
         'acciones',
     ];
     readonly tipos = TIPOS_ELECTOR;
+    readonly generos: { value: Genero; label: string }[] = [
+        { value: 'FEMENINO', label: 'Femenino' },
+        { value: 'MASCULINO', label: 'Masculino' },
+        { value: 'OTRO', label: 'Otro' },
+    ];
 
     electores: Elector[] = [];
     carreras: CatalogoInstitucional[] = [];
@@ -98,6 +104,7 @@ export default class ElectoresListComponent implements OnInit {
             ],
         ],
         tipo: ['ESTUDIANTE' as TipoElector, Validators.required],
+        genero: [null as Genero | null],
         carreraId: [''],
         nivelId: [''],
         paraleloId: [''],
@@ -182,6 +189,7 @@ export default class ElectoresListComponent implements OnInit {
             apellidos: '',
             email: '',
             tipo: 'ESTUDIANTE',
+            genero: null,
             carreraId: '',
             nivelId: '',
             paraleloId: '',
@@ -199,6 +207,7 @@ export default class ElectoresListComponent implements OnInit {
             apellidos: elector.apellidos,
             email: elector.email ?? '',
             tipo: elector.tipo,
+            genero: elector.genero ?? null,
             carreraId: elector.carreraId ?? '',
             nivelId: elector.nivelId ?? '',
             paraleloId: elector.paraleloId ?? '',
@@ -219,6 +228,7 @@ export default class ElectoresListComponent implements OnInit {
             apellidos: raw.apellidos!,
             email: raw.email || null,
             tipo: raw.tipo!,
+            genero: raw.genero || null,
             carreraId: raw.carreraId || null,
             nivelId: raw.nivelId || null,
             paraleloId: raw.paraleloId || null,

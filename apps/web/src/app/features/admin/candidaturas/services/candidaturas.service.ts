@@ -10,10 +10,14 @@ import {
   CreateListaPayload,
   DignidadListaEstado,
   EstadoEleccionResponse,
+  ImpugnacionCandidatura,
+  ImpugnarCalificacionPayload,
   ListaElectoral,
   ListasPaginated,
   ListasQuery,
+  ResolverImpugnacionCandidaturaPayload,
   SetDignidadListaEstadoPayload,
+  SubsanarCandidaturaPayload,
   UpdateCandidaturaPayload,
   UpdateListaPayload,
 } from '../models/candidatura.model';
@@ -132,6 +136,38 @@ export class CandidaturasService {
   ): Observable<Candidatura> {
     return this._http.patch<Candidatura>(
       `/candidaturas/elecciones/${eleccionId}/${candidaturaId}/calificacion`,
+      payload,
+    );
+  }
+
+  subsanar(
+    eleccionId: string,
+    candidaturaId: string,
+    payload: SubsanarCandidaturaPayload,
+  ): Observable<Candidatura> {
+    return this._http.patch<Candidatura>(
+      `/candidaturas/elecciones/${eleccionId}/${candidaturaId}/subsanar`,
+      payload,
+    );
+  }
+
+  impugnarCalificacion(
+    eleccionId: string,
+    candidaturaId: string,
+    payload: ImpugnarCalificacionPayload,
+  ): Observable<ImpugnacionCandidatura> {
+    return this._http.post<ImpugnacionCandidatura>(
+      `/candidaturas/elecciones/${eleccionId}/${candidaturaId}/impugnar-calificacion`,
+      payload,
+    );
+  }
+
+  resolverImpugnacionCalificacion(
+    impugnacionId: string,
+    payload: ResolverImpugnacionCandidaturaPayload,
+  ): Observable<ImpugnacionCandidatura> {
+    return this._http.patch<ImpugnacionCandidatura>(
+      `/candidaturas/impugnaciones-calificacion/${impugnacionId}/resolver`,
       payload,
     );
   }

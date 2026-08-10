@@ -7,6 +7,8 @@ import { Prisma } from 'prisma/generated/client';
 import {
   EstadoCandidatura,
   EstadoEleccion,
+  EstadoImpugnacionResultado,
+  EstadoListaElectoral,
   EstadoPadronElector,
   TipoElector,
 } from 'prisma/generated/enums';
@@ -20,7 +22,10 @@ import { AuthUser } from '../auth/entities/auth.entity';
 import {
   CalificarCandidaturaDto,
   CreateCandidaturaDto,
+  ImpugnarCalificacionDto,
   QueryCandidaturasDto,
+  ResolverImpugnacionCandidaturaDto,
+  SubsanarCandidaturaDto,
   UpdateCandidaturaDto,
 } from './dto/candidatura.dto';
 import {
@@ -59,6 +64,7 @@ const candidaturaSelect = {
   orden: true,
   estado: true,
   observacion: true,
+  plazoSubsanacionAt: true,
   createdAt: true,
   updatedAt: true,
   dignidad: {
@@ -77,6 +83,7 @@ const candidaturaSelect = {
       apellidos: true,
       email: true,
       tipo: true,
+      genero: true,
       carreraId: true,
       nivelId: true,
       carrera: { select: { id: true, nombre: true } },
@@ -160,12 +167,16 @@ export class CandidaturasService {
       );
     }
 
+    await this.expirarSubsanacionesVencidas(eleccionId);
     const pendientes = await this.prisma.candidatura.count({
-      where: { eleccionId, estado: EstadoCandidatura.INSCRITA },
+      where: {
+        eleccionId,
+        estado: { in: [EstadoCandidatura.INSCRITA, EstadoCandidatura.OBSERVADA] },
+      },
     });
     if (pendientes) {
       throw new BadRequestException(
-        'Existen candidaturas inscritas pendientes de calificar o rechazar.',
+        'Existen candidaturas inscritas u observadas pendientes de resolver.',
       );
     }
 
@@ -277,6 +288,14 @@ export class CandidaturasService {
   ) {
     await this.ensureCanEdit(eleccionId);
     const before = await this.findListaOrFail(eleccionId, listaId);
+
+    if (
+      dto.estado === EstadoListaElectoral.CALIFICADA &&
+      before.estado !== EstadoListaElectoral.CALIFICADA
+    ) {
+      await this.validarParidadGenero(listaId);
+    }
+
     const lista = await this.prisma.listaElectoral.update({
       where: { id: listaId },
       data: {
@@ -308,6 +327,7 @@ export class CandidaturasService {
 
   async listCandidaturas(eleccionId: string, query: QueryCandidaturasDto) {
     await this.ensureEleccion(eleccionId);
+    await this.expirarSubsanacionesVencidas(eleccionId);
     const { page, limit, search, dignidadId, listaId, estado } = query;
     const where: Prisma.CandidaturaWhereInput = { eleccionId };
     if (dignidadId) where.dignidadId = dignidadId;
@@ -418,15 +438,20 @@ export class CandidaturasService {
   ) {
     await this.ensureCanEdit(eleccionId);
     if (dto.estado === EstadoCandidatura.INSCRITA) {
-      throw new BadRequestException('La calificacion debe aprobar, rechazar o retirar la candidatura.');
+      throw new BadRequestException('La calificacion debe aprobar, observar, rechazar o retirar la candidatura.');
     }
 
+    await this.expirarSubsanacionesVencidas(eleccionId);
     const before = await this.findCandidaturaOrFail(eleccionId, candidaturaId);
     const candidatura = await this.prisma.candidatura.update({
       where: { id: candidaturaId },
       data: {
         estado: dto.estado,
         observacion: this.emptyToNull(dto.observacion),
+        plazoSubsanacionAt:
+          dto.estado === EstadoCandidatura.OBSERVADA
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+            : null,
       },
       select: candidaturaSelect,
     });
@@ -438,6 +463,180 @@ export class CandidaturasService {
     });
 
     return candidatura;
+  }
+
+  /**
+   * Art. 13: el postulante tiene 24 horas desde que la candidatura queda
+   * OBSERVADA para subsanar la documentacion; de lo contrario queda
+   * descalificado automaticamente (ver expirarSubsanacionesVencidas).
+   */
+  async subsanarCandidatura(
+    eleccionId: string,
+    candidaturaId: string,
+    dto: SubsanarCandidaturaDto,
+    actor: Actor,
+  ) {
+    await this.expirarSubsanacionesVencidas(eleccionId);
+    const before = await this.findCandidaturaOrFail(eleccionId, candidaturaId);
+    if (before.estado !== EstadoCandidatura.OBSERVADA) {
+      throw new BadRequestException(
+        'Solo se puede subsanar una candidatura observada.',
+      );
+    }
+
+    const candidatura = await this.prisma.candidatura.update({
+      where: { id: candidaturaId },
+      data: {
+        estado: EstadoCandidatura.INSCRITA,
+        observacion: this.emptyToNull(dto.observacion) ?? before.observacion,
+        plazoSubsanacionAt: null,
+      },
+      select: candidaturaSelect,
+    });
+
+    await this.audit(AuditTabla.CANDIDATURAS, AuditOperacion.ESTADO, candidatura.id, {
+      datosAnteriores: { estado: before.estado },
+      datosNuevos: { estado: candidatura.estado, observacion: candidatura.observacion },
+      actor,
+    });
+
+    return candidatura;
+  }
+
+  /**
+   * Art. 14: una candidatura o lista no calificada (RECHAZADA) puede
+   * impugnar esa resolucion. La respuesta del Consejo Electoral es de
+   * ultima instancia.
+   */
+  async impugnarCalificacion(
+    eleccionId: string,
+    candidaturaId: string,
+    dto: ImpugnarCalificacionDto,
+    actor: Actor,
+  ) {
+    await this.expirarSubsanacionesVencidas(eleccionId);
+    const candidatura = await this.findCandidaturaOrFail(eleccionId, candidaturaId);
+    if (candidatura.estado !== EstadoCandidatura.RECHAZADA) {
+      throw new BadRequestException(
+        'Solo se puede impugnar la calificacion de una candidatura rechazada.',
+      );
+    }
+
+    const impugnacion = await this.prisma.impugnacionCandidatura.create({
+      data: {
+        eleccionId,
+        candidaturaId,
+        presentadoPor: dto.presentadoPor.trim(),
+        correoNotificacion: dto.correoNotificacion.trim(),
+        fundamento: dto.fundamento.trim(),
+      },
+    });
+
+    await this.audit(
+      AuditTabla.CANDIDATURAS,
+      AuditOperacion.CREATE,
+      impugnacion.id,
+      { datosNuevos: impugnacion, actor },
+    );
+
+    return impugnacion;
+  }
+
+  async resolverImpugnacionCalificacion(
+    impugnacionId: string,
+    dto: ResolverImpugnacionCandidaturaDto,
+    actor: Actor,
+  ) {
+    if (dto.estado === EstadoImpugnacionResultado.PENDIENTE) {
+      throw new BadRequestException('La resolucion debe aceptar o rechazar la impugnacion.');
+    }
+    const before = await this.prisma.impugnacionCandidatura.findUnique({
+      where: { id: impugnacionId },
+    });
+    if (!before) {
+      throw new NotFoundException('Impugnacion no encontrada.');
+    }
+
+    const impugnacion = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.impugnacionCandidatura.update({
+        where: { id: impugnacionId },
+        data: {
+          estado: dto.estado,
+          resolucion: dto.resolucion.trim(),
+          fechaResolucion: new Date(),
+        },
+      });
+      if (dto.estado === EstadoImpugnacionResultado.ACEPTADA) {
+        await tx.candidatura.update({
+          where: { id: updated.candidaturaId },
+          data: { estado: EstadoCandidatura.CALIFICADA, plazoSubsanacionAt: null },
+        });
+      }
+      return updated;
+    });
+
+    await this.audit(
+      AuditTabla.CANDIDATURAS,
+      AuditOperacion.ESTADO,
+      impugnacionId,
+      {
+        datosAnteriores: { estado: before.estado },
+        datosNuevos: { estado: impugnacion.estado, resolucion: impugnacion.resolucion },
+        actor,
+      },
+    );
+
+    return impugnacion;
+  }
+
+  /**
+   * Art. 12: las candidaturas se presentan en lista respetando la equidad
+   * de genero. Se exige un minimo del 40% de representacion de cada genero
+   * declarado entre los integrantes vigentes de la lista.
+   */
+  private async validarParidadGenero(listaId: string) {
+    const candidaturas = await this.prisma.candidatura.findMany({
+      where: {
+        listaId,
+        estado: { not: EstadoCandidatura.RETIRADA },
+      },
+      select: { elector: { select: { genero: true } } },
+    });
+    if (candidaturas.length < 2) return;
+
+    const sinGenero = candidaturas.some((item) => !item.elector.genero);
+    if (sinGenero) {
+      throw new BadRequestException(
+        'Todos los integrantes de la lista deben tener el genero registrado antes de calificarla (Art. 12, equidad de genero).',
+      );
+    }
+
+    const total = candidaturas.length;
+    const conteo = new Map<string, number>();
+    for (const item of candidaturas) {
+      const genero = item.elector.genero as string;
+      conteo.set(genero, (conteo.get(genero) ?? 0) + 1);
+    }
+    const maximoPermitido = Math.ceil(total * 0.6);
+    const generoDominante = [...conteo.values()].some(
+      (cantidad) => cantidad > maximoPermitido,
+    );
+    if (conteo.size < 2 || generoDominante) {
+      throw new BadRequestException(
+        `La lista no cumple la equidad de genero exigida (Art. 12): ningun genero puede superar el ${Math.round((maximoPermitido / total) * 100)}% de los integrantes.`,
+      );
+    }
+  }
+
+  private async expirarSubsanacionesVencidas(eleccionId: string) {
+    await this.prisma.candidatura.updateMany({
+      where: {
+        eleccionId,
+        estado: EstadoCandidatura.OBSERVADA,
+        plazoSubsanacionAt: { lt: new Date() },
+      },
+      data: { estado: EstadoCandidatura.RECHAZADA },
+    });
   }
 
   private async getEleccion(eleccionId: string) {

@@ -14,7 +14,7 @@ import {
   Matches,
   Min,
 } from 'class-validator';
-import { TipoElector } from 'prisma/generated/enums';
+import { Genero, TipoElector } from 'prisma/generated/enums';
 
 export class QueryElectoresDto {
   @ApiPropertyOptional({ default: 1 })
@@ -47,6 +47,13 @@ export class QueryElectoresDto {
   @Type(() => Boolean)
   @IsBoolean()
   activo?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Excluye electores que ya estan en el padron de esta eleccion',
+  })
+  @IsOptional()
+  @IsUUID()
+  excluirEleccionId?: string;
 }
 
 export class CreateElectorDto {
@@ -81,6 +88,14 @@ export class CreateElectorDto {
   @ApiProperty({ enum: TipoElector })
   @IsEnum(TipoElector)
   tipo: TipoElector;
+
+  @ApiPropertyOptional({
+    enum: Genero,
+    description: 'Requerido para postular en una lista (Art. 12, equidad de genero).',
+  })
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero | null;
 
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
@@ -139,6 +154,11 @@ export class UpdateElectorDto {
   @IsOptional()
   @IsEnum(TipoElector)
   tipo?: TipoElector;
+
+  @ApiPropertyOptional({ enum: Genero })
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero | null;
 
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()

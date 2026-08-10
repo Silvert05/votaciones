@@ -180,7 +180,10 @@ export class VotacionService {
         requiereLista: true,
         tipoElectorPermitido: true,
         candidaturas: {
-          where: { estado: EstadoCandidatura.CALIFICADA },
+          where: {
+            estado: EstadoCandidatura.CALIFICADA,
+            excluidaSegundaVuelta: false,
+          },
           select: candidatoSelect,
           orderBy: [
             { lista: { codigo: 'asc' } },
@@ -494,7 +497,10 @@ export class VotacionService {
         requiereLista: true,
         tipoElectorPermitido: true,
         candidaturas: {
-          where: { estado: EstadoCandidatura.CALIFICADA },
+          where: {
+            estado: EstadoCandidatura.CALIFICADA,
+            excluidaSegundaVuelta: false,
+          },
           select: candidatoSelect,
           orderBy: [
             { lista: { codigo: 'asc' } },
@@ -952,6 +958,7 @@ export class VotacionService {
           eleccionId,
           dignidadId: voto.dignidadId,
           estado: EstadoCandidatura.CALIFICADA,
+          excluidaSegundaVuelta: false,
         },
         select: { id: true },
       });

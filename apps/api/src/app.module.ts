@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AccountAwareThrottlerGuard } from './config';
 import { PrismaModule } from './prisma';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
@@ -20,6 +24,14 @@ import { ReportesModule } from './modules/reportes/reportes.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 300,
+      },
+    ]),
     PrismaModule,
     AuditoriaModule,
     SeguridadModule,
@@ -33,6 +45,12 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     ReportesModule,
     AuthModule,
     UsersModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AccountAwareThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

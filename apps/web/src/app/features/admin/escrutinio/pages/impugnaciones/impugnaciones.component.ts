@@ -50,6 +50,7 @@ export default class ImpugnacionesComponent implements OnInit {
     Validators.maxLength(160),
   ]);
   fundamentoCtrl = new FormControl('', [Validators.required]);
+  respaldoCtrl = new FormControl('', [Validators.required]);
 
   ngOnInit(): void {
     this.loadElecciones();
@@ -98,9 +99,15 @@ export default class ImpugnacionesComponent implements OnInit {
   crear(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
-    if (this.presentadoPorCtrl.invalid || this.fundamentoCtrl.invalid) {
+    const respaldoIdentificaciones = this.parseRespaldo();
+    if (
+      this.presentadoPorCtrl.invalid ||
+      this.fundamentoCtrl.invalid ||
+      !respaldoIdentificaciones.length
+    ) {
       this.presentadoPorCtrl.markAsTouched();
       this.fundamentoCtrl.markAsTouched();
+      this.respaldoCtrl.markAsTouched();
       return;
     }
 
@@ -110,6 +117,7 @@ export default class ImpugnacionesComponent implements OnInit {
         dignidadId: this.dignidadCtrl.value || null,
         presentadoPor: this.presentadoPorCtrl.value?.trim() ?? '',
         fundamento: this.fundamentoCtrl.value?.trim() ?? '',
+        respaldoIdentificaciones,
       })
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
@@ -117,6 +125,7 @@ export default class ImpugnacionesComponent implements OnInit {
           this._notify('Impugnacion registrada.');
           this.presentadoPorCtrl.reset('');
           this.fundamentoCtrl.reset('');
+          this.respaldoCtrl.reset('');
           this.loadResumen();
           this.loadElecciones();
         },
@@ -138,7 +147,7 @@ export default class ImpugnacionesComponent implements OnInit {
       initialValue: impugnacion.resolucion ?? '',
       confirmText: 'Guardar resolución',
       required: true,
-      icon: 'heroicons_outline:scale',
+      icon: 'lucide:scale',
     }).subscribe((resolucion) => {
       if (!resolucion) return;
       this.saving = true;
@@ -156,6 +165,18 @@ export default class ImpugnacionesComponent implements OnInit {
             ),
         });
     });
+  }
+
+  private parseRespaldo(): string[] {
+    const raw = this.respaldoCtrl.value ?? '';
+    return [
+      ...new Set(
+        raw
+          .split(/[\s,;]+/)
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
   }
 
   label(value: string | null | undefined): string {

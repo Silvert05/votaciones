@@ -11,17 +11,23 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Rol } from 'prisma/generated/enums';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthUser } from '../auth/entities/auth.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionGuard } from '../auth/guards/permission.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { IniciarVotacionDto, PasoJornadaDto } from './dto/jornada.dto';
+import {
+  IniciarVotacionDto,
+  PasoJornadaDto,
+  ReiniciarJornadaDto,
+} from './dto/jornada.dto';
 import { JornadaService } from './jornada.service';
 
 @ApiTags('Jornada electoral')
 @ApiBearerAuth('access_token')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Rol.ADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
+@RequirePermission('elecciones.jornada')
 @Controller('jornada')
 export class JornadaController {
   constructor(private readonly jornadaService: JornadaService) {}
@@ -98,12 +104,14 @@ export class JornadaController {
   }
 
   @Post('elecciones/:id/reiniciar')
+  @Roles(Rol.ADMIN)
   @ApiOperation({ summary: 'Reiniciar la jornada (borra votos y reabre configuracion)' })
   reiniciar(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReiniciarJornadaDto,
     @CurrentUser() user: AuthUser,
     @Ip() ip: string,
   ) {
-    return this.jornadaService.reiniciar(id, { user, ip });
+    return this.jornadaService.reiniciar(id, dto, { user, ip });
   }
 }

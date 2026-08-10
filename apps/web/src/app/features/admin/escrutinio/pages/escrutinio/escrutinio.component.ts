@@ -107,7 +107,7 @@ export default class EscrutinioComponent implements OnInit {
       inputLabel: 'Observación del acta',
       initialValue: acta.observacion ?? '',
       confirmText: 'Cerrar acta',
-      icon: 'heroicons_outline:document-check',
+      icon: 'lucide:file-check',
     }).subscribe((observacion) => {
       if (observacion === null) return;
       this.saving = true;
@@ -132,7 +132,7 @@ export default class EscrutinioComponent implements OnInit {
       inputLabel: 'Observación de aprobación',
       initialValue: acta.observacion ?? '',
       confirmText: 'Aprobar acta',
-      icon: 'heroicons_outline:check-badge',
+      icon: 'lucide:badge-check',
     }).subscribe((observacion) => {
       if (observacion === null) return;
       this.saving = true;
@@ -157,7 +157,7 @@ export default class EscrutinioComponent implements OnInit {
       title: 'Publicar resultados provisionales',
       message: 'Los resultados se mostrarán al público con carácter provisional.',
       confirmText: 'Publicar provisionales',
-      icon: 'heroicons_outline:chart-bar-square',
+      icon: 'lucide:file-chart-column',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this.saving = true;
@@ -185,7 +185,7 @@ export default class EscrutinioComponent implements OnInit {
       title: 'Publicar resultados definitivos',
       message: 'Los resultados quedarán visibles como información oficial del proceso electoral.',
       confirmText: 'Publicar definitivos',
-      icon: 'heroicons_outline:check-circle',
+      icon: 'lucide:check-circle',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this.saving = true;
@@ -201,6 +201,35 @@ export default class EscrutinioComponent implements OnInit {
           error: (err) =>
             this._notifyError(
               this.errorMessage(err, 'No se pudieron publicar definitivos.'),
+            ),
+        });
+    });
+  }
+
+  iniciarSegundaVuelta(acta: ActaEscrutinio): void {
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) return;
+    this._institutionalDialog.confirm({
+      title: 'Iniciar segunda vuelta',
+      message: `La dignidad "${acta.dignidad.nombre}" presenta un empate (Art. 18). Se reabrirá la votación únicamente para las candidaturas empatadas por un máximo de 72 horas y se pausarán las demás dignidades mientras tanto.`,
+      confirmText: 'Iniciar segunda vuelta',
+      danger: true,
+      icon: 'lucide:refresh-ccw-dot',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.saving = true;
+      this._escrutinioService
+        .iniciarSegundaVuelta(eleccionId, acta.dignidadId)
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: (res) => {
+            this.resumen = res;
+            this._notify('Segunda vuelta iniciada. La votación fue reabierta.');
+            this.loadElecciones();
+          },
+          error: (err) =>
+            this._notifyError(
+              this.errorMessage(err, 'No se pudo iniciar la segunda vuelta.'),
             ),
         });
     });

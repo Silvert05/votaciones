@@ -32,6 +32,15 @@ const userSelect = {
       nombre: true,
     },
   },
+  electorId: true,
+  elector: {
+    select: {
+      id: true,
+      nombres: true,
+      apellidos: true,
+      tipo: true,
+    },
+  },
   activo: true,
   cambiarPassword: true,
   fechaCaducidad: true,
@@ -98,6 +107,26 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto, actor: Actor) {
+    if (dto.electorId) {
+      const elector = await this.prisma.elector.findUnique({
+        where: { id: dto.electorId },
+        select: { id: true },
+      });
+      if (!elector) {
+        throw new NotFoundException('Estudiante o profesor no encontrado.');
+      }
+
+      const yaVinculado = await this.prisma.usuario.findUnique({
+        where: { electorId: dto.electorId },
+        select: { id: true },
+      });
+      if (yaVinculado) {
+        throw new BadRequestException(
+          'Ese estudiante o profesor ya tiene un usuario de acceso.',
+        );
+      }
+    }
+
     const passwordHash = await hash(dto.password, 12);
 
     const user = await this.prisma.usuario.create({
@@ -108,6 +137,7 @@ export class UsersService {
         password: passwordHash,
         rol: dto.rol ?? Rol.USER,
         perfilId: dto.perfilId || null,
+        electorId: dto.electorId || null,
         activo: true,
         // Contraseña temporal: el usuario debe cambiarla en el primer ingreso.
         cambiarPassword: true,

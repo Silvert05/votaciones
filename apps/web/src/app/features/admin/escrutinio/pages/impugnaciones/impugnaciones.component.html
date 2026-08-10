@@ -5,7 +5,7 @@
       <p class="mt-2 text-secondary">Registro y resolucion de impugnaciones de resultados</p>
     </div>
     <button matButton="outlined" type="button" (click)="loadResumen()" [disabled]="!selectedEleccionCtrl.value || loading">
-      <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
+      <mat-icon [svgIcon]="'lucide:refresh-cw'" />
       <span class="ml-1">Actualizar</span>
     </button>
   </div>
@@ -51,8 +51,14 @@
             <textarea matInput rows="5" [formControl]="fundamentoCtrl"></textarea>
           </mat-form-field>
 
+          <mat-form-field appearance="outline">
+            <mat-label>Cedulas de respaldo</mat-label>
+            <textarea matInput rows="4" [formControl]="respaldoCtrl" placeholder="Una cedula por linea o separadas por coma"></textarea>
+            <mat-hint>Art. 19: se requiere el respaldo de al menos el 10% del padron electoral ({{ resumen.padronHabilitado }} habilitados).</mat-hint>
+          </mat-form-field>
+
           <button matButton="filled" color="primary" type="button" (click)="crear()" [disabled]="saving">
-            <mat-icon [svgIcon]="'heroicons_outline:plus'" />
+            <mat-icon [svgIcon]="'lucide:plus'" />
             <span class="ml-1">Registrar</span>
           </button>
         </div>
@@ -76,11 +82,11 @@
               </div>
               <div class="flex flex-wrap gap-2">
                 <button matButton="outlined" type="button" (click)="resolver(impugnacion, 'RECHAZADA')" [disabled]="impugnacion.estado !== 'PENDIENTE' || saving">
-                  <mat-icon [svgIcon]="'heroicons_outline:x-mark'" />
+                  <mat-icon [svgIcon]="'lucide:x'" />
                   <span class="ml-1">Rechazar</span>
                 </button>
                 <button matButton="filled" color="primary" type="button" (click)="resolver(impugnacion, 'ACEPTADA')" [disabled]="impugnacion.estado !== 'PENDIENTE' || saving">
-                  <mat-icon [svgIcon]="'heroicons_outline:check'" />
+                  <mat-icon [svgIcon]="'lucide:check'" />
                   <span class="ml-1">Aceptar</span>
                 </button>
               </div>

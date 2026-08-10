@@ -1,107 +1,167 @@
+<style>
+    @keyframes login-blob-float {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        50% { transform: translate3d(-4%, 5%, 0) scale(1.08); }
+    }
+    .login-blob {
+        animation: login-blob-float 11s ease-in-out infinite;
+    }
+    .login-blob--delay {
+        animation-delay: -5.5s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .login-blob { animation: none; }
+    }
+</style>
+
 <div class="flex min-h-screen w-full bg-slate-100 dark:bg-slate-950">
 
-    <!-- Panel izquierdo: carrusel institucional -->
-    <div class="relative hidden w-1/2 overflow-hidden bg-[var(--fuse-primary)] lg:block">
-        @for (slide of slides; track slide; let i = $index) {
-        <div
-            class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
-            [style.background-image]="'url(' + slide + ')'"
-            [class.opacity-100]="currentSlide === i"
-            [class.opacity-0]="currentSlide !== i"
-        ></div>
-        }
+    <!-- Panel izquierdo: carrusel institucional a pantalla completa -->
+    <div class="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col" [@fadeIn]="true">
 
-        <!-- Degradado para que el texto siempre sea legible sobre cualquier imagen -->
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--fuse-primary)] via-[var(--fuse-primary)]/40 to-[var(--fuse-primary)]/10"></div>
+        <!-- Foto de fondo (carrusel con transicion cruzada) -->
+        <div class="relative flex-1 overflow-hidden bg-[var(--fuse-primary)]">
+            @for (slide of slides; track slide; let i = $index) {
+            <div
+                class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+                [style.background-image]="'url(' + slide + ')'"
+                [class.opacity-100]="currentSlide === i"
+                [class.opacity-0]="currentSlide !== i"
+            ></div>
+            }
 
-        <div class="relative z-10 flex h-full flex-col justify-between p-14 text-white">
-            <div class="flex items-center gap-4">
-                <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white p-2 shadow-xl">
-                    <img src="img/logo.png" alt="Logo institucional" class="h-full w-full object-contain">
-                </div>
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.3em] text-white/70">Instituto Yavirac</p>
-                    <p class="text-xl font-black">Sistema Electoral</p>
-                </div>
+            <!-- Patron decorativo de puntos -->
+            <div
+                class="pointer-events-none absolute left-0 top-0 z-10 h-40 w-52 opacity-[0.15]"
+                style="background-image: radial-gradient(#fff 1.5px, transparent 1.5px); background-size: 14px 14px;"
+            ></div>
+
+            <!-- Degradado para legibilidad del texto -->
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
+
+            <!-- Texto institucional sobre la foto -->
+            <div class="absolute inset-x-0 bottom-0 z-10 p-10 text-white sm:p-14">
+                <h1 class="text-3xl font-black leading-tight sm:text-4xl">Vota. Participa.<br>Decide el futuro.</h1>
+                <p class="mt-4 max-w-sm text-white/85">Plataforma tecnológica de votación electrónica del Instituto Yavirac, segura y transparente.</p>
             </div>
+        </div>
 
-            <div class="max-w-md">
-                <h1 class="text-4xl font-black leading-tight">Vota. Participa.<br>Decide el futuro.</h1>
-                <p class="mt-4 text-white/80">Plataforma tecnológica de votación electrónica del Instituto Yavirac, segura y transparente.</p>
+        <!-- Franja institucional inferior con onda decorativa -->
+        <div class="relative flex h-20 shrink-0 items-center justify-center bg-[var(--fuse-primary)] px-10 sm:px-14">
+            <svg class="pointer-events-none absolute inset-x-0 -top-7 h-8 w-full text-[var(--fuse-primary)]" viewBox="0 0 500 60" preserveAspectRatio="none">
+                <path d="M0,60 C125,0 375,0 500,60 L500,60 L0,60 Z" fill="currentColor"></path>
+            </svg>
 
-                <div class="mt-10 flex gap-2">
-                    @for (slide of slides; track slide; let i = $index) {
-                    <button
-                        type="button"
-                        (click)="goToSlide(i)"
-                        class="h-1.5 rounded-full bg-white/40 transition-all duration-300"
-                        [class.w-8]="currentSlide === i"
-                        [class.bg-white]="currentSlide === i"
-                        [class.w-2]="currentSlide !== i"
-                        [attr.aria-label]="'Ir a la imagen ' + (i + 1)"
-                    ></button>
-                    }
-                </div>
+            <!-- Iconos decorativos -->
+            <svg class="pointer-events-none absolute bottom-3 right-24 h-6 w-20 text-white/20" viewBox="0 0 100 20" fill="none">
+                <path d="M0,10 Q12.5,0 25,10 T50,10 T75,10 T100,10" stroke="currentColor" stroke-width="2.5"></path>
+                <path d="M0,17 Q12.5,7 25,17 T50,17 T75,17 T100,17" stroke="currentColor" stroke-width="2.5"></path>
+            </svg>
+            <svg class="pointer-events-none absolute bottom-2 right-6 h-12 w-12 text-white/20" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5"></circle>
+                <circle cx="20" cy="20" r="12" stroke="currentColor" stroke-width="1.5"></circle>
+                <circle cx="20" cy="20" r="6" stroke="currentColor" stroke-width="1.5"></circle>
+            </svg>
+
+            <div class="relative z-10 flex gap-2">
+                @for (slide of slides; track slide; let i = $index) {
+                <button
+                    type="button"
+                    (click)="goToSlide(i)"
+                    class="h-2 w-2 rounded-full bg-white/30 transition-all duration-300"
+                    [class.w-6]="currentSlide === i"
+                    [class.bg-amber-400]="currentSlide === i"
+                    [attr.aria-label]="'Ir a la imagen ' + (i + 1)"
+                ></button>
+                }
             </div>
         </div>
     </div>
 
     <!-- Panel derecho: formulario de acceso -->
-    <div class="flex w-full flex-col items-center justify-center px-6 py-12 lg:w-1/2 lg:px-16">
-        <div class="w-full max-w-md">
+    <div class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-12 lg:w-1/2 lg:px-16">
 
-            <div class="mb-10 flex flex-col items-center text-center lg:items-start lg:text-left">
-                <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--fuse-primary)]/5 p-2 lg:hidden">
-                    <img src="img/logo.png" alt="Logo institucional" class="h-full w-full object-contain">
+        <!-- Blobs decorativos con los colores institucionales -->
+        <div class="login-blob pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange-400/25 blur-3xl dark:bg-orange-500/10"></div>
+        <div class="login-blob login-blob--delay pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-[var(--fuse-primary)]/20 blur-3xl dark:bg-[var(--fuse-primary)]/25"></div>
+
+        <!-- Patron decorativo de puntos -->
+        <div
+            class="pointer-events-none absolute right-10 top-10 hidden h-28 w-28 text-[var(--fuse-primary)] opacity-[0.15] dark:opacity-[0.12] sm:block"
+            style="background-image: radial-gradient(currentColor 1.5px, transparent 1.5px); background-size: 12px 12px;"
+        ></div>
+
+        <div class="relative z-10 w-full max-w-md">
+
+            <div class="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-8 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-10" [@fadeInBottom]="true">
+
+                <!-- Barra de acento superior -->
+                <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[var(--fuse-primary)] via-orange-400 to-[var(--fuse-primary)]"></div>
+
+                <div class="mb-8 flex items-center justify-center">
+                    <div class="venp-float-soft flex h-40 w-40 shrink-0 items-center justify-center rounded-2xl bg-[var(--fuse-primary)]/5 p-2">
+                        <img src="img/logo.png" alt="Logo institucional" class="h-full w-full object-contain">
+                    </div>
                 </div>
-                <h2 class="text-3xl font-black text-slate-800 dark:text-white">Acceso al sistema</h2>
-                <div class="mt-3 h-1.5 w-16 rounded-full bg-[var(--fuse-accent)]"></div>
-                <p class="mt-4 text-slate-500 dark:text-slate-400">Ingresa tus credenciales institucionales para continuar.</p>
+
+                <div class="mb-8 flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <p class="text-xs font-bold uppercase tracking-[0.3em] text-[var(--fuse-primary)]">Portal administrativo</p>
+                    <h2 class="mt-2 text-3xl font-black text-slate-800 dark:text-white">Acceso al sistema</h2>
+                    <div class="mt-3 h-1.5 w-16 rounded-full bg-gradient-to-r from-[var(--fuse-primary)] to-orange-400"></div>
+                    <p class="mt-4 text-slate-500 dark:text-slate-400">Ingresa tus credenciales institucionales para continuar.</p>
+                </div>
+
+                @if (showAlert) {
+                <fuse-alert class="mb-6 rounded-2xl" [type]="alert.type" [appearance]="'outline'">
+                    {{ alert.message }}
+                </fuse-alert>
+                }
+
+                <form class="space-y-5" [formGroup]="loginForm" (ngSubmit)="login()">
+                    <mat-form-field class="w-full" appearance="outline" [floatLabel]="'always'">
+                        <mat-label>Usuario institucional</mat-label>
+                        <mat-icon matPrefix class="mr-2 icon-size-5 text-slate-400" [svgIcon]="'lucide:user'"></mat-icon>
+                        <input matInput formControlName="username" placeholder="Cédula o usuario" autocomplete="username">
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full" appearance="outline" [floatLabel]="'always'">
+                        <mat-label>Contraseña</mat-label>
+                        <mat-icon matPrefix class="mr-2 icon-size-5 text-slate-400" [svgIcon]="'lucide:lock'"></mat-icon>
+                        <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Ingresa tu contraseña" autocomplete="current-password">
+                        <button
+                            type="button"
+                            mat-icon-button
+                            matSuffix
+                            (click)="togglePassword()"
+                            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                        >
+                            <mat-icon class="icon-size-5 text-slate-400" [svgIcon]="showPassword ? 'lucide:eye-off' : 'lucide:eye'"></mat-icon>
+                        </button>
+                    </mat-form-field>
+
+                    <div class="flex justify-end">
+                        <span class="text-sm font-medium text-slate-400 dark:text-slate-500" [matTooltip]="'Contacta al administrador del sistema para restablecer tu contraseña.'">
+                            ¿Olvidaste tu contraseña?
+                        </span>
+                    </div>
+
+                    <button
+                        type="submit"
+                        mat-flat-button
+                        [disabled]="loginForm.disabled"
+                        class="group flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[var(--fuse-primary)] text-lg font-black text-white shadow-lg shadow-[var(--fuse-primary)]/25 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--fuse-primary)]/40 hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                    >
+                        @if (loginForm.disabled) {
+                        <mat-progress-spinner class="[--mdc-circular-progress-active-indicator-color:white]" [diameter]="22" [mode]="'indeterminate'"></mat-progress-spinner>
+                        } @else {
+                        <span>Iniciar sesión</span>
+                        <mat-icon class="icon-size-5 transition-transform duration-300 group-hover:translate-x-1" [svgIcon]="'lucide:arrow-right'"></mat-icon>
+                        }
+                    </button>
+                </form>
             </div>
 
-            @if (showAlert) {
-            <fuse-alert class="mb-6 rounded-2xl" [type]="alert.type" [appearance]="'outline'">
-                {{ alert.message }}
-            </fuse-alert>
-            }
-
-            <form class="space-y-5" [formGroup]="loginForm" (ngSubmit)="login()">
-                <mat-form-field class="w-full" appearance="outline">
-                    <mat-label>Usuario institucional</mat-label>
-                    <mat-icon matPrefix class="mr-2 icon-size-5 text-slate-400" [svgIcon]="'heroicons_outline:user'"></mat-icon>
-                    <input matInput formControlName="username" autocomplete="username">
-                </mat-form-field>
-
-                <mat-form-field class="w-full" appearance="outline">
-                    <mat-label>Contraseña</mat-label>
-                    <mat-icon matPrefix class="mr-2 icon-size-5 text-slate-400" [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
-                    <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="current-password">
-                    <button
-                        type="button"
-                        mat-icon-button
-                        matSuffix
-                        (click)="togglePassword()"
-                        [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                    >
-                        <mat-icon class="icon-size-5 text-slate-400" [svgIcon]="showPassword ? 'heroicons_outline:eye-slash' : 'heroicons_outline:eye'"></mat-icon>
-                    </button>
-                </mat-form-field>
-
-                <button
-                    type="submit"
-                    mat-flat-button
-                    [disabled]="loginForm.disabled"
-                    class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--fuse-primary)] text-lg font-black text-white shadow-xl shadow-[var(--fuse-primary)]/20 transition-all duration-300 hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
-                >
-                    @if (loginForm.disabled) {
-                    <mat-progress-spinner class="[--mdc-circular-progress-active-indicator-color:white]" [diameter]="22" [mode]="'indeterminate'"></mat-progress-spinner>
-                    } @else {
-                    <span>Iniciar sesión</span>
-                    }
-                </button>
-            </form>
-
-            <div class="mt-10 text-center text-xs text-slate-400">
+            <div class="mt-8 text-center text-xs text-slate-400">
                 © {{ currentYear }} Instituto Yavirac — Gestión de Elecciones
             </div>
         </div>

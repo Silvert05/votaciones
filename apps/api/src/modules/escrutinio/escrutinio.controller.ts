@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import {
   CreateImpugnacionResultadoDto,
+  IniciarSegundaVueltaDto,
   ObservacionActaDto,
   ResolverImpugnacionResultadoDto,
 } from './dto/escrutinio.dto';
@@ -77,6 +78,25 @@ export class EscrutinioController {
     @Ip() ip: string,
   ) {
     return this.escrutinioService.publicarProvisionales(eleccionId, { user, ip });
+  }
+
+  @Post('elecciones/:eleccionId/dignidades/:dignidadId/segunda-vuelta')
+  @ApiOperation({
+    summary: 'Iniciar segunda vuelta por empate (Art. 18 del reglamento)',
+  })
+  iniciarSegundaVuelta(
+    @Param('eleccionId', ParseUUIDPipe) eleccionId: string,
+    @Param('dignidadId', ParseUUIDPipe) dignidadId: string,
+    @Body() dto: IniciarSegundaVueltaDto,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+  ) {
+    return this.escrutinioService.iniciarSegundaVuelta(
+      eleccionId,
+      dignidadId,
+      dto,
+      { user, ip },
+    );
   }
 
   @Post('elecciones/:eleccionId/impugnaciones')

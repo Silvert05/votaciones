@@ -1,4 +1,5 @@
 import { Rol } from '../../auth/models/auth.model';
+import { TipoElector } from '../../elections/models/election.model';
 
 export interface User {
   id: string;
@@ -10,6 +11,13 @@ export interface User {
   perfil?: {
     id: string;
     nombre: string;
+  } | null;
+  electorId: string | null;
+  elector?: {
+    id: string;
+    nombres: string;
+    apellidos: string;
+    tipo: TipoElector;
   } | null;
   activo: boolean;
   cambiarPassword: boolean;
@@ -42,6 +50,7 @@ export interface CreateUserPayload {
   password: string;
   rol: Rol;
   perfilId?: string | null;
+  electorId?: string | null;
 }
 
 export interface UpdateUserPayload {

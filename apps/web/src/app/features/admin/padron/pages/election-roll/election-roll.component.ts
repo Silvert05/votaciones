@@ -83,6 +83,7 @@ export default class ElectionRollComponent implements OnInit {
   estadoCtrl = new FormControl<EstadoPadronElector | ''>('');
   tipoCtrl = new FormControl<TipoElector | ''>('');
   asignarCtrl = new FormControl<string[]>([], { nonNullable: true });
+  electorSearchCtrl = new FormControl('');
 
   form = this._fb.group({
     estado: ['HABILITADO' as EstadoPadronElector, Validators.required],
@@ -94,7 +95,6 @@ export default class ElectionRollComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadElecciones();
-    this.loadElectores();
     this.searchCtrl.valueChanges
       .pipe(debounceTime(350), distinctUntilChanged())
       .subscribe(() => {
@@ -104,8 +104,13 @@ export default class ElectionRollComponent implements OnInit {
     this.selectedEleccionCtrl.valueChanges.subscribe(() => {
       this._query.page = 1;
       this.selectedPadron = null;
+      this.asignarCtrl.setValue([]);
       this.loadPadron();
+      this.loadElectores();
     });
+    this.electorSearchCtrl.valueChanges
+      .pipe(debounceTime(350), distinctUntilChanged())
+      .subscribe(() => this.loadElectores());
   }
 
   loadElecciones(): void {
@@ -121,12 +126,25 @@ export default class ElectionRollComponent implements OnInit {
   }
 
   loadElectores(): void {
-    this._padronService.listElectores({ page: 1, limit: 100, activo: true }).subscribe({
-      next: (res) => {
-        this.electores = res.data;
-      },
-      error: () => this._notifyError('No se pudieron cargar los electores activos.'),
-    });
+    const eleccionId = this.selectedEleccionCtrl.value;
+    if (!eleccionId) {
+      this.electores = [];
+      return;
+    }
+    this._padronService
+      .listElectores({
+        page: 1,
+        limit: 50,
+        activo: true,
+        excluirEleccionId: eleccionId,
+        search: this.electorSearchCtrl.value || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.electores = res.data;
+        },
+        error: () => this._notifyError('No se pudieron cargar los electores activos.'),
+      });
   }
 
   loadPadron(): void {
@@ -192,6 +210,7 @@ export default class ElectionRollComponent implements OnInit {
         this.asignarCtrl.setValue([]);
         this._notify(`Electores asignados: ${res.asignados}.`);
         this.loadPadron();
+        this.loadElectores();
       },
       error: (err) =>
         this._notifyError(this.errorMessage(err, 'No se pudieron asignar electores.')),
@@ -209,6 +228,7 @@ export default class ElectionRollComponent implements OnInit {
       next: (res) => {
         this._notify(`Padron generado. Nuevos: ${res.autogenerados}.`);
         this.loadPadron();
+        this.loadElectores();
       },
       error: (err) =>
         this._notifyError(this.errorMessage(err, 'No se pudo generar el padron.')),
@@ -225,7 +245,7 @@ export default class ElectionRollComponent implements OnInit {
       title: 'Publicar padrón electoral',
       message: 'El padrón quedará publicado. Las credenciales se generarán posteriormente y solo desde Jornada electoral.',
       confirmText: 'Publicar padrón',
-      icon: 'heroicons_outline:user-group',
+      icon: 'lucide:users-round',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._padronService.publicar(eleccionId).subscribe({
@@ -262,7 +282,7 @@ export default class ElectionRollComponent implements OnInit {
       title: 'Enviar nueva credencial',
       message: `Se invalidará la contraseña anterior y se enviará una nueva a ${item.elector.email ?? 'su correo'}.`,
       confirmText: 'Generar y enviar',
-      icon: 'heroicons_outline:envelope',
+      icon: 'lucide:mail',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._padronService.enviarCredencial(eleccionId, item.id).subscribe({

@@ -26,7 +26,6 @@ import {
   Eleccion,
   EleccionDetalle,
   EleccionesQuery,
-  TIPOS_ELECCION,
   TipoEleccion,
 } from '../../models/election.model';
 import { ElectionsService } from '../../services/elections.service';
@@ -64,7 +63,6 @@ export default class ElectionsListComponent implements OnInit {
     'dignidades',
     'acciones',
   ];
-  readonly tipos = TIPOS_ELECCION;
   readonly estados = ESTADOS_ELECCION;
 
   elecciones: Eleccion[] = [];
@@ -74,7 +72,6 @@ export default class ElectionsListComponent implements OnInit {
   saving = false;
 
   searchCtrl = new FormControl('');
-  tipoCtrl = new FormControl<TipoEleccion | ''>('');
   estadoCtrl = new FormControl<EstadoEleccion | ''>('');
 
   form = this._fb.group({
@@ -100,7 +97,6 @@ export default class ElectionsListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this._query.search = this.searchCtrl.value || undefined;
-    this._query.tipo = (this.tipoCtrl.value as TipoEleccion) || undefined;
     this._query.estado =
       (this.estadoCtrl.value as EstadoEleccion) || undefined;
 
@@ -211,7 +207,7 @@ export default class ElectionsListComponent implements OnInit {
       message: `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`,
       inputLabel: 'Comentario del cambio',
       confirmText: 'Cambiar etapa',
-      icon: 'heroicons_outline:arrow-path-rounded-square',
+      icon: 'lucide:refresh-ccw-dot',
     }).subscribe((comentario) => {
       if (comentario === null) return;
       this._electionsService

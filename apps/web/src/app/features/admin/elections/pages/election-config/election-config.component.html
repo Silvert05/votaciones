@@ -5,7 +5,7 @@
       <p class="mt-2 text-secondary">Personaliza la identidad visual de la jornada de votacion</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selectedId">
-      <mat-icon [svgIcon]="'heroicons_solid:paint-brush'" />
+      <mat-icon [svgIcon]="'lucide:paintbrush'" />
       <span class="ml-1">Guardar configuracion</span>
     </button>
   </div>
@@ -49,7 +49,7 @@
           <p class="text-sm text-secondary">Azul institucional, naranja y un fondo neutro sin tonos morados.</p>
         </div>
         <button matButton="outlined" color="primary" type="button" (click)="aplicarPaletaYavirac()">
-          <mat-icon [svgIcon]="'heroicons_outline:swatch'" />
+          <mat-icon [svgIcon]="'lucide:palette'" />
           Aplicar paleta Yavirac
         </button>
       </div>
@@ -66,7 +66,7 @@
 
       <label class="flex cursor-pointer items-center gap-4 rounded-xl border p-4 md:col-span-2">
         <input class="h-12 w-16 cursor-pointer rounded border-0 bg-transparent p-0" type="color" formControlName="colorAcento">
-        <span><span class="block font-semibold">Fondo neutro</span><span class="text-sm text-secondary">Superficies suaves; no se mezcla entre el azul y el naranja</span></span>
+        <span><span class="block font-semibold">Fondo del sitio público</span><span class="text-sm text-secondary">Solo se ve en el sitio público de los electores, no en este panel administrativo</span></span>
       </label>
 
       <mat-form-field appearance="outline" class="md:col-span-2">

@@ -34,6 +34,8 @@ export class PadronService {
         if (query.tipo) params = params.set('tipo', query.tipo);
         if (query.activo !== undefined)
             params = params.set('activo', query.activo);
+        if (query.excluirEleccionId)
+            params = params.set('excluirEleccionId', query.excluirEleccionId);
         return this._http.get<ElectoresPaginated>('/padrones/electores', {
             params,
         });

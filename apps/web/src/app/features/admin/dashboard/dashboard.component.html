@@ -22,10 +22,10 @@
       
       <div class="flex flex-wrap gap-4">
         <a routerLink="/admin/elecciones" class="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3.5 font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-blue-500/50 hover:from-blue-500 hover:to-blue-400">
-          <mat-icon class="icon-size-5 transition-transform group-hover:rotate-90 duration-300" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon> Nueva elección
+          <mat-icon class="icon-size-5 transition-transform group-hover:rotate-90 duration-300" [svgIcon]="'lucide:circle-plus'"></mat-icon> Nueva elección
         </a>
         <a routerLink="/admin/elecciones/jornada" class="group inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-lg">
-          <mat-icon class="icon-size-5 transition-transform group-hover:scale-110 duration-300" [svgIcon]="'heroicons_outline:flag'"></mat-icon> Jornada activa
+          <mat-icon class="icon-size-5 transition-transform group-hover:scale-110 duration-300" [svgIcon]="'lucide:flag'"></mat-icon> Jornada activa
         </a>
       </div>
     </div>
@@ -53,7 +53,7 @@
         <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
           <div class="flex items-start justify-between">
             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
-              <mat-icon [svgIcon]="'heroicons_outline:rectangle-stack'"></mat-icon>
+              <mat-icon [svgIcon]="'lucide:layers'"></mat-icon>
             </span>
             <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-500/20">{{ data.resumen.procesosActivos }} activos</span>
           </div>
@@ -64,7 +64,7 @@
         <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
           <div class="flex items-start justify-between">
             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white">
-              <mat-icon [svgIcon]="'heroicons_outline:users'"></mat-icon>
+              <mat-icon [svgIcon]="'lucide:users'"></mat-icon>
             </span>
             <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-500/20">{{ data.resumen.electoresActivos }} activos</span>
           </div>
@@ -75,7 +75,7 @@
         <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
           <div class="flex items-start justify-between">
             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 to-violet-50 text-violet-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white">
-              <mat-icon [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+              <mat-icon [svgIcon]="'lucide:users-round'"></mat-icon>
             </span>
             <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-500/20">{{ data.resumen.listas }} listas</span>
           </div>
@@ -86,7 +86,7 @@
         <article class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/10 dark:border-gray-800 dark:bg-gray-900 cursor-pointer">
           <div class="flex items-start justify-between">
             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 text-orange-600 transition-transform duration-300 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white">
-              <mat-icon [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
+              <mat-icon [svgIcon]="'lucide:badge-check'"></mat-icon>
             </span>
             <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 ring-1 ring-orange-500/20">Registrados</span>
           </div>
@@ -144,13 +144,13 @@
               <!-- Botones de Acción -->
               <div class="mt-8 flex flex-wrap gap-4">
                 <a routerLink="/admin/elecciones/cronograma" class="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 px-5 py-3.5 text-sm font-bold text-white transition-all hover:bg-slate-900 hover:shadow-lg sm:flex-none">
-                  <mat-icon class="icon-size-5 transition-transform group-hover:scale-110" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon> Cronograma
+                  <mat-icon class="icon-size-5 transition-transform group-hover:scale-110" [svgIcon]="'lucide:calendar-days'"></mat-icon> Cronograma
                 </a>
                 <a routerLink="/admin/elecciones/padron" class="group flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:flex-none">
-                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'heroicons_outline:list-bullet'"></mat-icon> Padrón
+                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'lucide:list'"></mat-icon> Padrón
                 </a>
                 <a routerLink="/admin/elecciones/candidaturas" class="group flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 sm:flex-none">
-                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'heroicons_outline:user-plus'"></mat-icon> Candidaturas
+                  <mat-icon class="icon-size-5 transition-transform group-hover:-translate-y-0.5" [svgIcon]="'lucide:user-plus'"></mat-icon> Candidaturas
                 </a>
               </div>
             </div>
@@ -165,7 +165,7 @@
           
           <div class="relative z-10">
             <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
-              <mat-icon class="text-cyan-300" [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
+              <mat-icon class="text-cyan-300" [svgIcon]="'lucide:chart-pie'"></mat-icon>
             </div>
             <h2 class="mt-8 text-xl font-extrabold uppercase tracking-widest text-cyan-100">Participación</h2>
             <div class="mt-2 flex items-baseline gap-1">
@@ -182,7 +182,7 @@
           </div>
           
           <a routerLink="/admin/elecciones/resultados" class="relative z-10 mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-4 text-sm font-black text-blue-900 shadow-lg transition-all hover:bg-cyan-50 hover:shadow-cyan-500/50">
-            Resultados en vivo <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-right'"></mat-icon>
+            Resultados en vivo <mat-icon class="icon-size-5" [svgIcon]="'lucide:arrow-right'"></mat-icon>
           </a>
         </aside>
       </div>

@@ -20,13 +20,13 @@
         <mat-form-field class="w-full">
           <mat-label>Usuario</mat-label>
           <input matInput [formControlName]="'usuario'">
-          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:user'" />
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'lucide:user'" />
         </mat-form-field>
 
         <mat-form-field class="w-full">
           <mat-label>Nombre</mat-label>
           <input matInput [formControlName]="'nombre'" placeholder="Nombre completo">
-          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:identification'" />
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'lucide:id-card'" />
           @if (profileForm.get('nombre').hasError('required')) {
           <mat-error>El nombre es requerido</mat-error>
           }
@@ -35,7 +35,7 @@
         <mat-form-field class="w-full">
           <mat-label>Correo electrónico</mat-label>
           <input matInput [formControlName]="'email'" placeholder="correo@dominio.com">
-          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:envelope'" />
+          <mat-icon class="icon-size-5" matPrefix [svgIcon]="'lucide:mail'" />
           @if (profileForm.get('email').hasError('required')) {
           <mat-error>El correo es requerido</mat-error>
           }
@@ -74,7 +74,7 @@
           <input matInput [type]="showCurrent ? 'text' : 'password'" [formControlName]="'currentPassword'">
           <button mat-icon-button type="button" (click)="showCurrent = !showCurrent" matSuffix>
             <mat-icon class="icon-size-5"
-              [svgIcon]="showCurrent ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+              [svgIcon]="showCurrent ? 'lucide:eye-off' : 'lucide:eye'" />
           </button>
           @if (passwordForm.get('currentPassword').hasError('required')) {
           <mat-error>La contraseña actual es requerida</mat-error>
@@ -85,7 +85,7 @@
           <mat-label>Nueva contraseña</mat-label>
           <input matInput [type]="showNew ? 'text' : 'password'" [formControlName]="'newPassword'">
           <button mat-icon-button type="button" (click)="showNew = !showNew" matSuffix>
-            <mat-icon class="icon-size-5" [svgIcon]="showNew ? 'heroicons_solid:eye-slash' : 'heroicons_solid:eye'" />
+            <mat-icon class="icon-size-5" [svgIcon]="showNew ? 'lucide:eye-off' : 'lucide:eye'" />
           </button>
           @if (passwordForm.get('newPassword').hasError('required')) {
           <mat-error>La nueva contraseña es requerida</mat-error>

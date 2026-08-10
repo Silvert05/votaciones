@@ -9,7 +9,7 @@
             <div class="venp-icon-panel mx-auto h-14 w-14">
                 <mat-icon
                     class="icon-size-8"
-                    [svgIcon]="'heroicons_outline:book-open'"
+                    [svgIcon]="'lucide:book-open'"
                 />
             </div>
             <p class="venp-section-kicker mt-5 text-white/70">
@@ -30,13 +30,14 @@
             <button
                 type="button"
                 (click)="imprimir()"
-                class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold"
+                [disabled]="descargando"
+                class="venp-choice-card inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
             >
                 <mat-icon
                     class="icon-size-5"
-                    [svgIcon]="'heroicons_outline:printer'"
+                    [svgIcon]="'lucide:printer'"
                 />
-                Imprimir / Guardar PDF
+                {{ descargando ? 'Generando PDF…' : 'Descargar PDF' }}
             </button>
         </div>
 
@@ -77,7 +78,7 @@
             <div class="mb-4 flex items-center gap-2">
                 <mat-icon
                     class="venp-text-primary icon-size-6"
-                    [svgIcon]="'heroicons_outline:light-bulb'"
+                    [svgIcon]="'lucide:lightbulb'"
                 />
                 <h2 class="venp-text-primary text-lg font-bold">
                     Recomendaciones importantes
@@ -88,7 +89,7 @@
                     <li class="flex items-start gap-2 text-sm">
                         <mat-icon
                             class="mt-0.5 shrink-0 text-green-600 icon-size-5"
-                            [svgIcon]="'heroicons_outline:check-circle'"
+                            [svgIcon]="'lucide:check-circle'"
                         />
                         <span>{{ t }}</span>
                     </li>
@@ -101,7 +102,7 @@
                 [routerLink]="'/votar'"
                 class="venp-bg-primary inline-flex items-center gap-2 rounded-xl px-8 py-3.5 font-bold text-white transition hover:opacity-90 active:scale-[0.99]"
             >
-                <mat-icon [svgIcon]="'heroicons_outline:finger-print'" />
+                <mat-icon [svgIcon]="'lucide:fingerprint'" />
                 Ir a votar ahora
             </a>
         </div>

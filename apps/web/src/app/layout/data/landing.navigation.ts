@@ -46,7 +46,7 @@ export const DataNavigation: Navigation = {
       id: 'login',
       title: 'INICIAR SESIÓN',
       type: 'basic',
-      icon: 'mat_solid:login',
+      icon: 'lucide:log-in',
       link: '/admin/auth/login',
       classes: {
         wrapper: 'px-2 bg-yellow-300 text-black rounded-full'

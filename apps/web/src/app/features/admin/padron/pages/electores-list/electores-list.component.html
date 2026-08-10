@@ -16,7 +16,7 @@
             type="button"
             (click)="newElector()"
         >
-            <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+            <mat-icon [svgIcon]="'lucide:plus'" />
             <span class="ml-1">Nuevo elector</span>
         </button>
     </div>
@@ -33,7 +33,7 @@
                     />
                     <mat-icon
                         matPrefix
-                        [svgIcon]="'heroicons_solid:magnifying-glass'"
+                        [svgIcon]="'lucide:search'"
                     />
                 </mat-form-field>
 
@@ -153,14 +153,14 @@
                             [matTooltip]="'Acciones'"
                         >
                             <mat-icon
-                                [svgIcon]="'heroicons_solid:ellipsis-vertical'"
+                                [svgIcon]="'lucide:ellipsis-vertical'"
                             />
                         </button>
                         <mat-menu #menu="matMenu">
                             <button mat-menu-item (click)="select(e)">
                                 <mat-icon
                                     class="mr-2 icon-size-5"
-                                    [svgIcon]="'heroicons_solid:pencil-square'"
+                                    [svgIcon]="'lucide:square-pen'"
                                 />
                                 <span>Editar</span>
                             </button>
@@ -169,8 +169,8 @@
                                     class="mr-2 icon-size-5"
                                     [svgIcon]="
                                         e.activo
-                                            ? 'heroicons_solid:lock-closed'
-                                            : 'heroicons_solid:lock-open'
+                                            ? 'lucide:lock'
+                                            : 'lucide:lock-open'
                                     "
                                 />
                                 <span>{{
@@ -225,7 +225,7 @@
                             >
                                 <mat-icon
                                     class="text-hint icon-size-12"
-                                    [svgIcon]="'heroicons_outline:user'"
+                                    [svgIcon]="'lucide:user'"
                                 />
                             </div>
                         }
@@ -258,7 +258,7 @@
                                 >
                                     <mat-icon
                                         class="icon-size-5"
-                                        [svgIcon]="'heroicons_outline:photo'"
+                                        [svgIcon]="'lucide:image'"
                                     />
                                     <span class="ml-1">{{
                                         fotoPreview
@@ -275,7 +275,7 @@
                                     >
                                         <mat-icon
                                             class="icon-size-5"
-                                            [svgIcon]="'heroicons_outline:trash'"
+                                            [svgIcon]="'lucide:trash'"
                                         />
                                         <span class="ml-1">{{
                                             fotoSeleccionada
@@ -331,6 +331,19 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
+                    <mat-label>Genero</mat-label>
+                    <mat-select formControlName="genero">
+                        <mat-option [value]="null">Sin especificar</mat-option>
+                        @for (genero of generos; track genero.value) {
+                            <mat-option [value]="genero.value">{{
+                                genero.label
+                            }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-hint>Requerido para calificar listas (Art. 12, equidad de genero).</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
                     <mat-label>Carrera</mat-label>
                     <mat-select formControlName="carreraId">
                         <mat-option value="">Sin asignar</mat-option>
@@ -379,7 +392,7 @@
                     (click)="save()"
                     [disabled]="saving"
                 >
-                    <mat-icon [svgIcon]="'heroicons_solid:check'" />
+                    <mat-icon [svgIcon]="'lucide:check'" />
                     <span class="ml-1">{{
                         selected ? 'Guardar' : 'Crear'
                     }}</span>

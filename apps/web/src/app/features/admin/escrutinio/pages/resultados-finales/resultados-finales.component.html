@@ -6,11 +6,11 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <button matButton="outlined" type="button" (click)="loadResumen()" [disabled]="!selectedEleccionCtrl.value || loading">
-        <mat-icon [svgIcon]="'heroicons_solid:arrow-path'" />
+        <mat-icon [svgIcon]="'lucide:refresh-cw'" />
         <span class="ml-1">Actualizar</span>
       </button>
       <button matButton="filled" color="primary" type="button" (click)="publicarDefinitivos()" [disabled]="!resumen || saving">
-        <mat-icon [svgIcon]="'heroicons_outline:check-badge'" />
+        <mat-icon [svgIcon]="'lucide:badge-check'" />
         <span class="ml-1">Publicar definitivos</span>
       </button>
     </div>

@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { fuseAnimations } from '@core/animations';
 import { FuseAlertComponent, FuseAlertType } from '@core/components/alert';
@@ -16,7 +17,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-login',
   imports: [FormsModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
     MatIconModule, MatButtonModule, MatDividerModule, MatProgressSpinnerModule,
-    MatCheckboxModule, FuseAlertComponent],
+    MatCheckboxModule, MatTooltipModule, FuseAlertComponent],
   templateUrl: './login.component.html',
   animations: fuseAnimations,
 })
@@ -39,6 +40,7 @@ export default class LoginComponent implements OnInit, OnDestroy {
     'img/login-carousel/slide-2.jpg',
     'img/login-carousel/slide-3.jpg',
   ];
+
   currentSlide = 0;
   private _slideInterval?: ReturnType<typeof setInterval>;
 
@@ -94,7 +96,7 @@ export default class LoginComponent implements OnInit, OnDestroy {
 
         const redirectURL =
           this._activatedRoute.snapshot.queryParamMap.get('redirectURL') ||
-          '/admin/elecciones/jornada';
+          this._authService.homeUrl();
         this._router.navigateByUrl(redirectURL);
       },
       error: (err) => {

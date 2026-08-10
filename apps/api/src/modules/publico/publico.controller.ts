@@ -6,9 +6,13 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { ReportesService } from '../reportes/reportes.service';
 import { Votante } from '../votacion/decorators/votante.decorator';
 import { VotoGuard } from '../votacion/guards/voto.guard';
 import {
@@ -24,7 +28,20 @@ export class PublicoController {
   constructor(
     private readonly publicoService: PublicoService,
     private readonly votacionService: VotacionService,
+    private readonly reportesService: ReportesService,
   ) {}
+
+  @Get('instructivo')
+  @ApiOperation({ summary: 'Descargar el instructivo de votacion (PDF)' })
+  async instructivo(@Res() res: Response) {
+    const buffer = await this.reportesService.instructivoPdf();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="instructivo-votacion.pdf"',
+    );
+    res.send(buffer);
+  }
 
   @Get('elecciones')
   @ApiOperation({ summary: 'Listar elecciones visibles al publico' })
@@ -57,6 +74,7 @@ export class PublicoController {
   }
 
   @Post('elecciones/:id/votante/login')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Ingreso del votante con DNI y contrasena' })
   loginVotante(
     @Param('id', ParseUUIDPipe) id: string,

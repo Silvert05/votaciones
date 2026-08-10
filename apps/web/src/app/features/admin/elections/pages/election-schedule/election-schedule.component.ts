@@ -28,13 +28,13 @@ const CRONOGRAMA_FIELDS: Array<keyof UpsertCronogramaPayload> = [
 ];
 
 const EVENTOS_PREVIEW = [
-  { field: 'fechaConvocatoria', label: 'Convocatoria del proceso', icon: 'heroicons_outline:megaphone' },
-  { field: 'fechaPublicacionPadron', label: 'Publicacion del padron', icon: 'heroicons_outline:users' },
-  { field: 'fechaInicioInscripcion', label: 'Apertura de candidaturas', icon: 'heroicons_outline:user-plus' },
-  { field: 'fechaFinInscripcion', label: 'Cierre de candidaturas', icon: 'heroicons_outline:user-group' },
-  { field: 'fechaInicioVotacion', label: 'Inicio de la votacion', icon: 'heroicons_outline:cursor-arrow-rays' },
-  { field: 'fechaFinVotacion', label: 'Cierre de la votacion', icon: 'heroicons_outline:lock-closed' },
-  { field: 'fechaPublicacionResultados', label: 'Publicacion de resultados', icon: 'heroicons_outline:chart-bar' },
+  { field: 'fechaConvocatoria', label: 'Convocatoria del proceso', icon: 'lucide:megaphone' },
+  { field: 'fechaPublicacionPadron', label: 'Publicacion del padron', icon: 'lucide:users' },
+  { field: 'fechaInicioInscripcion', label: 'Apertura de candidaturas', icon: 'lucide:user-plus' },
+  { field: 'fechaFinInscripcion', label: 'Cierre de candidaturas', icon: 'lucide:users-round' },
+  { field: 'fechaInicioVotacion', label: 'Inicio de la votacion', icon: 'lucide:mouse-pointer-click' },
+  { field: 'fechaFinVotacion', label: 'Cierre de la votacion', icon: 'lucide:lock' },
+  { field: 'fechaPublicacionResultados', label: 'Publicacion de resultados', icon: 'lucide:chart-bar' },
 ] as const;
 
 @Component({
@@ -127,20 +127,20 @@ export default class ElectionScheduleComponent implements OnInit {
 
   save(): void {
     if (!this.selected) {
-      this._notify('Selecciona una eleccion.');
+      this._notifyService.warning('Selecciona una eleccion.');
       return;
     }
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this._notify('Indica el inicio y el cierre de la votacion.');
+      this._notifyService.warning('Indica el inicio y el cierre de la votacion.');
       return;
     }
 
     const raw = this.form.getRawValue();
     if (raw.fechaInicioVotacion && raw.fechaFinVotacion &&
         new Date(raw.fechaInicioVotacion) >= new Date(raw.fechaFinVotacion)) {
-      this._notify('El cierre de la votacion debe ser posterior al inicio.');
+      this._notifyService.warning('El cierre de la votacion debe ser posterior al inicio.');
       return;
     }
     if (
@@ -148,7 +148,7 @@ export default class ElectionScheduleComponent implements OnInit {
       raw.fechaPublicacionResultados &&
       new Date(raw.fechaFinVotacion) > new Date(raw.fechaPublicacionResultados)
     ) {
-      this._notify(
+      this._notifyService.warning(
         'La publicacion de resultados debe ser posterior al cierre de la votacion.',
       );
       return;

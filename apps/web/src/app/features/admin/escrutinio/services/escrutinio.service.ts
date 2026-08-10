@@ -80,4 +80,15 @@ export class EscrutinioService {
       {},
     );
   }
+
+  iniciarSegundaVuelta(
+    eleccionId: string,
+    dignidadId: string,
+    plazoHoras?: number,
+  ): Observable<EscrutinioResumen> {
+    return this._http.post<EscrutinioResumen>(
+      `/escrutinio/elecciones/${eleccionId}/dignidades/${dignidadId}/segunda-vuelta`,
+      plazoHoras ? { plazoHoras } : {},
+    );
+  }
 }

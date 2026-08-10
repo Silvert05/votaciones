@@ -7,6 +7,7 @@ export const AuditOperacion = {
   LOGIN: 'LOGIN',
   LOGOUT: 'LOGOUT',
   PASSWORD: 'PASSWORD',
+  DESCARGAR: 'DESCARGAR',
 } as const;
 
 export type AuditOperacion =
@@ -30,5 +31,7 @@ export const AuditTabla = {
   CONTEOS_VOTOS: 'conteos_votos',
   ACTAS_ESCRUTINIO: 'actas_escrutinio',
   IMPUGNACIONES_RESULTADOS: 'impugnaciones_resultados',
+  IMPUGNACIONES_CANDIDATURAS: 'impugnaciones_candidaturas',
+  REPORTES: 'reportes',
   AUTH: 'auth',
 } as const;

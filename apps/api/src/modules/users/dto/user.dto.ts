@@ -53,6 +53,14 @@ export class CreateUserDto {
   @ValidateIf((_, value) => value !== null && value !== '')
   @IsUUID()
   perfilId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Elector (estudiante/profesor) de origen, si el usuario se crea a partir de uno',
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== '')
+  @IsUUID()
+  electorId?: string | null;
 }
 
 export class UpdateUserDto {

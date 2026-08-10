@@ -90,7 +90,7 @@ export default class ResultadosFinalesComponent implements OnInit {
       title: 'Publicar resultados definitivos',
       message: 'Los resultados quedarán visibles como información oficial del proceso electoral.',
       confirmText: 'Publicar resultados',
-      icon: 'heroicons_outline:chart-bar-square',
+      icon: 'lucide:file-chart-column',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this.saving = true;

@@ -2,6 +2,7 @@ import { TipoElector } from '../../elections/models/election.model';
 import { Paginated } from '../../users/models/user.model';
 
 export type EstadoPadronElector = 'HABILITADO' | 'INHABILITADO' | 'OBSERVADO';
+export type Genero = 'MASCULINO' | 'FEMENINO' | 'OTRO';
 
 export interface CatalogoInstitucional {
   id: string;
@@ -24,6 +25,7 @@ export interface Elector {
   email: string | null;
   fotoUrl: string | null;
   tipo: TipoElector;
+  genero: Genero | null;
   carreraId: string | null;
   nivelId: string | null;
   paraleloId: string | null;
@@ -61,6 +63,7 @@ export interface ElectoresQuery {
   search?: string;
   tipo?: TipoElector;
   activo?: boolean;
+  excluirEleccionId?: string;
 }
 
 export interface PadronQuery {
@@ -81,6 +84,7 @@ export interface CreateElectorPayload {
   email?: string | null;
   fotoUrl?: string | null;
   tipo: TipoElector;
+  genero?: Genero | null;
   carreraId?: string | null;
   nivelId?: string | null;
   paraleloId?: string | null;

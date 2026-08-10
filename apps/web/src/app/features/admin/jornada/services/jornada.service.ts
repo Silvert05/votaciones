@@ -60,10 +60,10 @@ export class JornadaService {
     );
   }
 
-  reiniciar(eleccionId: string): Observable<JornadaEstado> {
+  reiniciar(eleccionId: string, motivo: string): Observable<JornadaEstado> {
     return this._http.post<JornadaEstado>(
       `/jornada/elecciones/${eleccionId}/reiniciar`,
-      {},
+      { motivo },
     );
   }
 }

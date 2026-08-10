@@ -543,7 +543,9 @@ export class EleccionesService {
   ) {
     const dates = this.toCronogramaData(dto);
 
-    const camposFecha: Array<[keyof typeof dates, string]> = [
+    const camposFecha: Array<
+      [Exclude<keyof typeof dates, 'lugarVotacion'>, string]
+    > = [
       ['fechaConvocatoria', 'La convocatoria'],
       ['fechaPublicacionPadron', 'La publicacion del padron'],
       ['fechaInicioInscripcion', 'El inicio de inscripcion de candidaturas'],
@@ -593,6 +595,16 @@ export class EleccionesService {
       if (dates.fechaFinCampania > max) {
         throw new BadRequestException(
           'La campania debe suspenderse al menos 24 horas antes de la votacion.',
+        );
+      }
+    }
+
+    if (dates.fechaConvocatoria && dates.fechaInicioVotacion) {
+      const minimo = new Date(dates.fechaConvocatoria);
+      minimo.setDate(minimo.getDate() + 20);
+      if (dates.fechaInicioVotacion < minimo) {
+        throw new BadRequestException(
+          'La convocatoria debe realizarse con al menos veinte (20) dias de anticipacion a la votacion (Art. 9).',
         );
       }
     }
@@ -648,6 +660,7 @@ export class EleccionesService {
         dto.fechaFinImpugnacionResultados,
       ),
       fechaResultadosFinales: this.toDate(dto.fechaResultadosFinales),
+      lugarVotacion: dto.lugarVotacion?.trim() || null,
     };
   }
 

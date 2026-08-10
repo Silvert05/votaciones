@@ -18,6 +18,7 @@ const HIDDEN_ADMIN_ROUTES = [
   '/admin/elecciones/escrutinio',
   '/admin/elecciones/impugnaciones',
   '/admin/elecciones/resultados-finales',
+  '/admin/seguridad/opciones',
 ];
 
 @Injectable({ providedIn: 'root' })
@@ -113,6 +114,24 @@ export class AuthService {
   /** Token JWT de acceso almacenado. */
   get accessToken(): string | null {
     return sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  /**
+   * Ruta segura a la que aterrizar tras iniciar sesión / restablecer
+   * contraseña, o a la que redirigir cuando un guard rechaza el acceso.
+   * Nunca debe apuntar a una ruta que pueda a su vez estar bloqueada para
+   * el usuario actual (evita bucles de redireccion).
+   */
+  homeUrl(): string {
+    const user = this._user();
+    if (!user) {
+      return '/admin/auth/login';
+    }
+    if (user.rol === 'ADMIN') {
+      return ADMIN_HOME;
+    }
+    const [primeraRutaPermitida] = this.rutasPermitidas();
+    return primeraRutaPermitida ?? '/admin/perfil';
   }
 
   canAccessRoute(url: string): boolean {

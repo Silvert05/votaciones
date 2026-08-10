@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsEmail,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -10,7 +12,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { EstadoCandidatura } from 'prisma/generated/enums';
+import {
+  EstadoCandidatura,
+  EstadoImpugnacionResultado,
+} from 'prisma/generated/enums';
 
 export class QueryCandidaturasDto {
   @ApiPropertyOptional({ default: 1 })
@@ -107,4 +112,44 @@ export class CalificarCandidaturaDto {
   @IsString()
   @MaxLength(255)
   observacion?: string | null;
+}
+
+export class SubsanarCandidaturaDto {
+  @ApiPropertyOptional({
+    description: 'Notas sobre la documentacion corregida presentada.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  observacion?: string | null;
+}
+
+export class ImpugnarCalificacionDto {
+  @ApiProperty({ example: 'Lista A / Representante acreditado' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  presentadoPor: string;
+
+  @ApiProperty({
+    description: 'Correo para notificar la resolucion (Art. 14).',
+  })
+  @IsEmail()
+  correoNotificacion: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fundamento: string;
+}
+
+export class ResolverImpugnacionCandidaturaDto {
+  @ApiProperty({ enum: EstadoImpugnacionResultado })
+  @IsEnum(EstadoImpugnacionResultado)
+  estado: EstadoImpugnacionResultado;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  resolucion: string;
 }

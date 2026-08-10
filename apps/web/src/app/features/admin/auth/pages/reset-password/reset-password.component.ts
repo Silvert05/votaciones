@@ -85,7 +85,7 @@ export default class ResetPasswordComponent implements OnInit {
       .resetPassword(this.form.value.newPassword, this._token)
       .subscribe({
         next: () => {
-          this._router.navigateByUrl('/admin/elecciones/jornada');
+          this._router.navigateByUrl(this._authService.homeUrl());
         },
         error: (err) => {
           this.form.enable();

@@ -47,21 +47,21 @@
       </fuse-horizontal-navigation>
       <a [routerLink]="'admin/auth/login'" target="_blank"
         class="inline-flex items-center gap-1.5 px-4 h-8 rounded-md bg-primary text-on-primary text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150">
-        <mat-icon class="icon-size-4" [svgIcon]="'mat_solid:login'"></mat-icon>
+        <mat-icon class="icon-size-4" [svgIcon]="'lucide:log-in'"></mat-icon>
         Iniciar Sesión
       </a>
     </div>
 
     } @else {
     <button mat-icon-button (click)="toggleNavigation('mainNavigation')">
-      <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+      <mat-icon [svgIcon]="'lucide:menu'"></mat-icon>
     </button>
     <a [routerLink]="'/inicio'" class="absolute left-1/2 -translate-x-1/2">
       <img class="h-8" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </a>
     <a [routerLink]="'admin/auth/login'" target="_blank"
       class="inline-flex items-center gap-1 px-3 h-8 rounded-md bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity duration-150">
-      <mat-icon class="icon-size-4" [svgIcon]="'mat_solid:login'"></mat-icon>
+      <mat-icon class="icon-size-4" [svgIcon]="'lucide:log-in'"></mat-icon>
       <span class="hidden xs:inline">Ingresar</span>
     </a>
     }
@@ -103,7 +103,7 @@
 
       <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
         <div class="flex items-center gap-3">
-          <mat-icon class="text-orange-300" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
+          <mat-icon class="text-orange-300" [svgIcon]="'lucide:shield-check'"></mat-icon>
           <p class="font-black">Votación responsable</p>
         </div>
         <p class="mt-3 text-sm leading-relaxed text-slate-400">

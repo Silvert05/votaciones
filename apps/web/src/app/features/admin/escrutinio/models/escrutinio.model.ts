@@ -39,11 +39,17 @@ export interface ActaEscrutinio {
   votosNulos: number;
   estado: EstadoActaEscrutinio;
   observacion: string | null;
+  vuelta: number;
+  empatado: boolean;
+  empateCandidaturaIds: string[];
   cerradaAt: string | null;
   aprobadaAt: string | null;
   createdAt: string;
   updatedAt: string;
-  dignidad: Pick<Dignidad, 'id' | 'nombre' | 'cantidadGanadores' | 'orden'>;
+  dignidad: Pick<Dignidad, 'id' | 'nombre' | 'cantidadGanadores' | 'orden'> & {
+    vuelta: number;
+    pausadaSegundaVuelta: boolean;
+  };
   detalles: DetalleActaEscrutinio[];
 }
 
@@ -54,9 +60,12 @@ export interface ImpugnacionResultado {
   actaId: string | null;
   presentadoPor: string;
   fundamento: string;
+  respaldoIdentificaciones: string[];
+  respaldoValidos: number;
   estado: EstadoImpugnacionResultado;
   resolucion: string | null;
   fechaPresentacion: string;
+  fechaLimiteResolucion: string | null;
   fechaResolucion: string | null;
   createdAt: string;
   updatedAt: string;
@@ -72,6 +81,10 @@ export interface ResultadoFinalDignidad {
   votosValidos: number;
   votosBlancos: number;
   votosNulos: number;
+  vuelta: number;
+  empatado: boolean;
+  empateCandidaturaIds: string[];
+  esVigente: boolean;
   ganadores: DetalleActaEscrutinio[];
 }
 
@@ -92,6 +105,7 @@ export interface CreateImpugnacionPayload {
   dignidadId?: string | null;
   presentadoPor: string;
   fundamento: string;
+  respaldoIdentificaciones: string[];
 }
 
 export interface ResolverImpugnacionPayload {

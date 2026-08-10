@@ -6,11 +6,11 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <button matButton="tonal" type="button" (click)="abrir()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:lock-open'" />
+        <mat-icon [svgIcon]="'lucide:lock-open'" />
         <span class="ml-1">Abrir</span>
       </button>
       <button matButton="tonal" type="button" (click)="cerrar()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:lock-closed'" />
+        <mat-icon [svgIcon]="'lucide:lock'" />
         <span class="ml-1">Cerrar</span>
       </button>
     </div>
@@ -38,7 +38,7 @@
 
       <div class="md:col-span-3 flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="cargarTarjeton()">
-          <mat-icon [svgIcon]="'heroicons_solid:magnifying-glass'" />
+          <mat-icon [svgIcon]="'lucide:search'" />
           <span class="ml-1">Cargar tarjeton</span>
         </button>
       </div>
@@ -81,7 +81,7 @@
 
       <div class="mt-4 flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="emitir()" [disabled]="saving || tarjeton.votosEmitidos.length > 0">
-          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <mat-icon [svgIcon]="'lucide:check'" />
           <span class="ml-1">Registrar voto</span>
         </button>
       </div>

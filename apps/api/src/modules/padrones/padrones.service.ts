@@ -51,6 +51,7 @@ const electorSelect = {
   email: true,
   fotoUrl: true,
   tipo: true,
+  genero: true,
   carreraId: true,
   nivelId: true,
   paraleloId: true,
@@ -91,11 +92,16 @@ export class PadronesService {
   ) {}
 
   async listElectores(query: QueryElectoresDto) {
-    const { page, limit, search, tipo, activo } = query;
+    const { page, limit, search, tipo, activo, excluirEleccionId } = query;
     const where: Prisma.ElectorWhereInput = {};
 
     if (tipo) where.tipo = tipo;
     if (activo !== undefined) where.activo = activo;
+    if (excluirEleccionId) {
+      where.padrones = {
+        none: { eleccionId: excluirEleccionId },
+      };
+    }
     if (search) {
       where.OR = [
         { identificacion: { contains: search, mode: 'insensitive' } },
@@ -167,6 +173,7 @@ export class PadronesService {
           ? { email: this.normalizarEmail(dto.email) }
           : {}),
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
+        ...(dto.genero !== undefined ? { genero: dto.genero } : {}),
         ...(dto.carreraId !== undefined ? { carreraId: dto.carreraId } : {}),
         ...(dto.nivelId !== undefined ? { nivelId: dto.nivelId } : {}),
         ...(dto.paraleloId !== undefined
@@ -839,6 +846,7 @@ export class PadronesService {
       apellidos: dto.apellidos.trim(),
       email: this.normalizarEmail(dto.email),
       tipo: dto.tipo,
+      genero: dto.genero ?? null,
       carreraId: dto.carreraId ?? null,
       nivelId: dto.nivelId ?? null,
       paraleloId: dto.paraleloId ?? null,

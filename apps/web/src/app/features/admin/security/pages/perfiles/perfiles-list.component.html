@@ -5,7 +5,7 @@
       <p class="mt-2 text-secondary">Agrupa opciones de menu y rutas para asignarlas a usuarios</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="newPerfil()">
-      <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+      <mat-icon [svgIcon]="'lucide:plus'" />
       <span class="ml-1">Nuevo perfil</span>
     </button>
   </div>
@@ -51,16 +51,16 @@
           <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
           <td mat-cell *matCellDef="let p" class="text-right">
             <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
-              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+              <mat-icon [svgIcon]="'lucide:ellipsis-vertical'" />
             </button>
             <mat-menu #menu="matMenu">
               <button mat-menu-item (click)="select(p)">
-                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
                 <span>Editar accesos</span>
               </button>
               <button mat-menu-item (click)="togglePerfil(p)">
                 <mat-icon class="icon-size-5 mr-2"
-                  [svgIcon]="p.activo ? 'heroicons_solid:lock-closed' : 'heroicons_solid:lock-open'" />
+                  [svgIcon]="p.activo ? 'lucide:lock' : 'lucide:lock-open'" />
                 <span>{{ p.activo ? 'Desactivar' : 'Activar' }}</span>
               </button>
             </mat-menu>
@@ -95,7 +95,7 @@
 
       <div class="flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving">
-          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <mat-icon [svgIcon]="'lucide:check'" />
           <span class="ml-1">{{ selectedPerfil ? 'Guardar perfil' : 'Crear perfil' }}</span>
         </button>
       </div>
@@ -108,7 +108,7 @@
           </div>
           <button matButton="filled" color="primary" type="button" (click)="saveOpciones()"
             [disabled]="!selectedPerfil || savingOptions">
-            <mat-icon [svgIcon]="'heroicons_solid:shield-check'" />
+            <mat-icon [svgIcon]="'lucide:shield-check'" />
             <span class="ml-1">Asignar</span>
           </button>
         </div>

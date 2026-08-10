@@ -5,12 +5,14 @@ import { Paginated } from '../../users/models/user.model';
 export type EstadoListaElectoral =
   | 'BORRADOR'
   | 'INSCRITA'
+  | 'OBSERVADA'
   | 'CALIFICADA'
   | 'RECHAZADA'
   | 'RETIRADA';
 
 export type EstadoCandidatura =
   | 'INSCRITA'
+  | 'OBSERVADA'
   | 'CALIFICADA'
   | 'RECHAZADA'
   | 'RETIRADA';
@@ -41,6 +43,7 @@ export interface Candidatura {
   orden: number;
   estado: EstadoCandidatura;
   observacion: string | null;
+  plazoSubsanacionAt: string | null;
   createdAt: string;
   updatedAt: string;
   dignidad: Pick<Dignidad, 'id' | 'nombre' | 'tipoElectorPermitido' | 'requiereLista'>;
@@ -114,10 +117,39 @@ export const ESTADOS_LISTA: EstadoListaElectoral[] = [
 
 export const ESTADOS_CANDIDATURA: EstadoCandidatura[] = [
   'INSCRITA',
+  'OBSERVADA',
   'CALIFICADA',
   'RECHAZADA',
   'RETIRADA',
 ];
+
+export interface SubsanarCandidaturaPayload {
+  observacion?: string | null;
+}
+
+export interface ImpugnarCalificacionPayload {
+  presentadoPor: string;
+  correoNotificacion: string;
+  fundamento: string;
+}
+
+export interface ImpugnacionCandidatura {
+  id: string;
+  eleccionId: string;
+  candidaturaId: string;
+  presentadoPor: string;
+  correoNotificacion: string;
+  fundamento: string;
+  estado: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA';
+  resolucion: string | null;
+  fechaPresentacion: string;
+  fechaResolucion: string | null;
+}
+
+export interface ResolverImpugnacionCandidaturaPayload {
+  estado: 'ACEPTADA' | 'RECHAZADA';
+  resolucion: string;
+}
 
 export interface DignidadListaEstado {
   id: string;

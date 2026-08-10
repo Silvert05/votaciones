@@ -6,15 +6,15 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <button matButton="tonal" type="button" (click)="abrirCandidaturas()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:lock-open'" />
+        <mat-icon [svgIcon]="'lucide:lock-open'" />
         <span class="ml-1">Abrir</span>
       </button>
       <button matButton="tonal" type="button" (click)="cerrarCalificacion()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:check-badge'" />
+        <mat-icon [svgIcon]="'lucide:badge-check'" />
         <span class="ml-1">Cerrar calificacion</span>
       </button>
       <button matButton="filled" color="primary" type="button" (click)="newCandidatura()" [disabled]="!selectedEleccionCtrl.value">
-        <mat-icon [svgIcon]="'heroicons_solid:plus'" />
+        <mat-icon [svgIcon]="'lucide:plus'" />
         <span class="ml-1">Nueva candidatura</span>
       </button>
     </div>
@@ -65,7 +65,7 @@
         <mat-form-field appearance="outline" class="md:col-span-2 xl:col-span-3">
           <mat-label>Buscar</mat-label>
           <input matInput [formControl]="searchCtrl" placeholder="Candidato, dignidad o lista">
-          <mat-icon matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'" />
+          <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
       </div>
 
@@ -117,6 +117,9 @@
             @if (c.observacion) {
             <div class="text-xs text-secondary mt-1">{{ c.observacion }}</div>
             }
+            @if (c.estado === 'OBSERVADA' && c.plazoSubsanacionAt) {
+            <div class="text-xs text-amber-700 mt-1">Plazo de subsanacion: {{ c.plazoSubsanacionAt | date: 'short' }}</div>
+            }
           </td>
         </ng-container>
 
@@ -124,15 +127,18 @@
           <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
           <td mat-cell *matCellDef="let c" class="text-right">
             <button mat-icon-button [matMenuTriggerFor]="menu" [matTooltip]="'Acciones'">
-              <mat-icon [svgIcon]="'heroicons_solid:ellipsis-vertical'" />
+              <mat-icon [svgIcon]="'lucide:ellipsis-vertical'" />
             </button>
             <mat-menu #menu="matMenu">
               <button mat-menu-item (click)="edit(c)">
-                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:pencil-square'" />
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
                 <span>Editar</span>
               </button>
               <button mat-menu-item (click)="calificar(c, 'CALIFICADA')">
                 <span>Calificar</span>
+              </button>
+              <button mat-menu-item (click)="calificar(c, 'OBSERVADA')">
+                <span>Observar (24h para subsanar)</span>
               </button>
               <button mat-menu-item (click)="calificar(c, 'RECHAZADA')">
                 <span>Rechazar</span>
@@ -140,6 +146,18 @@
               <button mat-menu-item (click)="calificar(c, 'RETIRADA')">
                 <span>Retirar</span>
               </button>
+              @if (c.estado === 'OBSERVADA') {
+              <button mat-menu-item (click)="subsanar(c)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:file-up'" />
+                <span>Subsanar documentacion</span>
+              </button>
+              }
+              @if (c.estado === 'RECHAZADA') {
+              <button mat-menu-item (click)="impugnarCalificacion(c)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:scale'" />
+                <span>Impugnar calificacion</span>
+              </button>
+              }
             </mat-menu>
           </td>
         </ng-container>
@@ -202,7 +220,7 @@
 
       <div class="mt-4 flex justify-end">
         <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selectedEleccionCtrl.value">
-          <mat-icon [svgIcon]="'heroicons_solid:check'" />
+          <mat-icon [svgIcon]="'lucide:check'" />
           <span class="ml-1">{{ selected ? 'Guardar' : 'Crear' }}</span>
         </button>
       </div>

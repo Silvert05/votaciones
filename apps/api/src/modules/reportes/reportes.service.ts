@@ -3,14 +3,25 @@ import pdfMake from 'pdfmake';
 import { EstadoPadronElector, TipoVoto } from 'prisma/generated/enums';
 import { PrismaService } from 'src/prisma';
 import {
+  AuditOperacion,
+  AuditTabla,
+} from '../auditoria/auditoria.constants';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { AuthUser } from '../auth/entities/auth.entity';
+import {
   Branding,
   buildBarChart,
+  buildFechaLugar,
+  buildFirmas,
   buildFooter,
   buildHeader,
   buildImagesDict,
+  buildPageBackground,
   colorParaLista,
   fetchImageDataUri,
   formatPorcentaje,
+  getDefaultLogoDataUri,
+  PAGE_MARGINS,
   porcentaje,
   resolveColores,
   tablaSimple,
@@ -19,6 +30,11 @@ import type { Content, TableCell } from './reportes.pdf';
 
 // pdfmake no publica tipos propios para la definicion del documento.
 type TDocumentDefinitions = any;
+
+interface Actor {
+  user: AuthUser;
+  ip?: string | null;
+}
 
 const STANDARD_FONT_FILES = new Set([
   'Helvetica',
@@ -40,9 +56,13 @@ pdfMake.setUrlAccessPolicy(() => false);
 
 @Injectable()
 export class ReportesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditoria: AuditoriaService,
+  ) {}
 
-  async actaPorLista(eleccionId: string) {
+  async actaPorLista(eleccionId: string, actor: Actor) {
+    await this.auditDescarga(eleccionId, 'acta-por-lista', actor);
     const { branding, fechaTexto } = await this.getBranding(eleccionId);
 
     const dignidades = await this.prisma.dignidad.findMany({
@@ -61,6 +81,7 @@ export class ReportesService {
 
     const content: Content[] = [
       ...buildHeader(branding, 'ACTA DE PROCLAMACION DE RESULTADOS'),
+      buildFechaLugar(fechaTexto),
       {
         text: this.narrativaActa(branding, fechaTexto),
         alignment: 'justify',
@@ -204,10 +225,18 @@ export class ReportesService {
       content.push(buildBarChart(barItems));
     }
 
+    content.push(
+      buildFirmas([
+        { rol: 'Presidente/a del Tribunal Electoral' },
+        { rol: 'Secretario/a del Tribunal Electoral' },
+      ]),
+    );
+
     return this.render(content, branding);
   }
 
-  async participacionPorTipo(eleccionId: string) {
+  async participacionPorTipo(eleccionId: string, actor: Actor) {
+    await this.auditDescarga(eleccionId, 'participacion-por-tipo', actor);
     const { branding, fechaTexto } = await this.getBranding(eleccionId);
 
     const tipos: Array<{ tipo: 'DOCENTE' | 'ESTUDIANTE'; label: string; color: string }> = [
@@ -266,6 +295,7 @@ export class ReportesService {
 
     const content: Content[] = [
       ...buildHeader(branding, 'PARTICIPACION POR TIPO DE ELECTOR'),
+      buildFechaLugar(fechaTexto),
       {
         text: `Resumen de participacion electoral por tipo de elector correspondiente al proceso "${branding.eleccionNombre}", con corte al ${fechaTexto}.`,
         alignment: 'justify',
@@ -282,7 +312,8 @@ export class ReportesService {
     return this.render(content, branding);
   }
 
-  async actaPorDignidades(eleccionId: string) {
+  async actaPorDignidades(eleccionId: string, actor: Actor) {
+    await this.auditDescarga(eleccionId, 'acta-por-dignidades', actor);
     const { branding, fechaTexto } = await this.getBranding(eleccionId);
 
     const dignidades = await this.prisma.dignidad.findMany({
@@ -297,6 +328,7 @@ export class ReportesService {
 
     const content: Content[] = [
       ...buildHeader(branding, 'ACTA DE RESULTADOS POR DIGNIDAD'),
+      buildFechaLugar(fechaTexto),
       {
         text: `Detalle de resultados por dignidad del proceso "${branding.eleccionNombre}", con corte al ${fechaTexto}.`,
         alignment: 'justify',
@@ -367,7 +399,117 @@ export class ReportesService {
       );
     }
 
+    content.push(
+      buildFirmas([
+        { rol: 'Presidente/a del Tribunal Electoral' },
+        { rol: 'Secretario/a del Tribunal Electoral' },
+      ]),
+    );
+
     return this.render(content, branding);
+  }
+
+  /**
+   * Instructivo de votacion en PDF, con el mismo membrete institucional que
+   * el resto de reportes. No depende de una eleccion puntual (se descarga
+   * desde la pagina publica de instructivo), asi que usa la marca por
+   * defecto en lugar de la Configuracion de una Eleccion.
+   */
+  async instructivoPdf(): Promise<Buffer> {
+    const colores = resolveColores(null);
+    const logo = await getDefaultLogoDataUri();
+    const branding: Branding = {
+      eleccionId: 'instructivo',
+      eleccionNombre: '',
+      nombreInstitucion: 'Instituto Superior Tecnológico Yavirac',
+      colorPrimario: colores.primario,
+      colorSecundario: colores.secundario,
+      colorAcento: colores.acento,
+      escudoDataUri: logo,
+      logoDataUri: logo,
+    };
+
+    const pasos: Array<{ titulo: string; detalle: string }> = [
+      {
+        titulo: '1. Ingrese al portal y presione VOTAR',
+        detalle:
+          'Desde la pagina de inicio, ubique el proceso electoral activo y presione el boton VOTAR para abrir el modulo de votacion.',
+      },
+      {
+        titulo: '2. Autentiquese con sus credenciales',
+        detalle:
+          'Escriba su numero de cedula (DNI) y la contrasena que recibio. Presione INGRESAR. Sus datos identifican que usted esta habilitado en el padron, pero su voto siempre sera secreto.',
+      },
+      {
+        titulo: '3. Lea cada cedula de votacion',
+        detalle:
+          'Vera una cedula por cada dignidad o cargo a elegir. En la parte superior se indica el cargo y cuantas opciones puede elegir.',
+      },
+      {
+        titulo: '4. Marque su preferencia',
+        detalle:
+          'Seleccione al candidato de su preferencia. Tambien puede elegir "Voto en blanco" o "Voto nulo". Si no marca ninguna opcion, se registrara como voto en blanco.',
+      },
+      {
+        titulo: '5. Avance por todas las cedulas',
+        detalle:
+          'Use el boton "Siguiente" para pasar a la proxima cedula, o "Anterior" para revisar la previa. La barra de progreso le indica cuantas cedulas faltan.',
+      },
+      {
+        titulo: '6. Revise y confirme su voto',
+        detalle:
+          'Al terminar vera un resumen de todas sus selecciones. Reviselo con cuidado y presione "Emitir mi voto". Esta accion no se puede deshacer.',
+      },
+      {
+        titulo: '7. Reciba la confirmacion',
+        detalle:
+          'Aparecera el mensaje "Su participacion ha sido registrada satisfactoriamente". Su voto ya fue contabilizado de forma secreta.',
+      },
+    ];
+
+    const tips: string[] = [
+      'Su voto es secreto: el sistema nunca asocia su identidad con la opcion marcada.',
+      'Solo puede votar una vez. Una vez emitido, no podra volver a ingresar.',
+      'Si olvido su contrasena o no consta en el padron, contacte al soporte tecnico del proceso.',
+      'Puede votar desde cualquier dispositivo con acceso a internet dentro del horario de la jornada.',
+    ];
+
+    const content: Content[] = [
+      ...buildHeader(branding, 'INSTRUCTIVO DE VOTACIÓN'),
+      {
+        text: 'Guia paso a paso para ejercer su voto en el sistema de Voto Electronico No Presencial (VENP).',
+        alignment: 'justify',
+        fontSize: 10,
+        margin: [0, 0, 0, 14],
+      },
+      ...pasos.flatMap((paso) => [
+        { text: paso.titulo, bold: true, fontSize: 11, margin: [0, 8, 0, 2] },
+        { text: paso.detalle, fontSize: 10, alignment: 'justify' },
+      ]),
+      {
+        text: 'Recomendaciones importantes',
+        bold: true,
+        fontSize: 12,
+        color: branding.colorPrimario,
+        margin: [0, 18, 0, 6],
+      },
+      {
+        ul: tips.map((tip) => ({ text: tip, fontSize: 10, margin: [0, 2, 0, 2] })),
+      },
+    ];
+
+    return this.render(content, branding);
+  }
+
+  private auditDescarga(eleccionId: string, reporte: string, actor: Actor) {
+    return this.auditoria.registrar({
+      tabla: AuditTabla.REPORTES,
+      operacion: AuditOperacion.DESCARGAR,
+      registroId: eleccionId,
+      datosNuevos: { reporte },
+      usuario: actor.user.usuario,
+      ip: actor.ip,
+    });
   }
 
   private async getBranding(eleccionId: string) {
@@ -396,9 +538,13 @@ export class ReportesService {
     });
     if (!eleccion) throw new NotFoundException('Eleccion no encontrada.');
 
-    const [escudoDataUri, logoDataUri] = await Promise.all([
+    // Si la eleccion no tiene escudo/logo propios configurados en
+    // Configuracion, se usa el logo institucional por defecto para que los
+    // reportes nunca salgan sin identidad visual.
+    const [escudoDataUri, logoDataUri, logoPorDefecto] = await Promise.all([
       fetchImageDataUri(eleccion.configuracion?.escudoUrl),
       fetchImageDataUri(eleccion.configuracion?.logoUrl),
+      getDefaultLogoDataUri(),
     ]);
 
     const colores = resolveColores(eleccion.configuracion);
@@ -410,8 +556,8 @@ export class ReportesService {
       colorPrimario: colores.primario,
       colorSecundario: colores.secundario,
       colorAcento: colores.acento,
-      escudoDataUri,
-      logoDataUri,
+      escudoDataUri: escudoDataUri ?? logoPorDefecto,
+      logoDataUri: logoDataUri ?? logoPorDefecto,
     };
 
     const fecha =
@@ -434,8 +580,15 @@ export class ReportesService {
 
   private render(content: Content[], branding: Branding): Promise<Buffer> {
     const docDefinition: TDocumentDefinitions = {
-      pageMargins: [40, 40, 40, 60],
+      pageSize: 'LETTER',
+      pageMargins: [
+        PAGE_MARGINS.left,
+        PAGE_MARGINS.top,
+        PAGE_MARGINS.right,
+        PAGE_MARGINS.bottom,
+      ],
       images: buildImagesDict(branding),
+      background: buildPageBackground(branding),
       footer: buildFooter(branding),
       defaultStyle: { fontSize: 10 },
       content,

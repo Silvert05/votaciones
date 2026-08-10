@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { SeguridadModule } from '../seguridad/seguridad.module';
 import { EleccionesController } from './elecciones.controller';
 import { EleccionesService } from './elecciones.service';
 
 @Module({
+  imports: [SeguridadModule],
   controllers: [EleccionesController],
   providers: [EleccionesService],
 })

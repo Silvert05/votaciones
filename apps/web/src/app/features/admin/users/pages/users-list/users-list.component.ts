@@ -159,7 +159,7 @@ export default class UsersListComponent implements OnInit {
       message: `Se va a ${accion} la cuenta “${user.usuario}”.`,
       confirmText: user.activo ? 'Desactivar' : 'Activar',
       danger: user.activo,
-      icon: 'heroicons_outline:user-circle',
+      icon: 'lucide:user-circle',
     }).subscribe((confirmed) => {
       if (!confirmed) return;
       this._usersService.setActivo(user.id, !user.activo).subscribe({

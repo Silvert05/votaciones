@@ -88,55 +88,55 @@ const routes: Routes = [
       },
       {
         path: 'elecciones',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./elections/pages/elections-list/elections-list.component')
       },
       {
         path: 'elecciones/configuracion',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./elections/pages/election-config/election-config.component')
       },
       {
         path: 'elecciones/cronograma',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./elections/pages/election-schedule/election-schedule.component')
       },
       {
         path: 'elecciones/dignidades',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./elections/pages/election-positions/election-positions.component')
       },
       {
         path: 'elecciones/electores',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./padron/pages/electores-list/electores-list.component')
       },
       {
         path: 'elecciones/padron',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./padron/pages/election-roll/election-roll.component')
       },
       {
         path: 'elecciones/listas',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./candidaturas/pages/listas/listas.component')
       },
       {
         path: 'elecciones/candidaturas',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./candidaturas/pages/candidaturas/candidaturas.component')
       },
       {
         path: 'elecciones/jornada',
-        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        canActivate: [optionGuard],
         loadComponent: () =>
           import('./jornada/pages/jornada/jornada.component')
       },

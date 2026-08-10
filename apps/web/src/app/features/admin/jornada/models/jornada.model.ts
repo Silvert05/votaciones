@@ -55,6 +55,7 @@ export interface JornadaEstado {
 
 export interface PasoPayload {
   reporte?: string;
+  forzar?: boolean;
 }
 
 export type IniciarVotacionPayload = PasoPayload;

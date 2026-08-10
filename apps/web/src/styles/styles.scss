@@ -12,6 +12,29 @@
     --fuse-on-accent: #ffffff;
 }
 
+/* Los iconos de Lucide solo vienen en trazo fino (no hay version "rellena"),
+   asi que se engrosa un poco el trazo para que no se vean genericos/debiles,
+   sobre todo dentro de las insignias de color del sitio publico. */
+.mat-icon svg {
+    stroke-width: 2.25;
+}
+
+/* El menu lateral (Fuse) atenua sus iconos a 60% de opacidad por defecto
+   (.fuse-vertical-navigation-item-icon { opacity: 60% }), lo que los hace ver
+   "perdidos" contra el fondo blanco. Se sube a opacidad completa siempre
+   (inofensivo: activo/hover ya pedian 100%), y se fuerza negro solido solo
+   en el estado de reposo (ni activo ni hover), sin tocar el blanco del item
+   activo ni el azul del hover, y sin tocar los iconos de las insignias de
+   color del sitio publico (blancos a proposito sobre fondos azul/naranja). */
+.fuse-vertical-navigation-item-icon {
+    opacity: 1 !important;
+}
+
+.fuse-vertical-navigation-item:not(.fuse-vertical-navigation-item-active):not(.fuse-vertical-navigation-item-active-forced):not(:hover)
+    .fuse-vertical-navigation-item-icon {
+    color: #0f172a !important;
+}
+
 .venp-gradient {
     position: relative;
     isolation: isolate;

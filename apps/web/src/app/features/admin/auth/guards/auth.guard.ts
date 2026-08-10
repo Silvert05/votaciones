@@ -26,12 +26,13 @@ export const noAuthGuard: CanActivateFn = () => {
     return true;
   }
 
-  return router.createUrlTree(['/admin/elecciones/jornada']);
+  return router.createUrlTree([authService.homeUrl()]);
 };
 
 /**
  * Restringe una ruta a los roles indicados. Si el usuario no tiene el rol,
- * se le redirige al dashboard. Úsalo como `roleGuard(['ADMIN'])`.
+ * se le redirige a una ruta segura para su usuario. Úsalo como
+ * `roleGuard(['ADMIN'])`.
  */
 export const roleGuard =
   (roles: Rol[]): CanActivateFn =>
@@ -44,7 +45,7 @@ export const roleGuard =
       return true;
     }
 
-    return router.createUrlTree(['/admin/elecciones/jornada']);
+    return router.createUrlTree([authService.homeUrl()]);
   };
 
 /** Restringe pantallas administrativas segun las rutas asignadas al perfil. */
@@ -56,5 +57,5 @@ export const optionGuard: CanActivateFn = (_route, state) => {
     return true;
   }
 
-  return router.createUrlTree(['/admin/elecciones/jornada']);
+  return router.createUrlTree([authService.homeUrl()]);
 };

@@ -1,11 +1,14 @@
 import { Component, Inject, OnInit, inject } from '@angular/core';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -19,6 +22,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { FuseAlertComponent, FuseAlertType } from '@core/components/alert';
 import { Perfil } from 'app/features/admin/security/models/security.model';
 import { SecurityService } from 'app/features/admin/security/services/security.service';
+import { Elector } from 'app/features/admin/padron/models/padron.model';
+import { PadronService } from 'app/features/admin/padron/services/padron.service';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
 
@@ -36,6 +42,8 @@ export interface UserFormData {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    MatButtonToggleModule,
+    MatAutocompleteModule,
     MatIconModule,
     MatProgressSpinnerModule,
     FuseAlertComponent,
@@ -53,9 +61,17 @@ export class UserFormDialog implements OnInit {
     message: '',
   };
 
+  /** Origen del usuario nuevo: a partir de un elector (por defecto) o manual. */
+  modo: 'elector' | 'manual' = 'elector';
+  electorSearchCtrl = new FormControl('');
+  electorResultados: Elector[] = [];
+  electorSeleccionado: Elector | null = null;
+  buscandoElectores = false;
+
   private _fb = inject(FormBuilder);
   private _usersService = inject(UsersService);
   private _securityService = inject(SecurityService);
+  private _padronService = inject(PadronService);
   private _dialogRef = inject(MatDialogRef<UserFormDialog>);
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: UserFormData) {}
@@ -86,9 +102,97 @@ export class UserFormDialog implements OnInit {
         this.perfiles = perfiles.filter((perfil) => perfil.activo);
       },
     });
+
+    if (!this.isEdit) {
+      this._actualizarEstadoControles();
+
+      this.electorSearchCtrl.valueChanges
+        .pipe(
+          debounceTime(300),
+          distinctUntilChanged(),
+          switchMap((termino) => {
+            const search = (termino ?? '').trim();
+            if (search.length < 2) {
+              this.buscandoElectores = false;
+              return [];
+            }
+            this.buscandoElectores = true;
+            return this._padronService.listElectores({
+              search,
+              limit: 8,
+              activo: true,
+            });
+          }),
+        )
+        .subscribe({
+          next: (res) => {
+            this.buscandoElectores = false;
+            this.electorResultados = res?.data ?? [];
+          },
+          error: () => {
+            this.buscandoElectores = false;
+            this.electorResultados = [];
+          },
+        });
+
+      this.form.get('usuario')?.valueChanges.subscribe((value) => {
+        if (this.electorSeleccionado) {
+          this.form.get('password')?.setValue(value, { emitEvent: false });
+        }
+      });
+    }
+  }
+
+  setModo(modo: 'elector' | 'manual'): void {
+    if (this.modo === modo) {
+      return;
+    }
+    this.modo = modo;
+    this.quitarElector();
+  }
+
+  seleccionarElector(elector: Elector): void {
+    this.electorSeleccionado = elector;
+    this.electorResultados = [];
+    this.electorSearchCtrl.setValue('', { emitEvent: false });
+
+    const usuarioGenerado = this._generarUsuario(
+      elector.apellidos,
+      elector.nombres,
+    );
+    this.form.patchValue({
+      nombre: `${elector.nombres} ${elector.apellidos}`,
+      email: elector.email ?? '',
+      usuario: usuarioGenerado,
+      password: usuarioGenerado,
+    });
+    this._actualizarEstadoControles();
+  }
+
+  quitarElector(): void {
+    this.electorSeleccionado = null;
+    this.electorResultados = [];
+    this.electorSearchCtrl.setValue('', { emitEvent: false });
+    if (this.modo === 'manual') {
+      this.form.patchValue({ nombre: '', usuario: '', password: '' });
+    }
+    this._actualizarEstadoControles();
   }
 
   save(): void {
+    if (
+      !this.isEdit &&
+      this.modo === 'elector' &&
+      !this.electorSeleccionado
+    ) {
+      this.alert = {
+        show: true,
+        type: 'error',
+        message: 'Selecciona un estudiante o profesor.',
+      };
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -112,6 +216,8 @@ export class UserFormDialog implements OnInit {
           password: v.password,
           rol: v.rol,
           perfilId: v.perfilId || null,
+          electorId:
+            this.modo === 'elector' ? this.electorSeleccionado?.id : null,
         });
 
     request$.subscribe({
@@ -131,5 +237,33 @@ export class UserFormDialog implements OnInit {
 
   cancel(): void {
     this._dialogRef.close();
+  }
+
+  private _actualizarEstadoControles(): void {
+    const derivadoDeElector = this.modo === 'elector';
+    const nombreCtrl = this.form.get('nombre');
+    const passwordCtrl = this.form.get('password');
+
+    if (derivadoDeElector) {
+      nombreCtrl?.disable();
+      passwordCtrl?.disable();
+    } else {
+      nombreCtrl?.enable();
+      passwordCtrl?.enable();
+    }
+  }
+
+  private _normalizar(texto: string): string {
+    return texto
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/[^a-z]/g, '');
+  }
+
+  private _generarUsuario(apellidos: string, nombres: string): string {
+    const primerApellido = this._normalizar(apellidos.split(' ')[0] ?? '');
+    const primerNombre = this._normalizar(nombres.split(' ')[0] ?? '');
+    return `${primerApellido.charAt(0)}${primerNombre}`;
   }
 }

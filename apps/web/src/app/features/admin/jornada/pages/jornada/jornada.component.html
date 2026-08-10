@@ -53,7 +53,7 @@
               [class.text-secondary]="paso.numero > pasoActual"
             >
               @if (pasoCompletado(paso.numero)) {
-              <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:check'" />
+              <mat-icon class="icon-size-5 text-white" [svgIcon]="'lucide:check'" />
               } @else {
               {{ paso.numero }}
               }
@@ -74,12 +74,13 @@
           <div class="text-2xl font-bold tabular-nums">{{ countdown }}</div>
         </div>
         }
-        <button matButton="tonal" type="button" [disabled]="working || !estado.jornada.votacionIniciadaAt || !!estado.jornada.votacionCerradaAt" (click)="reactivarLink()">
-          <mat-icon [svgIcon]="'heroicons_outline:link'" />
+        <button matButton="tonal" type="button" [disabled]="working || !estado.jornada.votacionIniciadaAt || !!estado.jornada.votacionCerradaAt" (click)="reactivarLink()"
+          matTooltip="Reactiva el acceso de los electores al link de votación si quedó desactivado manualmente. No afecta los votos ya registrados.">
+          <mat-icon [svgIcon]="'lucide:link'" />
           <span class="ml-1">Reactivar link</span>
         </button>
         <button matButton type="button" class="text-warn" [disabled]="working" (click)="reiniciar()">
-          <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" />
+          <mat-icon [svgIcon]="'lucide:refresh-cw'" />
           <span class="ml-1">Reiniciar jornada</span>
         </button>
       </div>
@@ -118,14 +119,14 @@
       <div class="text-2xl font-extrabold">1. INICIALIZAR JORNADA</div>
       <p class="text-secondary mt-1">Bloquea la configuracion y habilita el proceso.</p>
       <button matButton="filled" color="primary" class="mt-3" [disabled]="working" (click)="inicializar()">
-        <mat-icon [svgIcon]="'heroicons_solid:play'" /><span class="ml-1">Inicializar jornada</span>
+        <mat-icon [svgIcon]="'lucide:play'" /><span class="ml-1">Inicializar jornada</span>
       </button>
       }
       @case (2) {
       <div class="text-2xl font-extrabold">2. PUESTA A CERO</div>
       <p class="text-secondary mt-1">Verifica que no existan votos previos registrados.</p>
       <button matButton="filled" color="primary" class="mt-3" [disabled]="working" (click)="puestaCero()">
-        <mat-icon [svgIcon]="'heroicons_solid:scale'" /><span class="ml-1">Ejecutar puesta a cero</span>
+        <mat-icon [svgIcon]="'lucide:scale'" /><span class="ml-1">Ejecutar puesta a cero</span>
       </button>
       }
       @case (3) {
@@ -164,7 +165,7 @@
               [disabled]="working || estado.resumen.padronHabilitado === 0 || estado.resumen.correosInvalidos > 0"
               (click)="generarEnviarCredenciales()"
             >
-              <mat-icon [svgIcon]="'heroicons_solid:envelope'" />
+              <mat-icon [svgIcon]="'lucide:mail'" />
               <span class="ml-1">Generar y enviar credenciales</span>
             </button>
           </div>
@@ -189,15 +190,23 @@
         La votación se habilitará cuando llegue la fecha de inicio configurada en el cronograma.
       </p>
       }
-      <div>
+      <div class="flex flex-wrap items-center gap-2">
         <button
           matButton="filled"
           color="primary"
           [disabled]="working || !puedeIniciarPorFecha || estado.resumen.credencialesPendientes > 0 || estado.resumen.correosInvalidos > 0"
           (click)="iniciarVotacion()"
         >
-          <mat-icon [svgIcon]="'heroicons_solid:cursor-arrow-rays'" /><span class="ml-1">Iniciar votacion</span>
+          <mat-icon [svgIcon]="'lucide:mouse-pointer-click'" /><span class="ml-1">Iniciar votacion</span>
         </button>
+        @if (!puedeIniciarPorFecha) {
+        <button matButton="outlined" color="primary"
+          [disabled]="working || estado.resumen.credencialesPendientes > 0 || estado.resumen.correosInvalidos > 0"
+          (click)="iniciarVotacionAnticipada()"
+          matTooltip="Abre la votación ahora mismo, antes de la fecha programada en el cronograma">
+          <span class="ml-1">Iniciar anticipadamente</span>
+        </button>
+        }
       </div>
       }
       @case (4) {
@@ -208,9 +217,17 @@
       <div class="mt-2 text-sm font-medium">
         Cierre programado: {{ cierreProgramado ? (cierreProgramado | date: 'medium') : 'Pendiente en cronograma' }}
       </div>
-      <button matButton="filled" color="warn" class="mt-3" [disabled]="working || !puedeCerrarPorFecha" (click)="cerrarVotacion()">
-        <mat-icon [svgIcon]="'heroicons_solid:lock-closed'" /><span class="ml-1">Cerrar votacion</span>
-      </button>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <button matButton="filled" color="warn" [disabled]="working || !puedeCerrarPorFecha" (click)="cerrarVotacion()">
+          <mat-icon [svgIcon]="'lucide:lock'" /><span class="ml-1">Cerrar votacion</span>
+        </button>
+        @if (!puedeCerrarPorFecha) {
+        <button matButton="outlined" color="warn" [disabled]="working" (click)="cerrarVotacionAnticipada()"
+          matTooltip="Cierra la votación ahora mismo, antes de la fecha programada en el cronograma">
+          <span class="ml-1">Cerrar anticipadamente</span>
+        </button>
+        }
+      </div>
       }
       @case (5) {
       <div class="text-2xl font-extrabold">5. RESULTADOS ELECTORALES</div>
@@ -218,10 +235,18 @@
       <div class="mt-3 text-sm text-secondary">
         Fecha programada: {{ publicacionProgramada ? (publicacionProgramada | date: 'medium') : 'Pendiente en cronograma' }}
       </div>
-      <button matButton="filled" color="primary" class="mt-3" [disabled]="working || !puedePublicarPorFecha || !!estado.jornada.resultadosAt" (click)="generarResultados()">
-        <mat-icon [svgIcon]="'heroicons_solid:chart-bar'" />
-        <span class="ml-1">{{ estado.jornada.resultadosAt ? 'Resultados publicados' : 'Publicar resultados' }}</span>
-      </button>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <button matButton="filled" color="primary" [disabled]="working || !puedePublicarPorFecha || !!estado.jornada.resultadosAt" (click)="generarResultados()">
+          <mat-icon [svgIcon]="'lucide:chart-bar'" />
+          <span class="ml-1">{{ estado.jornada.resultadosAt ? 'Resultados publicados' : 'Publicar resultados' }}</span>
+        </button>
+        @if (!puedePublicarPorFecha && !estado.jornada.resultadosAt) {
+        <button matButton="outlined" color="primary" [disabled]="working" (click)="generarResultadosAnticipado()"
+          matTooltip="Publica los resultados ahora mismo, antes de la fecha programada en el cronograma">
+          <span class="ml-1">Publicar anticipadamente</span>
+        </button>
+        }
+      </div>
       }
       }
     </div>

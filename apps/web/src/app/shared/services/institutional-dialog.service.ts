@@ -1,4 +1,4 @@
-import { Component, Injectable, inject } from '@angular/core';
+import { Component, Injectable, NgZone, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -52,7 +52,7 @@ interface InstitutionalDialogData extends InstitutionalPromptOptions {
           [class.bg-blue-100]="!data.danger"
           [class.text-primary]="!data.danger"
         >
-          <mat-icon [svgIcon]="data.icon || (data.danger ? 'heroicons_outline:exclamation-triangle' : 'heroicons_outline:information-circle')" />
+          <mat-icon [svgIcon]="data.icon || (data.danger ? 'lucide:triangle-alert' : 'lucide:info')" />
         </span>
         <div class="min-w-0 flex-1">
           <h2 class="text-xl font-extrabold leading-7 text-default">{{ data.title }}</h2>
@@ -108,6 +108,7 @@ export class InstitutionalDialogComponent {
 @Injectable({ providedIn: 'root' })
 export class InstitutionalDialogService {
   private readonly dialog = inject(MatDialog);
+  private readonly ngZone = inject(NgZone);
 
   confirm(options: InstitutionalDialogOptions): Observable<boolean> {
     return this.open({ ...options, mode: 'confirm' }).pipe(map((value) => value === true));
@@ -120,7 +121,7 @@ export class InstitutionalDialogService {
   }
 
   private open(data: InstitutionalDialogData): Observable<unknown> {
-    return this.dialog.open(InstitutionalDialogComponent, {
+    const afterClosed = this.dialog.open(InstitutionalDialogComponent, {
       width: 'min(92vw, 520px)',
       maxWidth: '92vw',
       autoFocus: data.mode === 'prompt' ? 'textarea' : false,
@@ -128,5 +129,19 @@ export class InstitutionalDialogService {
       panelClass: 'institutional-dialog-panel',
       data,
     }).afterClosed();
+
+    // El cierre del dialogo puede quedar atado a la animacion de salida de
+    // Angular Material, que se ejecuta fuera de la zona de Angular. Sin este
+    // reingreso explicito, el estado que dependa de este resultado (por ej.
+    // disparar una peticion HTTP y reflejar su resultado en pantalla) no se
+    // repinta hasta que otro evento cualquiera fuerce un ciclo de deteccion.
+    return new Observable((subscriber) => {
+      const subscription = afterClosed.subscribe({
+        next: (value) => this.ngZone.run(() => subscriber.next(value)),
+        error: (err) => this.ngZone.run(() => subscriber.error(err)),
+        complete: () => this.ngZone.run(() => subscriber.complete()),
+      });
+      return () => subscription.unsubscribe();
+    });
   }
 }
