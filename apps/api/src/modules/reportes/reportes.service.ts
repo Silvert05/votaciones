@@ -80,7 +80,7 @@ export class ReportesService {
     });
 
     const content: Content[] = [
-      ...buildHeader(branding, 'ACTA DE PROCLAMACION DE RESULTADOS'),
+      ...buildHeader(branding, 'ACTA DE RESULTADOS POR LISTA'),
       buildFechaLugar(fechaTexto),
       {
         text: this.narrativaActa(branding, fechaTexto),
@@ -501,6 +501,91 @@ export class ReportesService {
     return this.render(content, branding);
   }
 
+  /**
+   * Certificado individual que acredita unicamente que el elector participo
+   * en la votacion, con el mismo membrete/estilo institucional que el resto
+   * de reportes (acta). No incluye la seleccion realizada (el voto es
+   * secreto): se busca por el id del VotoEmitido (codigo del comprobante)
+   * dentro de la eleccion, sin depender de la sesion del votante (la
+   * credencial ya fue revocada al momento de votar).
+   */
+  async comprobanteVotacionPdf(
+    eleccionId: string,
+    codigo: string,
+    ip?: string | null,
+  ): Promise<Buffer> {
+    const voto = await this.prisma.votoEmitido.findFirst({
+      where: { id: codigo, eleccionId },
+      select: {
+        createdAt: true,
+        elector: {
+          select: { identificacion: true, nombres: true, apellidos: true },
+        },
+      },
+    });
+    if (!voto) {
+      throw new NotFoundException('Comprobante de votacion no encontrado.');
+    }
+
+    const { branding } = await this.getBranding(eleccionId);
+    const fechaEmisionTexto = new Intl.DateTimeFormat('es-EC', {
+      dateStyle: 'long',
+      timeStyle: 'medium',
+      timeZone: 'America/Guayaquil',
+    }).format(voto.createdAt);
+    const fechaLugarTexto = new Intl.DateTimeFormat('es-EC', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Guayaquil',
+    }).format(voto.createdAt);
+
+    const content: Content[] = [
+      ...buildHeader(branding, 'CERTIFICADO DE VOTACIÓN'),
+      buildFechaLugar(fechaLugarTexto),
+      {
+        text: `El Tribunal Electoral de ${branding.nombreInstitucion} certifica que el/la elector/a ${voto.elector.nombres} ${voto.elector.apellidos}, con cedula de identidad N.° ${voto.elector.identificacion}, ejercio su derecho al voto de forma electronica no presencial dentro del proceso "${branding.eleccionNombre}", quedando registrada su participacion de conformidad con el padron electoral habilitado.`,
+        alignment: 'justify',
+        fontSize: 10,
+        margin: [0, 0, 0, 16],
+      },
+      tablaSimple(
+        ['Apellidos y Nombres', 'Cédula de Identidad', 'Fecha y Hora de Emisión'],
+        [
+          [
+            { text: `${voto.elector.apellidos} ${voto.elector.nombres}` },
+            { text: voto.elector.identificacion, alignment: 'center' },
+            { text: fechaEmisionTexto, alignment: 'center' },
+          ],
+        ],
+      ),
+      {
+        text: 'Este documento certifica unicamente la participacion del elector. No contiene ni permite identificar la seleccion realizada; el voto es secreto.',
+        italics: true,
+        fontSize: 9,
+        color: '#475569',
+        alignment: 'center',
+        margin: [0, 6, 0, 10],
+      },
+      buildFirmas([
+        { rol: 'Presidente/a del Tribunal Electoral' },
+        { rol: 'Secretario/a del Tribunal Electoral' },
+      ]),
+    ];
+
+    await this.auditoria.registrar({
+      tabla: AuditTabla.VOTOS_EMITIDOS,
+      operacion: AuditOperacion.DESCARGAR,
+      registroId: codigo,
+      datosNuevos: { reporte: 'comprobante-votacion' },
+      usuario: voto.elector.identificacion,
+      ip,
+    });
+
+    return this.render(content, branding);
+  }
+
   private auditDescarga(eleccionId: string, reporte: string, actor: Actor) {
     return this.auditoria.registrar({
       tabla: AuditTabla.REPORTES,
@@ -526,12 +611,6 @@ export class ReportesService {
             colorPrimario: true,
             colorSecundario: true,
             colorAcento: true,
-          },
-        },
-        cronograma: {
-          select: {
-            fechaFinVotacion: true,
-            fechaPublicacionResultados: true,
           },
         },
       },
@@ -560,16 +639,16 @@ export class ReportesService {
       logoDataUri: logoDataUri ?? logoPorDefecto,
     };
 
-    const fecha =
-      eleccion.cronograma?.fechaFinVotacion ??
-      eleccion.cronograma?.fechaPublicacionResultados ??
-      new Date();
+    // La fecha del acta siempre es la fecha real de generacion/impresion
+    // del reporte (no una fecha guardada en el cronograma), para que nunca
+    // quede desactualizada al volver a descargar un reporte mas adelante.
     const fechaTexto = new Intl.DateTimeFormat('es-EC', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
       year: 'numeric',
-    }).format(fecha);
+      timeZone: 'America/Guayaquil',
+    }).format(new Date());
 
     return { branding, fechaTexto };
   }

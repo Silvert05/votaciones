@@ -104,4 +104,27 @@ export class PublicoController {
   ) {
     return this.votacionService.emitirVotante(eleccionId, electorId, dto, ip);
   }
+
+  @Get('elecciones/:id/comprobante/:codigo/pdf')
+  @ApiOperation({
+    summary: 'Descargar el certificado de votacion del elector (PDF)',
+  })
+  async comprobantePdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('codigo', ParseUUIDPipe) codigo: string,
+    @Res() res: Response,
+    @Ip() ip: string,
+  ) {
+    const buffer = await this.reportesService.comprobanteVotacionPdf(
+      id,
+      codigo,
+      ip,
+    );
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="certificado-votacion-${codigo}.pdf"`,
+    );
+    res.send(buffer);
+  }
 }

@@ -104,6 +104,25 @@
           </div>
         </div>
 
+        <!-- Lista lider (dignidades de plancha, Art. 16) -->
+        @if (listaLiderPlancha) {
+        <div class="venp-premium-card flex flex-wrap items-center gap-4 overflow-hidden p-5">
+          <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow"
+            [style.background]="listaLiderPlancha.color">
+            <mat-icon [svgIcon]="'lucide:trophy'" />
+          </span>
+          <div class="min-w-0 flex-auto">
+            <p class="venp-section-kicker venp-text-secondary">Lista con más votos en esta plancha</p>
+            <p class="mt-0.5 truncate text-lg font-black">{{ listaLiderPlancha.detalle }}</p>
+          </div>
+          <p class="text-secondary max-w-xs text-xs leading-relaxed">
+            Esta dignidad se vota en plancha junto con las demás de este proceso: se elige una lista completa,
+            por eso la participación coincide entre todas ellas.
+          </p>
+        </div>
+        }
+
         <!-- Gráfico ApexCharts -->
         <div class="venp-premium-card relative overflow-hidden p-4 sm:p-7">
           <span class="venp-brand-rule absolute inset-x-0 top-0"></span>

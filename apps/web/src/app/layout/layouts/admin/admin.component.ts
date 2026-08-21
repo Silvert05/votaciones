@@ -14,6 +14,7 @@ import {
   FuseNavigationService,
   FuseVerticalNavigationComponent,
 } from '@core/components/navigation';
+import { FuseStickyScrollBlockFixDirective } from '@core/directives/sticky-scroll-block-fix';
 import { FuseMediaWatcherService } from '@core/services/media-watcher';
 import { AuthService } from 'app/features/admin/auth/services/auth.service';
 import { UserComponent } from 'app/layout/common/user/user.component';
@@ -26,6 +27,7 @@ import { Subject, takeUntil } from 'rxjs';
   imports: [
     FuseLoadingBarComponent,
     FuseVerticalNavigationComponent,
+    FuseStickyScrollBlockFixDirective,
     MatButtonModule,
     MatIconModule,
     UserComponent,

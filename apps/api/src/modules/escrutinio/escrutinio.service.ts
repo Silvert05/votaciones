@@ -153,6 +153,7 @@ export class EscrutinioService {
         orden: true,
         vuelta: true,
         pausadaSegundaVuelta: true,
+        requiereLista: true,
       },
     });
     const actas = await this.prisma.actaEscrutinio.findMany({
@@ -197,6 +198,7 @@ export class EscrutinioService {
           orden: true,
           vuelta: true,
           cantidadGanadores: true,
+          requiereLista: true,
         },
       });
       if (!dignidades.length) {
@@ -214,6 +216,9 @@ export class EscrutinioService {
       const actasProcesadas: string[] = [];
       for (const [index, dignidad] of dignidades.entries()) {
         const detalle = await this.buildDetalleActa(tx, eleccionId, dignidad.id);
+        if (dignidad.vuelta > 1 && dignidad.requiereLista) {
+          this.aplicarBlancosASegundaVuelta(detalle);
+        }
         const totalVotantes = await tx.votoEmitido.count({
           where: { eleccionId, dignidadId: dignidad.id },
         });
@@ -393,6 +398,13 @@ export class EscrutinioService {
     return this.resumen(eleccionId);
   }
 
+  /**
+   * Art. 18 del Reglamento: si la dignidad empatada requiere lista (voto en
+   * plancha, Art. 16), la segunda vuelta debe reabrir TODAS las dignidades
+   * de esa plancha a la vez (no solo la dignidad indicada), porque se vota
+   * una lista completa. Las dignidades sin lista siguen reabriendose de
+   * forma individual, como antes.
+   */
   async iniciarSegundaVuelta(
     eleccionId: string,
     dignidadId: string,
@@ -402,62 +414,95 @@ export class EscrutinioService {
     const eleccion = await this.getEleccion(eleccionId);
     const dignidad = await this.prisma.dignidad.findFirst({
       where: { id: dignidadId, eleccionId },
-      select: { id: true, nombre: true, vuelta: true, activo: true },
+      select: {
+        id: true,
+        nombre: true,
+        vuelta: true,
+        activo: true,
+        requiereLista: true,
+      },
     });
     if (!dignidad) {
       throw new NotFoundException('Dignidad no encontrada en esta eleccion.');
     }
 
-    const acta = await this.prisma.actaEscrutinio.findUnique({
-      where: {
-        eleccionId_dignidadId_vuelta: {
-          eleccionId,
-          dignidadId,
-          vuelta: dignidad.vuelta,
-        },
+    const grupo = dignidad.requiereLista
+      ? await this.prisma.dignidad.findMany({
+          where: { eleccionId, requiereLista: true },
+          select: { id: true, nombre: true, vuelta: true },
+        })
+      : [{ id: dignidad.id, nombre: dignidad.nombre, vuelta: dignidad.vuelta }];
+
+    const actas = await this.prisma.actaEscrutinio.findMany({
+      where: { eleccionId, dignidadId: { in: grupo.map((d) => d.id) } },
+      select: {
+        dignidadId: true,
+        vuelta: true,
+        estado: true,
+        empatado: true,
+        empateCandidaturaIds: true,
       },
-      select: { id: true, estado: true, empatado: true, empateCandidaturaIds: true },
     });
-    if (!acta || acta.estado !== EstadoActaEscrutinio.APROBADA) {
-      throw new BadRequestException(
-        'Solo se puede iniciar una segunda vuelta desde un acta aprobada.',
+
+    const dignidadesConEmpate = grupo.map((d) => {
+      const acta = actas.find(
+        (a) => a.dignidadId === d.id && a.vuelta === d.vuelta,
       );
-    }
-    if (!acta.empatado || !acta.empateCandidaturaIds.length) {
-      throw new BadRequestException(
-        'Esta dignidad no presenta un empate que requiera segunda vuelta.',
-      );
-    }
+      if (!acta || acta.estado !== EstadoActaEscrutinio.APROBADA) {
+        throw new BadRequestException(
+          `Solo se puede iniciar una segunda vuelta desde un acta aprobada ("${d.nombre}").`,
+        );
+      }
+      if (!acta.empatado || !acta.empateCandidaturaIds.length) {
+        throw new BadRequestException(
+          dignidad.requiereLista
+            ? `La dignidad "${d.nombre}" de la plancha no presenta un empate que requiera segunda vuelta.`
+            : 'Esta dignidad no presenta un empate que requiera segunda vuelta.',
+        );
+      }
+      return {
+        id: d.id,
+        nombre: d.nombre,
+        vuelta: d.vuelta,
+        empatadosIds: acta.empateCandidaturaIds,
+      };
+    });
 
     const plazoHoras = dto.plazoHoras ?? 72;
     const fechaFinVotacion = new Date(Date.now() + plazoHoras * 60 * 60 * 1000);
-    const empatadosIds = acta.empateCandidaturaIds;
+    const grupoIds = dignidadesConEmpate.map((d) => d.id);
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.candidatura.updateMany({
-        where: {
-          eleccionId,
-          dignidadId,
-          estado: EstadoCandidatura.CALIFICADA,
-          id: { notIn: empatadosIds },
-        },
-        data: { excluidaSegundaVuelta: true },
-      });
+      for (const item of dignidadesConEmpate) {
+        await tx.candidatura.updateMany({
+          where: {
+            eleccionId,
+            dignidadId: item.id,
+            estado: EstadoCandidatura.CALIFICADA,
+            id: { notIn: item.empatadosIds },
+          },
+          data: { excluidaSegundaVuelta: true },
+        });
 
-      await tx.votoEmitido.deleteMany({ where: { eleccionId, dignidadId } });
-      await tx.conteoVoto.deleteMany({ where: { eleccionId, dignidadId } });
-      await tx.$executeRaw(Prisma.sql`
-        DELETE FROM "conteos_votos_carrera"
-        WHERE "eleccion_id" = ${eleccionId}::uuid AND "dignidad_id" = ${dignidadId}::uuid
-      `);
+        await tx.votoEmitido.deleteMany({
+          where: { eleccionId, dignidadId: item.id },
+        });
+        await tx.conteoVoto.deleteMany({
+          where: { eleccionId, dignidadId: item.id },
+        });
+        await tx.$executeRaw(Prisma.sql`
+          DELETE FROM "conteos_votos_carrera"
+          WHERE "eleccion_id" = ${eleccionId}::uuid AND "dignidad_id" = ${item.id}::uuid
+        `);
 
-      await tx.dignidad.update({
-        where: { id: dignidadId },
-        data: { vuelta: { increment: 1 } },
-      });
+        await tx.dignidad.update({
+          where: { id: item.id },
+          data: { vuelta: { increment: 1 } },
+        });
+      }
 
       await tx.dignidad.updateMany({
-        where: { eleccionId, id: { not: dignidadId }, activo: true },
+        where: { eleccionId, id: { notIn: grupoIds }, activo: true },
         data: { activo: false, pausadaSegundaVuelta: true },
       });
 
@@ -466,9 +511,10 @@ export class EscrutinioService {
         data: { linkVotacionActivo: true, fechaFinVotacion },
       });
 
-      if (
-        eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA
-      ) {
+      if (eleccion.estado !== EstadoEleccion.VOTACION_ABIERTA) {
+        const nombresGrupo = dignidadesConEmpate
+          .map((d) => `"${d.nombre}"`)
+          .join(', ');
         await tx.eleccion.update({
           where: { id: eleccionId },
           data: { estado: EstadoEleccion.VOTACION_ABIERTA },
@@ -478,7 +524,7 @@ export class EscrutinioService {
             eleccionId,
             estadoAnterior: eleccion.estado,
             estadoNuevo: EstadoEleccion.VOTACION_ABIERTA,
-            comentario: `Reapertura de votacion para segunda vuelta (Art. 18) en dignidad "${dignidad.nombre}"`,
+            comentario: `Reapertura de votacion para segunda vuelta (Art. 18) en dignidad(es) ${nombresGrupo}`,
             usuario: actor.user.usuario,
           },
         });
@@ -490,8 +536,20 @@ export class EscrutinioService {
       AuditOperacion.ESTADO,
       dignidadId,
       {
-        datosAnteriores: { vuelta: dignidad.vuelta, empatadosIds },
-        datosNuevos: { vuelta: dignidad.vuelta + 1, fechaFinVotacion },
+        datosAnteriores: {
+          dignidades: dignidadesConEmpate.map((d) => ({
+            id: d.id,
+            vuelta: d.vuelta,
+            empatadosIds: d.empatadosIds,
+          })),
+        },
+        datosNuevos: {
+          dignidades: dignidadesConEmpate.map((d) => ({
+            id: d.id,
+            vuelta: d.vuelta + 1,
+          })),
+          fechaFinVotacion,
+        },
         actor,
       },
     );
@@ -933,6 +991,25 @@ export class EscrutinioService {
   ): string {
     const base = `ACT-${eleccionId.slice(0, 8).toUpperCase()}-${String(orden + 1).padStart(3, '0')}`;
     return vuelta > 1 ? `${base}-V${vuelta}` : base;
+  }
+
+  /**
+   * Art. 18: en la segunda vuelta de una dignidad de plancha, los votos en
+   * blanco se suman a la lista (candidato) con mas votacion para la
+   * proclamacion de resultados. El conteo original de blancos se conserva
+   * en el acta como dato informativo; solo se ajusta el total del candidato
+   * lider, que es el que determina ganador/empate y queda persistido en el
+   * detalle del acta.
+   */
+  private aplicarBlancosASegundaVuelta(detalle: DetalleActaGenerado[]): void {
+    const blanco = detalle.find((item) => item.tipo === TipoVoto.BLANCO);
+    if (!blanco || blanco.total <= 0) return;
+    const candidatos = detalle.filter((item) => item.tipo === TipoVoto.CANDIDATO);
+    if (!candidatos.length) return;
+    const lider = candidatos.reduce((max, item) =>
+      item.total > max.total ? item : max,
+    );
+    lider.total += blanco.total;
   }
 
   /**

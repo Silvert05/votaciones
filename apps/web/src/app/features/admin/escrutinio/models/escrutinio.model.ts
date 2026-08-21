@@ -91,7 +91,7 @@ export interface ResultadoFinalDignidad {
 export interface EscrutinioResumen {
   eleccion: Pick<Eleccion, 'id' | 'nombre' | 'estado'>;
   padronHabilitado: number;
-  dignidades: Array<Pick<Dignidad, 'id' | 'nombre' | 'cantidadGanadores' | 'orden'>>;
+  dignidades: Array<Pick<Dignidad, 'id' | 'nombre' | 'cantidadGanadores' | 'orden' | 'requiereLista'>>;
   actas: ActaEscrutinio[];
   impugnaciones: ImpugnacionResultado[];
   resultados: ResultadoFinalDignidad[];

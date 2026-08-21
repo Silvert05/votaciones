@@ -188,7 +188,7 @@ export class PublicoService {
       this.prisma.dignidad.findMany({
         where: { eleccionId, activo: true },
         orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-        select: { id: true, nombre: true },
+        select: { id: true, nombre: true, requiereLista: true },
       }),
     ]);
 
@@ -196,11 +196,34 @@ export class PublicoService {
       dignidades.map(async (d) => ({
         dignidadId: d.id,
         nombre: d.nombre,
+        requiereLista: d.requiereLista,
         total: await this.prisma.votoEmitido.count({
           where: { eleccionId, dignidadId: d.id },
         }),
       })),
     );
+
+    // Las dignidades que requieren lista se votan en una sola plancha (Art.
+    // 16), por lo que su participacion siempre coincide: se consolidan en
+    // una sola fila para no repetir el mismo dato varias veces.
+    const dePlancha = emitidosPorDignidad.filter((d) => d.requiereLista);
+    const individuales = emitidosPorDignidad.filter((d) => !d.requiereLista);
+    const dignidadesConsolidadas = [
+      ...(dePlancha.length
+        ? [
+            {
+              dignidadId: 'plancha',
+              nombre: `Plancha: ${this.listarConY(dePlancha.map((d) => d.nombre))}`,
+              total: dePlancha[0].total,
+            },
+          ]
+        : []),
+      ...individuales.map((d) => ({
+        dignidadId: d.dignidadId,
+        nombre: d.nombre,
+        total: d.total,
+      })),
+    ];
 
     const porcentaje = padronHabilitado
       ? Math.round((votantes / padronHabilitado) * 10000) / 100
@@ -211,8 +234,13 @@ export class PublicoService {
       padronHabilitado,
       votantes,
       porcentaje,
-      dignidades: emitidosPorDignidad,
+      dignidades: dignidadesConsolidadas,
     };
+  }
+
+  private listarConY(items: string[]): string {
+    if (items.length <= 1) return items.join('');
+    return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
   }
 
   private mapPublic(

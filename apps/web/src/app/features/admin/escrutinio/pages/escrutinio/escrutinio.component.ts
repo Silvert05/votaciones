@@ -209,9 +209,21 @@ export default class EscrutinioComponent implements OnInit {
   iniciarSegundaVuelta(acta: ActaEscrutinio): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
+    const dignidad = this.resumen?.dignidades.find((d) => d.id === acta.dignidadId);
+    const esPlancha = dignidad?.requiereLista ?? false;
+    const otrasDePlancha = esPlancha
+      ? this.resumen?.dignidades.filter((d) => d.requiereLista && d.id !== acta.dignidadId) ?? []
+      : [];
+    const message = esPlancha
+      ? `La dignidad "${acta.dignidad.nombre}" es de lista (voto en plancha) y presenta un empate (Art. 18). Se reabrirá la votación para las candidaturas empatadas ${
+          otrasDePlancha.length
+            ? `en esta y en las demás dignidades de la misma plancha (${otrasDePlancha.map((d) => d.nombre).join(', ')}) `
+            : ''
+        }por un máximo de 72 horas, y se pausarán las dignidades ajenas a la plancha mientras tanto.`
+      : `La dignidad "${acta.dignidad.nombre}" presenta un empate (Art. 18). Se reabrirá la votación únicamente para las candidaturas empatadas por un máximo de 72 horas y se pausarán las demás dignidades mientras tanto.`;
     this._institutionalDialog.confirm({
       title: 'Iniciar segunda vuelta',
-      message: `La dignidad "${acta.dignidad.nombre}" presenta un empate (Art. 18). Se reabrirá la votación únicamente para las candidaturas empatadas por un máximo de 72 horas y se pausarán las demás dignidades mientras tanto.`,
+      message,
       confirmText: 'Iniciar segunda vuelta',
       danger: true,
       icon: 'lucide:refresh-ccw-dot',

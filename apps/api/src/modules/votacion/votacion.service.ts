@@ -229,7 +229,7 @@ export class VotacionService {
     );
     const dignidades = await this.prisma.dignidad.findMany({
       where: { eleccionId, activo: true },
-      select: { id: true, nombre: true },
+      select: { id: true, nombre: true, requiereLista: true },
     });
     if (!dignidades.length) {
       throw new BadRequestException('La eleccion no tiene dignidades activas.');
@@ -248,14 +248,17 @@ export class VotacionService {
       );
     }
 
+    const listaIdsPorDignidad = new Map<string, string | null>();
     for (const voto of dto.votos) {
       if (!dignidadIds.has(voto.dignidadId)) {
         throw new BadRequestException(
           'Una dignidad no pertenece a la eleccion.',
         );
       }
-      await this.validateSeleccion(eleccionId, voto);
+      const listaId = await this.validateSeleccion(eleccionId, voto);
+      listaIdsPorDignidad.set(voto.dignidadId, listaId);
     }
+    this.validateConsistenciaPlancha(dignidades, listaIdsPorDignidad);
 
     const yaVoto = await this.prisma.votoEmitido.findFirst({
       where: { eleccionId, electorId: elector.id },
@@ -347,7 +350,7 @@ export class VotacionService {
     const dignidades = await this.prisma.dignidad.findMany({
       where: { eleccionId, activo: true },
       orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-      select: { id: true, nombre: true, cantidadGanadores: true },
+      select: { id: true, nombre: true, cantidadGanadores: true, requiereLista: true },
     });
     const conteos = await this.prisma.conteoVoto.findMany({
       where: { eleccionId },
@@ -572,7 +575,7 @@ export class VotacionService {
         activo: true,
         OR: this.dignidadesElegiblesWhere(elector.elector.tipo),
       },
-      select: { id: true },
+      select: { id: true, requiereLista: true },
     });
     if (!dignidades.length) {
       throw new BadRequestException(
@@ -590,14 +593,17 @@ export class VotacionService {
         'Debe registrar una seleccion por cada cedula.',
       );
     }
+    const listaIdsPorDignidad = new Map<string, string | null>();
     for (const voto of dto.votos) {
       if (!dignidadIds.has(voto.dignidadId)) {
         throw new BadRequestException(
           'Una cedula no corresponde a este elector.',
         );
       }
-      await this.validateSeleccion(eleccionId, voto);
+      const listaId = await this.validateSeleccion(eleccionId, voto);
+      listaIdsPorDignidad.set(voto.dignidadId, listaId);
     }
+    this.validateConsistenciaPlancha(dignidades, listaIdsPorDignidad);
 
     const yaVoto = await this.prisma.votoEmitido.findFirst({
       where: { eleccionId, electorId },
@@ -942,10 +948,15 @@ export class VotacionService {
     return padron.elector;
   }
 
+  /**
+   * Valida una seleccion individual y devuelve el listaId de la candidatura
+   * elegida (o null para blanco/nulo), usado luego por
+   * validateConsistenciaPlancha para exigir voto en plancha (Art. 16).
+   */
   private async validateSeleccion(
     eleccionId: string,
     voto: { dignidadId: string; tipo: TipoVoto; candidaturaId?: string | null },
-  ) {
+  ): Promise<string | null> {
     if (voto.tipo === TipoVoto.CANDIDATO) {
       if (!voto.candidaturaId) {
         throw new BadRequestException(
@@ -960,19 +971,45 @@ export class VotacionService {
           estado: EstadoCandidatura.CALIFICADA,
           excluidaSegundaVuelta: false,
         },
-        select: { id: true },
+        select: { id: true, listaId: true },
       });
       if (!candidatura) {
         throw new BadRequestException(
           'La candidatura seleccionada no esta calificada.',
         );
       }
-      return;
+      return candidatura.listaId;
     }
 
     if (voto.candidaturaId) {
       throw new BadRequestException(
         'El voto blanco o nulo no debe tener candidatura.',
+      );
+    }
+    return null;
+  }
+
+  /**
+   * Art. 16 del Reglamento de Elecciones: el elector marca una sola lista
+   * completa para las dignidades que la requieren (voto en plancha), no
+   * candidatos independientes por dignidad. Los votos en blanco/nulo dentro
+   * del grupo no violan la regla (cubren tanto "blanco/nulo de toda la
+   * plancha" como el relleno automatico cuando la lista elegida no inscribio
+   * candidato en alguna dignidad del grupo).
+   */
+  private validateConsistenciaPlancha(
+    dignidades: Array<{ id: string; requiereLista: boolean }>,
+    listaIdsPorDignidad: Map<string, string | null>,
+  ): void {
+    const listasElegidas = new Set(
+      dignidades
+        .filter((d) => d.requiereLista)
+        .map((d) => listaIdsPorDignidad.get(d.id))
+        .filter((listaId): listaId is string => Boolean(listaId)),
+    );
+    if (listasElegidas.size > 1) {
+      throw new BadRequestException(
+        'El voto para las dignidades de lista debe corresponder a una sola lista electoral.',
       );
     }
   }

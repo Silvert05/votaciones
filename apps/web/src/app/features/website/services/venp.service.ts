@@ -122,6 +122,7 @@ export interface ResultadosPublicos {
         id: string;
         nombre: string;
         cantidadGanadores: number;
+        requiereLista: boolean;
     }>;
     emitidos: Array<{ dignidadId: string; total: number }>;
     conteos: Array<{
@@ -285,5 +286,15 @@ export class VenpService {
         return this._http.get('/publico/instructivo', {
             responseType: 'blob',
         });
+    }
+
+    descargarComprobantePdf(
+        eleccionId: string,
+        codigo: string
+    ): Observable<Blob> {
+        return this._http.get(
+            `/publico/elecciones/${eleccionId}/comprobante/${codigo}/pdf`,
+            { responseType: 'blob' }
+        );
     }
 }

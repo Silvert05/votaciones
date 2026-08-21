@@ -13,6 +13,10 @@
         <mat-icon [svgIcon]="'lucide:badge-check'" />
         <span class="ml-1">Publicar</span>
       </button>
+      <button matButton="tonal" type="button" (click)="reenviarPendientes()" [disabled]="!selectedEleccionCtrl.value">
+        <mat-icon [svgIcon]="'lucide:mail'" />
+        <span class="ml-1">Reenviar pendientes</span>
+      </button>
     </div>
   </div>
 
@@ -152,6 +156,10 @@
               <button mat-menu-item (click)="edit(p)">
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
                 <span>Editar estado</span>
+              </button>
+              <button mat-menu-item (click)="enviarCredencial(p)" [disabled]="!p.elector.email">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:mail'" />
+                <span>Reenviar credencial</span>
               </button>
             </mat-menu>
           </td>

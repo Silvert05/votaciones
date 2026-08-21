@@ -150,6 +150,18 @@ export default class ResultadosComponent implements OnInit {
         return (this.emitidosDignidad / padron) * 100;
     }
 
+    /**
+     * Lista con mas votos en la dignidad seleccionada. Solo aplica a
+     * dignidades de plancha (Art. 16): ahi todas las dignidades de la misma
+     * plancha comparten exactamente la misma participacion y el mismo
+     * ganador por lista, por eso los porcentajes coinciden entre ellas.
+     */
+    get listaLiderPlancha(): FilaResultado | null {
+        if (!this.dignidadSel?.requiereLista) return null;
+        const candidatos = this.filas.filter((f) => f.detalle);
+        return candidatos.length ? candidatos[0] : null;
+    }
+
     get filas(): FilaResultado[] {
         if (!this.resultados) return [];
         const conteos = this.resultados.conteos.filter(
