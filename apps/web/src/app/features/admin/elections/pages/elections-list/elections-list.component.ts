@@ -202,9 +202,13 @@ export default class ElectionsListComponent implements OnInit {
   }
 
   cambiarEstado(eleccion: Eleccion, estado: EstadoEleccion): void {
+    const message =
+      estado === 'POSESIONADA'
+        ? `La elección pasará de ${this.label(eleccion.estado)} a Posesionada (Art. 22). Esto es definitivo: se publicará en el sitio público el acta de posesión con las autoridades electas de cada dignidad.`
+        : `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`;
     this._institutionalDialog.prompt({
       title: 'Cambiar etapa de la elección',
-      message: `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`,
+      message,
       inputLabel: 'Comentario del cambio',
       confirmText: 'Cambiar etapa',
       icon: 'lucide:refresh-ccw-dot',

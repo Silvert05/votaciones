@@ -32,6 +32,15 @@ interface FilaResultado {
     porcentaje: number;
 }
 
+interface AutoridadElecta {
+    dignidad: string;
+    nombre: string;
+    fotoUrl: string | null;
+    listaCodigo: string | null;
+    listaNombre: string | null;
+    listaColor: string | null;
+}
+
 @Component({
     selector: 'app-resultados',
     imports: [
@@ -155,11 +164,39 @@ export default class ResultadosComponent implements OnInit {
      * dignidades de plancha (Art. 16): ahi todas las dignidades de la misma
      * plancha comparten exactamente la misma participacion y el mismo
      * ganador por lista, por eso los porcentajes coinciden entre ellas.
+     * Se oculta una vez posesionada la eleccion, porque en ese punto ya se
+     * muestra el acta de posesion formal (ver `autoridadesElectas`).
      */
     get listaLiderPlancha(): FilaResultado | null {
-        if (!this.dignidadSel?.requiereLista) return null;
+        if (!this.dignidadSel?.requiereLista || this.posesionada) return null;
         const candidatos = this.filas.filter((f) => f.detalle);
         return candidatos.length ? candidatos[0] : null;
+    }
+
+    /** Art. 22: una vez posesionadas las autoridades, el resultado ya es oficial y definitivo. */
+    get posesionada(): boolean {
+        return this.resultados?.eleccion.estado === 'POSESIONADA';
+    }
+
+    /** Autoridad con mas votos en cada dignidad, para el acta de posesion (Art. 22). */
+    get autoridadesElectas(): AutoridadElecta[] {
+        if (!this.resultados) return [];
+        return this.resultados.dignidades
+            .map((d) => {
+                const ganador = this.resultados!.conteos
+                    .filter((c) => c.dignidadId === d.id && c.tipo === 'CANDIDATO')
+                    .sort((a, b) => b.total - a.total)[0];
+                if (!ganador?.candidatura) return null;
+                return {
+                    dignidad: d.nombre,
+                    nombre: `${ganador.candidatura.elector.apellidos} ${ganador.candidatura.elector.nombres}`,
+                    fotoUrl: ganador.candidatura.elector.fotoUrl,
+                    listaCodigo: ganador.candidatura.lista?.codigo ?? null,
+                    listaNombre: ganador.candidatura.lista?.nombre ?? null,
+                    listaColor: ganador.candidatura.lista?.color ?? null,
+                } satisfies AutoridadElecta;
+            })
+            .filter((a): a is AutoridadElecta => a !== null);
     }
 
     get filas(): FilaResultado[] {

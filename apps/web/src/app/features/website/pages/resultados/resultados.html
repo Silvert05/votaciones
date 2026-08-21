@@ -42,6 +42,40 @@
       </div>
     </div>
 
+    <!-- Acta de posesión (Art. 22): autoridades electas y posesionadas -->
+    @if (posesionada && autoridadesElectas.length) {
+    <div class="venp-premium-card relative mt-6 overflow-hidden p-6 sm:p-8">
+      <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+      <div class="flex items-center gap-3">
+        <span class="venp-bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg">
+          <mat-icon [svgIcon]="'lucide:badge-check'" />
+        </span>
+        <div>
+          <p class="venp-section-kicker venp-text-secondary">Acta de posesión — Art. 22</p>
+          <h2 class="text-xl font-black sm:text-2xl">Autoridades electas y posesionadas</h2>
+        </div>
+      </div>
+      <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (autoridad of autoridadesElectas; track autoridad.dignidad) {
+        <div class="venp-soft-panel flex items-center gap-3 p-4">
+          <img [src]="autoridad.fotoUrl || '/img/avatar-placeholder.svg'" [alt]="autoridad.nombre"
+            class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white dark:ring-gray-700" />
+          <div class="min-w-0">
+            <div class="text-secondary text-[11px] font-bold uppercase tracking-wide">{{ autoridad.dignidad }}</div>
+            <div class="truncate text-sm font-black">{{ autoridad.nombre }}</div>
+            @if (autoridad.listaCodigo) {
+            <div class="mt-0.5 flex items-center gap-1.5 text-xs font-semibold" [style.color]="autoridad.listaColor || 'var(--venp-primary)'">
+              <span class="h-2 w-2 shrink-0 rounded-full" [style.background]="autoridad.listaColor || 'var(--venp-primary)'"></span>
+              <span class="truncate">Lista {{ autoridad.listaCodigo }} · {{ autoridad.listaNombre }}</span>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
     <!-- Selector de cédula -->
     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 print:hidden">
       <div class="venp-premium-card p-5">
