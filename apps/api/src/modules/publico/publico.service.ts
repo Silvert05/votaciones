@@ -21,6 +21,11 @@ const RESULT_STATES: EstadoEleccion[] = [
   EstadoEleccion.POSESIONADA,
 ];
 
+const PUBLIC_RESULT_STATES: EstadoEleccion[] = [
+  EstadoEleccion.RESULTADOS_DEFINITIVOS,
+  EstadoEleccion.POSESIONADA,
+];
+
 const VISIBLE_STATES: EstadoEleccion[] = [
   EstadoEleccion.CONVOCADA,
   EstadoEleccion.PADRON_PUBLICADO,
@@ -39,6 +44,16 @@ const publicSelect = {
   estado: true,
   configuracion: true,
   cronograma: true,
+  cronogramaItems: {
+    orderBy: { fecha: 'asc' },
+    select: {
+      id: true,
+      nombre: true,
+      fecha: true,
+      fechaFin: true,
+      descripcion: true,
+    },
+  },
   jornada: {
     select: {
       linkVotacionActivo: true,
@@ -57,16 +72,36 @@ export class PublicoService {
     private readonly votacion: VotacionService,
   ) {}
 
+  /**
+   * El portal muestra un solo proceso: el que el administrador marcó como
+   * "portal público" y ya está al menos convocado. Si no hay ninguno, el portal
+   * queda en blanco.
+   */
   async listElecciones() {
     const data = await this.prisma.eleccion.findMany({
-      where: { estado: { in: VISIBLE_STATES } },
+      where: { portalPublico: true, estado: { in: VISIBLE_STATES } },
       orderBy: { createdAt: 'desc' },
       select: publicSelect,
     });
     return data.map((e) => this.mapPublic(e));
   }
 
+  private async ensureEleccionPublica(eleccionId: string) {
+    const eleccion = await this.prisma.eleccion.findFirst({
+      where: {
+        id: eleccionId,
+        portalPublico: true,
+        estado: { in: VISIBLE_STATES },
+      },
+      select: { id: true },
+    });
+    if (!eleccion) {
+      throw new NotFoundException('Eleccion no encontrada.');
+    }
+  }
+
   async landing(eleccionId: string) {
+    await this.ensureEleccionPublica(eleccionId);
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
       select: publicSelect,
@@ -76,6 +111,7 @@ export class PublicoService {
   }
 
   async resultados(eleccionId: string) {
+    await this.ensureEleccionPublica(eleccionId);
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
       select: {
@@ -94,6 +130,9 @@ export class PublicoService {
     if (!eleccion.jornada?.resultadosAt) {
       throw new BadRequestException('Los resultados aun no estan disponibles.');
     }
+    if (!PUBLIC_RESULT_STATES.includes(eleccion.estado)) {
+      throw new BadRequestException('Los resultados aun no son definitivos.');
+    }
     const resultados = await this.votacion.resultados(eleccionId);
     return {
       ...resultados,
@@ -106,6 +145,7 @@ export class PublicoService {
   }
 
   async candidatos(eleccionId: string) {
+    await this.ensureEleccionPublica(eleccionId);
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
       select: {
@@ -164,6 +204,7 @@ export class PublicoService {
   }
 
   async participacion(eleccionId: string) {
+    await this.ensureEleccionPublica(eleccionId);
     const eleccion = await this.prisma.eleccion.findUnique({
       where: { id: eleccionId },
       select: { id: true, nombre: true, estado: true },
@@ -258,9 +299,12 @@ export class PublicoService {
       tipo: e.tipo,
       estado: e.estado,
       configuracion: e.configuracion,
-      cronograma: e.cronograma,
+      // El cronograma solo llega al portal cuando el administrador lo publica.
+      cronograma: e.cronograma?.publicado ? e.cronograma : null,
+      cronogramaItems: e.cronograma?.publicado ? (e.cronogramaItems ?? []) : [],
       votarDisponible,
-      resultadosDisponibles: !!e.jornada?.resultadosAt,
+      resultadosDisponibles:
+        !!e.jornada?.resultadosAt && PUBLIC_RESULT_STATES.includes(e.estado),
       fechaFinVotacion: e.jornada?.fechaFinVotacion ?? null,
     };
   }

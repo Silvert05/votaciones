@@ -154,7 +154,7 @@ export default class ElectionPositionsComponent implements OnInit {
 
   save(): void {
     if (!this.selected) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     if (this.form.invalid) {

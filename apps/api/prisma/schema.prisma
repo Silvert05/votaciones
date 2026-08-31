@@ -118,6 +118,7 @@ model Usuario {
   email           String    @db.VarChar(150)
   cambiarPassword Boolean   @default(false) @map("cambiar_password")
   fechaCaducidad  DateTime? @map("fecha_caducidad")
+  encargadoCronograma Boolean @default(false) @map("encargado_cronograma")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -187,14 +188,16 @@ model Eleccion {
   descripcion       String?        @db.Text
   tipo              TipoEleccion
   estado            EstadoEleccion @default(BORRADOR)
-  fechaConvocatoria DateTime?      @map("fecha_convocatoria")
   vueltaActual      Int            @default(1) @map("vuelta_actual")
+  // Solo una eleccion a la vez es la que ve el portal publico del elector.
+  portalPublico     Boolean        @default(false) @map("portal_publico")
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
 
   configuracion          ConfiguracionEleccion?
   jornada                JornadaElectoral?
   cronograma             CronogramaElectoral?
+  cronogramaItems        CronogramaItem[]
   dignidades             Dignidad[]
   padron                 PadronElectoral[]
   listasElectorales      ListaElectoral[]
@@ -209,7 +212,6 @@ model Eleccion {
 
   @@index([estado])
   @@index([tipo])
-  @@index([fechaConvocatoria])
   @@map("elecciones")
 }
 
@@ -392,6 +394,11 @@ model Candidatura {
   updatedAt   DateTime          @updatedAt @map("updated_at")
 
   excluidaSegundaVuelta Boolean @default(false) @map("excluida_segunda_vuelta")
+
+  // Criterios de elegibilidad del Art. 4, Cap. 4 del reglamento, marcados como checklist al calificar.
+  cumpleAprobadoCarrera  Boolean? @map("cumple_aprobado_carrera")
+  cumplePromedioAcademico Boolean? @map("cumple_promedio_academico")
+  sancionado              Boolean? @map("sancionado")
 
   eleccion      Eleccion                 @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
   dignidad      Dignidad                 @relation(fields: [dignidadId], references: [id], onDelete: Cascade)
@@ -682,12 +689,34 @@ model CronogramaElectoral {
   fechaFinImpugnacionResultados      DateTime? @map("fecha_fin_impugnacion_resultados")
   fechaResultadosFinales             DateTime? @map("fecha_resultados_finales")
   lugarVotacion                      String?   @map("lugar_votacion") @db.VarChar(255)
+  ordenHitos                         String[]  @default([]) @map("orden_hitos")
+  etiquetasHitos                     Json?     @map("etiquetas_hitos")
+  detallesHitos                      Json?     @map("detalles_hitos")
+  publicado                          Boolean   @default(false) @map("publicado")
   createdAt                          DateTime  @default(now()) @map("created_at")
   updatedAt                          DateTime  @updatedAt @map("updated_at")
 
   eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
 
   @@map("cronogramas_electorales")
+}
+
+model CronogramaItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  eleccionId  String    @map("eleccion_id") @db.Uuid
+  nombre      String    @db.VarChar(160)
+  // Ambas fechas son opcionales: un ítem puede ser solo inicio, solo fin
+  // (fecha límite) o un rango. La regla "al menos una" se valida en el servicio.
+  fecha       DateTime?
+  fechaFin    DateTime? @map("fecha_fin")
+  descripcion String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  eleccion Eleccion @relation(fields: [eleccionId], references: [id], onDelete: Cascade)
+
+  @@index([eleccionId])
+  @@map("cronograma_items")
 }
 
 model HistorialEstadoEleccion {

@@ -7,6 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -31,6 +32,7 @@ import {
   ListaElectoral,
 } from '../../models/candidatura.model';
 import { CandidaturasService } from '../../services/candidaturas.service';
+import { CalificacionChecklistDialog } from '../../dialogs/calificacion-checklist/calificacion-checklist.dialog';
 
 @Component({
   selector: 'admin-candidaturas',
@@ -57,6 +59,7 @@ export default class CandidaturasComponent implements OnInit {
   private _candidaturasService = inject(CandidaturasService);
   private _notifyService = inject(NotifyService);
   private _institutionalDialog = inject(InstitutionalDialogService);
+  private _dialog = inject(MatDialog);
   private _changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly columns = ['dignidad', 'candidato', 'lista', 'estado', 'acciones'];
@@ -136,7 +139,7 @@ export default class CandidaturasComponent implements OnInit {
         next: (res) => {
           this.padronHabilitado = res.data.filter((item) => item.publicado);
         },
-        error: () => this._notifyError('No se pudo cargar el padron habilitado.'),
+        error: () => this._notifyError('No se pudo cargar el padrón habilitado.'),
       });
 
     this._candidaturasService
@@ -205,7 +208,7 @@ export default class CandidaturasComponent implements OnInit {
     if (!eleccionId) return;
     this._candidaturasService.abrir(eleccionId).subscribe({
       next: () => {
-        this._notify('Inscripcion de candidaturas abierta.');
+        this._notify('Inscripción de candidaturas abierta.');
         this.loadElecciones();
       },
       error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
@@ -250,7 +253,7 @@ export default class CandidaturasComponent implements OnInit {
   save(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     if (this.form.invalid) {
@@ -285,6 +288,31 @@ export default class CandidaturasComponent implements OnInit {
   calificar(candidatura: Candidatura, estado: EstadoCandidatura): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) return;
+
+    if (estado === 'CALIFICADA') {
+      this._dialog
+        .open(CalificacionChecklistDialog, {
+          width: 'min(92vw, 560px)',
+          maxWidth: '92vw',
+          data: { candidatura },
+        })
+        .afterClosed()
+        .subscribe((result) => {
+          if (!result) return;
+          this._candidaturasService
+            .calificar(eleccionId, candidatura.id, result)
+            .subscribe({
+              next: () => {
+                this._notify(`Candidatura marcada como ${this.label(result.estado)}.`);
+                this.load();
+              },
+              error: (err) =>
+                this._notifyError(this.errorMessage(err, 'No se pudo calificar.')),
+            });
+        });
+      return;
+    }
+
     this._institutionalDialog.prompt({
       title: `${this.label(estado)} candidatura`,
       message: 'Registre la observación correspondiente para la candidatura seleccionada.',
@@ -311,9 +339,9 @@ export default class CandidaturasComponent implements OnInit {
     if (!eleccionId) return;
     this._institutionalDialog.prompt({
       title: 'Subsanar candidatura observada',
-      message: 'Registre la documentacion corregida presentada dentro del plazo de 24 horas (Art. 13).',
-      inputLabel: 'Notas de subsanacion',
-      confirmText: 'Registrar subsanacion',
+      message: 'Registre la documentación corregida presentada dentro del plazo de 24 horas (Art. 13).',
+      inputLabel: 'Notas de subsanación',
+      confirmText: 'Registrar subsanación',
       icon: 'lucide:file-up',
     }).subscribe((observacion) => {
       if (observacion === null) return;
@@ -321,11 +349,11 @@ export default class CandidaturasComponent implements OnInit {
         .subsanar(eleccionId, candidatura.id, { observacion: observacion || null })
         .subscribe({
           next: () => {
-            this._notify('Candidatura subsanada, vuelve a quedar inscrita para revision.');
+            this._notify('Candidatura subsanada, vuelve a quedar inscrita para revisión.');
             this.load();
           },
           error: (err) =>
-            this._notifyError(this.errorMessage(err, 'No se pudo registrar la subsanacion.')),
+            this._notifyError(this.errorMessage(err, 'No se pudo registrar la subsanación.')),
         });
     });
   }
@@ -335,11 +363,11 @@ export default class CandidaturasComponent implements OnInit {
     if (!eleccionId) return;
     this._institutionalDialog
       .prompt({
-        title: 'Impugnar calificacion',
+        title: 'Impugnar calificación',
         message:
-          'Indique quien presenta la impugnacion y el correo de notificacion en el formato "Nombre <correo@dominio>". La resolucion del Consejo Electoral es de ultima instancia (Art. 14).',
+          'Indique quién presenta la impugnación y el correo de notificación en el formato "Nombre <correo@dominio>". La resolución del Consejo Electoral es de última instancia (Art. 14).',
         inputLabel: 'Presentado por <correo>',
-        confirmText: 'Registrar impugnacion',
+        confirmText: 'Registrar impugnación',
         icon: 'lucide:scale',
       })
       .subscribe((entrada) => {
@@ -355,15 +383,15 @@ export default class CandidaturasComponent implements OnInit {
           .impugnarCalificacion(eleccionId, candidatura.id, {
             presentadoPor,
             correoNotificacion,
-            fundamento: 'Impugnacion a la calificacion registrada desde el panel administrativo.',
+            fundamento: 'Impugnación a la calificación registrada desde el panel administrativo.',
           })
           .subscribe({
             next: () => {
-              this._notify('Impugnacion a la calificacion registrada.');
+              this._notify('Impugnación a la calificación registrada.');
               this.load();
             },
             error: (err) =>
-              this._notifyError(this.errorMessage(err, 'No se pudo registrar la impugnacion.')),
+              this._notifyError(this.errorMessage(err, 'No se pudo registrar la impugnación.')),
           });
       });
   }

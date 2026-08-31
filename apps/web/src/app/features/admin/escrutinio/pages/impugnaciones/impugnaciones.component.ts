@@ -122,7 +122,7 @@ export default class ImpugnacionesComponent implements OnInit {
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => {
-          this._notify('Impugnacion registrada.');
+          this._notify('Impugnación registrada.');
           this.presentadoPorCtrl.reset('');
           this.fundamentoCtrl.reset('');
           this.respaldoCtrl.reset('');
@@ -131,7 +131,7 @@ export default class ImpugnacionesComponent implements OnInit {
         },
         error: (err) =>
           this._notifyError(
-            this.errorMessage(err, 'No se pudo registrar la impugnacion.'),
+            this.errorMessage(err, 'No se pudo registrar la impugnación.'),
           ),
       });
   }

@@ -4,12 +4,15 @@ import { Observable } from 'rxjs';
 import {
   CambiarEstadoPayload,
   ConfiguracionEleccion,
+  CreateCronogramaItemPayload,
   CreateDignidadPayload,
   CreateEleccionPayload,
+  CronogramaItem,
   Dignidad,
   EleccionDetalle,
   EleccionesPaginated,
   EleccionesQuery,
+  UpdateCronogramaItemPayload,
   UpdateDignidadPayload,
   UpdateEleccionPayload,
   UpsertConfiguracionPayload,
@@ -58,6 +61,16 @@ export class ElectionsService {
     return this._http.patch<EleccionDetalle>(`/elecciones/${id}/estado`, payload);
   }
 
+  setPortalPublico(
+    id: string,
+    portalPublico: boolean,
+  ): Observable<EleccionDetalle> {
+    return this._http.patch<EleccionDetalle>(
+      `/elecciones/${id}/portal-publico`,
+      { portalPublico },
+    );
+  }
+
   getConfiguracion(id: string): Observable<ConfiguracionEleccion | null> {
     return this._http.get<ConfiguracionEleccion | null>(
       `/elecciones/${id}/configuracion`,
@@ -81,6 +94,69 @@ export class ElectionsService {
     return this._http.patch<CronogramaElectoral>(
       `/elecciones/${id}/cronograma`,
       payload,
+    );
+  }
+
+  updateOrdenCronograma(
+    id: string,
+    orden: string[],
+  ): Observable<CronogramaElectoral> {
+    return this._http.patch<CronogramaElectoral>(
+      `/elecciones/${id}/cronograma/orden`,
+      { orden },
+    );
+  }
+
+  updateEtiquetasCronograma(
+    id: string,
+    etiquetas: Record<string, string>,
+  ): Observable<CronogramaElectoral> {
+    return this._http.patch<CronogramaElectoral>(
+      `/elecciones/${id}/cronograma/etiquetas`,
+      { etiquetas },
+    );
+  }
+
+  publicarCronograma(
+    id: string,
+    publicado: boolean,
+  ): Observable<CronogramaElectoral> {
+    return this._http.patch<CronogramaElectoral>(
+      `/elecciones/${id}/cronograma/publicacion`,
+      { publicado },
+    );
+  }
+
+  listCronogramaItems(id: string): Observable<CronogramaItem[]> {
+    return this._http.get<CronogramaItem[]>(
+      `/elecciones/${id}/cronograma-items`,
+    );
+  }
+
+  createCronogramaItem(
+    id: string,
+    payload: CreateCronogramaItemPayload,
+  ): Observable<CronogramaItem> {
+    return this._http.post<CronogramaItem>(
+      `/elecciones/${id}/cronograma-items`,
+      payload,
+    );
+  }
+
+  updateCronogramaItem(
+    id: string,
+    itemId: string,
+    payload: UpdateCronogramaItemPayload,
+  ): Observable<CronogramaItem> {
+    return this._http.patch<CronogramaItem>(
+      `/elecciones/${id}/cronograma-items/${itemId}`,
+      payload,
+    );
+  }
+
+  deleteCronogramaItem(id: string, itemId: string): Observable<{ id: string }> {
+    return this._http.delete<{ id: string }>(
+      `/elecciones/${id}/cronograma-items/${itemId}`,
     );
   }
 

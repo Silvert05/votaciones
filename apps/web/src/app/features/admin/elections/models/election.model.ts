@@ -30,8 +30,8 @@ export interface Eleccion {
   descripcion: string | null;
   tipo: TipoEleccion;
   estado: EstadoEleccion;
-  fechaConvocatoria: string | null;
   vueltaActual: number;
+  portalPublico: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -56,9 +56,39 @@ export interface CronogramaElectoral {
   fechaPublicacionResultados: string | null;
   fechaFinImpugnacionResultados: string | null;
   fechaResultadosFinales: string | null;
+  ordenHitos: string[];
+  etiquetasHitos: Record<string, string> | null;
+  detallesHitos: Record<string, HitoDetalle> | null;
+  publicado: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface HitoDetalle {
+  fechaFin?: string | null;
+  descripcion?: string | null;
+}
+
+export interface CronogramaItem {
+  id: string;
+  eleccionId: string;
+  nombre: string;
+  /** Un ítem puede tener solo inicio, solo fin (fecha límite) o ambas. */
+  fecha: string | null;
+  fechaFin: string | null;
+  descripcion: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCronogramaItemPayload {
+  nombre: string;
+  fecha?: string | null;
+  fechaFin?: string | null;
+  descripcion?: string | null;
+}
+
+export type UpdateCronogramaItemPayload = Partial<CreateCronogramaItemPayload>;
 
 export interface ConfiguracionEleccion {
   id: string;
@@ -134,7 +164,6 @@ export interface CreateEleccionPayload {
   nombre: string;
   descripcion?: string | null;
   tipo: TipoEleccion;
-  fechaConvocatoria?: string | null;
 }
 
 export interface UpdateEleccionPayload
@@ -164,6 +193,7 @@ export type UpsertCronogramaPayload = Partial<
     | 'fechaPublicacionResultados'
     | 'fechaFinImpugnacionResultados'
     | 'fechaResultadosFinales'
+    | 'detallesHitos'
   >
 >;
 
@@ -219,13 +249,15 @@ export const ESTADO_TRANSICIONES: Record<EstadoEleccion, EstadoEleccion[]> = {
   CANDIDATURAS_CALIFICADAS: ['CAMPANIA', 'ANULADA'],
   CAMPANIA: ['VOTACION_ABIERTA', 'ANULADA'],
   VOTACION_ABIERTA: ['VOTACION_CERRADA', 'ANULADA'],
-  VOTACION_CERRADA: ['ESCRUTINIO', 'ANULADA'],
+  // El escrutinio se hace dentro de "Jornada electoral" (no hay pantalla propia
+  // en Gestión). Desde "Votación cerrada" el avance a resultados lo hace la
+  // Jornada al generar resultados, por eso no se ofrece como salto manual.
+  VOTACION_CERRADA: ['ANULADA'],
   ESCRUTINIO: ['RESULTADOS_PROVISIONALES', 'ANULADA'],
-  RESULTADOS_PROVISIONALES: [
-    'IMPUGNACION_RESULTADOS',
-    'RESULTADOS_DEFINITIVOS',
-    'ANULADA',
-  ],
+  // La ventana de "Impugnación de resultados" no tiene pantalla propia (todo
+  // el cierre se gestiona desde Jornada electoral), por eso no se ofrece como
+  // salto manual. El estado se conserva en el enum por compatibilidad histórica.
+  RESULTADOS_PROVISIONALES: ['RESULTADOS_DEFINITIVOS', 'ANULADA'],
   IMPUGNACION_RESULTADOS: ['RESULTADOS_DEFINITIVOS', 'ANULADA'],
   RESULTADOS_DEFINITIVOS: ['POSESIONADA', 'ANULADA'],
   POSESIONADA: [],

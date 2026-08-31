@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -27,12 +28,6 @@ export class CreateEleccionDto {
   @ApiProperty({ enum: TipoEleccion })
   @IsEnum(TipoEleccion)
   tipo: TipoEleccion;
-
-  @ApiPropertyOptional({ example: '2026-08-01T08:00:00.000Z' })
-  @IsOptional()
-  @IsString()
-  fechaConvocatoria?: string;
-
 }
 
 export class UpdateEleccionDto {
@@ -52,11 +47,6 @@ export class UpdateEleccionDto {
   @IsOptional()
   @IsEnum(TipoEleccion)
   tipo?: TipoEleccion;
-
-  @ApiPropertyOptional({ example: '2026-08-01T08:00:00.000Z' })
-  @IsOptional()
-  @IsString()
-  fechaConvocatoria?: string | null;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
@@ -97,6 +87,16 @@ export class QueryEleccionesDto {
   @IsOptional()
   @IsEnum(EstadoEleccion)
   estado?: EstadoEleccion;
+}
+
+export class SetPortalPublicoDto {
+  @ApiProperty({
+    description:
+      'true = esta eleccion pasa a ser la que muestra el portal publico (desactiva la anterior); false = el portal queda sin proceso activo.',
+    example: true,
+  })
+  @IsBoolean()
+  portalPublico: boolean;
 }
 
 export class CambiarEstadoEleccionDto {

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CronogramaElectoral, Prisma } from 'prisma/generated/client';
+import { Prisma } from 'prisma/generated/client';
 import {
   EstadoEleccion,
   TipoEleccion,
@@ -17,17 +17,27 @@ import {
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
 import { UpsertConfiguracionEleccionDto } from './dto/configuracion.dto';
-import { UpsertCronogramaDto } from './dto/cronograma.dto';
+import {
+  PublicarCronogramaDto,
+  UpdateEtiquetasCronogramaDto,
+  UpdateOrdenCronogramaDto,
+  UpsertCronogramaDto,
+} from './dto/cronograma.dto';
 import {
   CambiarEstadoEleccionDto,
   CreateEleccionDto,
   QueryEleccionesDto,
+  SetPortalPublicoDto,
   UpdateEleccionDto,
 } from './dto/eleccion.dto';
 import {
   CreateDignidadDto,
   UpdateDignidadDto,
 } from './dto/dignidad.dto';
+import {
+  CreateCronogramaItemDto,
+  UpdateCronogramaItemDto,
+} from './dto/cronograma-item.dto';
 
 interface Actor {
   user: AuthUser;
@@ -40,8 +50,8 @@ const eleccionListSelect = {
   descripcion: true,
   tipo: true,
   estado: true,
-  fechaConvocatoria: true,
   vueltaActual: true,
+  portalPublico: true,
   createdAt: true,
   updatedAt: true,
   _count: {
@@ -72,9 +82,15 @@ const allowedTransitions: Record<EstadoEleccion, EstadoEleccion[]> = {
   CANDIDATURAS_CALIFICADAS: ['CAMPANIA', 'ANULADA'],
   CAMPANIA: ['VOTACION_ABIERTA', 'ANULADA'],
   VOTACION_ABIERTA: ['VOTACION_CERRADA', 'ANULADA'],
-  VOTACION_CERRADA: ['ESCRUTINIO', 'ANULADA'],
+  // "Escrutinio" no se ofrece como salto manual (no tiene pantalla en Gestion;
+  // se gestiona desde Jornada, que avanza a RESULTADOS_PROVISIONALES al generar
+  // resultados). El estado se conserva en el enum por historiales existentes.
+  VOTACION_CERRADA: ['ANULADA'],
   ESCRUTINIO: ['RESULTADOS_PROVISIONALES', 'ANULADA'],
-  RESULTADOS_PROVISIONALES: ['IMPUGNACION_RESULTADOS', 'RESULTADOS_DEFINITIVOS', 'ANULADA'],
+  // "Impugnacion de resultados" no se ofrece como salto manual (no tiene
+  // pantalla; el cierre se gestiona desde Jornada). El estado se conserva en el
+  // enum por compatibilidad con historiales existentes.
+  RESULTADOS_PROVISIONALES: ['RESULTADOS_DEFINITIVOS', 'ANULADA'],
   IMPUGNACION_RESULTADOS: ['RESULTADOS_DEFINITIVOS', 'ANULADA'],
   RESULTADOS_DEFINITIVOS: ['POSESIONADA', 'ANULADA'],
   POSESIONADA: [],
@@ -135,25 +151,35 @@ export class EleccionesService {
   }
 
   async create(dto: CreateEleccionDto, actor: Actor) {
-    this.ensureNotPast(
-      'La convocatoria',
-      this.toDate(dto.fechaConvocatoria),
-      null,
-    );
-
     const created = await this.prisma.$transaction(async (tx) => {
+      // Si no hay ningún proceso "activo" en el portal (ninguno marcado, o el
+      // marcado ya está posesionado/anulado), el proceso nuevo toma el portal.
+      const portalActivo = await tx.eleccion.count({
+        where: {
+          portalPublico: true,
+          estado: { notIn: ['POSESIONADA', 'ANULADA'] },
+        },
+      });
+
       const eleccion = await tx.eleccion.create({
         data: {
           nombre: dto.nombre,
           descripcion: this.emptyToNull(dto.descripcion),
           tipo: dto.tipo,
-          fechaConvocatoria: this.toDate(dto.fechaConvocatoria),
+          portalPublico: portalActivo === 0,
           // Cada proceso nace con una jornada propia y vacía. Nunca reutiliza
           // eventos, votos ni estados de la elección anterior.
           jornada: { create: {} },
         },
         select: eleccionDetailSelect,
       });
+
+      if (portalActivo === 0) {
+        await tx.eleccion.updateMany({
+          where: { id: { not: eleccion.id }, portalPublico: true },
+          data: { portalPublico: false },
+        });
+      }
 
       await tx.historialEstadoEleccion.create({
         data: {
@@ -179,14 +205,6 @@ export class EleccionesService {
   async update(id: string, dto: UpdateEleccionDto, actor: Actor) {
     const before = await this.findOne(id);
 
-    if (dto.fechaConvocatoria !== undefined) {
-      this.ensureNotPast(
-        'La convocatoria',
-        this.toDate(dto.fechaConvocatoria),
-        before.fechaConvocatoria,
-      );
-    }
-
     const eleccion = await this.prisma.eleccion.update({
       where: { id },
       data: {
@@ -195,9 +213,6 @@ export class EleccionesService {
           ? { descripcion: this.emptyToNull(dto.descripcion) }
           : {}),
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
-        ...(dto.fechaConvocatoria !== undefined
-          ? { fechaConvocatoria: this.toDate(dto.fechaConvocatoria) }
-          : {}),
         ...(dto.vueltaActual !== undefined
           ? { vueltaActual: dto.vueltaActual }
           : {}),
@@ -255,6 +270,44 @@ export class EleccionesService {
     return this.findOne(id);
   }
 
+  /**
+   * Marca (o desmarca) la eleccion que ve el portal publico. Solo una puede
+   * estarlo a la vez: activar una desactiva a las demas.
+   */
+  async setPortalPublico(
+    id: string,
+    dto: SetPortalPublicoDto,
+    actor: Actor,
+  ) {
+    const before = await this.findOne(id);
+
+    if (dto.portalPublico) {
+      await this.prisma.$transaction([
+        this.prisma.eleccion.updateMany({
+          where: { portalPublico: true, id: { not: id } },
+          data: { portalPublico: false },
+        }),
+        this.prisma.eleccion.update({
+          where: { id },
+          data: { portalPublico: true },
+        }),
+      ]);
+    } else {
+      await this.prisma.eleccion.update({
+        where: { id },
+        data: { portalPublico: false },
+      });
+    }
+
+    await this.audit(AuditTabla.ELECCIONES, AuditOperacion.UPDATE, id, {
+      datosAnteriores: { portalPublico: before.portalPublico },
+      datosNuevos: { portalPublico: dto.portalPublico },
+      actor,
+    });
+
+    return this.findOne(id);
+  }
+
   async upsertCronograma(
     eleccionId: string,
     dto: UpsertCronogramaDto,
@@ -265,15 +318,20 @@ export class EleccionesService {
     const before = await this.prisma.cronogramaElectoral.findUnique({
       where: { eleccionId },
     });
-    this.validateCronograma(dto, before);
+    this.validateCronograma(dto);
 
     const data = this.toCronogramaData(dto);
+    const detalles =
+      dto.detallesHitos === undefined
+        ? {}
+        : { detallesHitos: this.sanitizeDetallesHitos(dto.detallesHitos) };
     const cronograma = await this.prisma.cronogramaElectoral.upsert({
       where: { eleccionId },
-      update: data,
+      update: { ...data, ...detalles },
       create: {
         eleccionId,
         ...data,
+        ...detalles,
       },
     });
 
@@ -284,6 +342,183 @@ export class EleccionesService {
     });
 
     return cronograma;
+  }
+
+  async updateOrdenCronograma(
+    eleccionId: string,
+    dto: UpdateOrdenCronogramaDto,
+    actor: Actor,
+  ) {
+    await this.ensureEleccion(eleccionId);
+
+    const before = await this.prisma.cronogramaElectoral.findUnique({
+      where: { eleccionId },
+    });
+
+    const cronograma = await this.prisma.cronogramaElectoral.upsert({
+      where: { eleccionId },
+      update: { ordenHitos: dto.orden },
+      create: { eleccionId, ordenHitos: dto.orden },
+    });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.UPDATE, cronograma.id, {
+      datosAnteriores: { ordenHitos: before?.ordenHitos ?? [] },
+      datosNuevos: { ordenHitos: cronograma.ordenHitos },
+      actor,
+    });
+
+    return cronograma;
+  }
+
+  async setPublicacionCronograma(
+    eleccionId: string,
+    dto: PublicarCronogramaDto,
+    actor: Actor,
+  ) {
+    await this.ensureEleccion(eleccionId);
+
+    const before = await this.prisma.cronogramaElectoral.findUnique({
+      where: { eleccionId },
+    });
+
+    const cronograma = await this.prisma.cronogramaElectoral.upsert({
+      where: { eleccionId },
+      update: { publicado: dto.publicado },
+      create: { eleccionId, publicado: dto.publicado },
+    });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.UPDATE, cronograma.id, {
+      datosAnteriores: { publicado: before?.publicado ?? false },
+      datosNuevos: { publicado: cronograma.publicado },
+      actor,
+    });
+
+    return cronograma;
+  }
+
+  async updateEtiquetasCronograma(
+    eleccionId: string,
+    dto: UpdateEtiquetasCronogramaDto,
+    actor: Actor,
+  ) {
+    await this.ensureEleccion(eleccionId);
+
+    const before = await this.prisma.cronogramaElectoral.findUnique({
+      where: { eleccionId },
+    });
+
+    const etiquetasActuales =
+      (before?.etiquetasHitos as Record<string, string> | null) ?? {};
+    const etiquetas: Record<string, string> = { ...etiquetasActuales };
+    for (const [campo, valor] of Object.entries(dto.etiquetas ?? {})) {
+      const limpio = typeof valor === 'string' ? valor.trim().slice(0, 160) : '';
+      if (limpio) {
+        etiquetas[campo] = limpio;
+      } else {
+        delete etiquetas[campo];
+      }
+    }
+
+    const cronograma = await this.prisma.cronogramaElectoral.upsert({
+      where: { eleccionId },
+      update: { etiquetasHitos: etiquetas },
+      create: { eleccionId, etiquetasHitos: etiquetas },
+    });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.UPDATE, cronograma.id, {
+      datosAnteriores: { etiquetasHitos: etiquetasActuales },
+      datosNuevos: { etiquetasHitos: etiquetas },
+      actor,
+    });
+
+    return cronograma;
+  }
+
+  async listCronogramaItems(eleccionId: string) {
+    await this.ensureEleccion(eleccionId);
+
+    return this.prisma.cronogramaItem.findMany({
+      where: { eleccionId },
+      orderBy: { fecha: 'asc' },
+    });
+  }
+
+  async createCronogramaItem(
+    eleccionId: string,
+    dto: CreateCronogramaItemDto,
+    actor: Actor,
+  ) {
+    await this.ensureEleccion(eleccionId);
+
+    const fecha = this.toDate(dto.fecha);
+    const fechaFin = this.toDate(dto.fechaFin);
+    this.ensureFechasItem(fecha, fechaFin);
+
+    const item = await this.prisma.cronogramaItem.create({
+      data: {
+        eleccionId,
+        nombre: dto.nombre,
+        fecha,
+        fechaFin,
+        descripcion: this.emptyToNull(dto.descripcion),
+      },
+    });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.CREATE, item.id, {
+      datosNuevos: item,
+      actor,
+    });
+
+    return item;
+  }
+
+  async updateCronogramaItem(
+    eleccionId: string,
+    itemId: string,
+    dto: UpdateCronogramaItemDto,
+    actor: Actor,
+  ) {
+    const before = await this.findCronogramaItemOrFail(eleccionId, itemId);
+
+    const fecha =
+      dto.fecha !== undefined ? this.toDate(dto.fecha) : before.fecha;
+    const fechaFin =
+      dto.fechaFin !== undefined ? this.toDate(dto.fechaFin) : before.fechaFin;
+    this.ensureFechasItem(fecha, fechaFin);
+
+    const item = await this.prisma.cronogramaItem.update({
+      where: { id: itemId },
+      data: {
+        ...(dto.nombre !== undefined ? { nombre: dto.nombre } : {}),
+        ...(dto.fecha !== undefined ? { fecha } : {}),
+        ...(dto.fechaFin !== undefined ? { fechaFin } : {}),
+        ...(dto.descripcion !== undefined
+          ? { descripcion: this.emptyToNull(dto.descripcion) }
+          : {}),
+      },
+    });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.UPDATE, item.id, {
+      datosAnteriores: before,
+      datosNuevos: item,
+      actor,
+    });
+
+    return item;
+  }
+
+  async deleteCronogramaItem(eleccionId: string, itemId: string, actor: Actor) {
+    const before = await this.findCronogramaItemOrFail(eleccionId, itemId);
+
+    await this.prisma.cronogramaItem.delete({ where: { id: itemId } });
+
+    await this.audit(AuditTabla.CRONOGRAMAS, AuditOperacion.ESTADO, itemId, {
+      datosAnteriores: before,
+      datosNuevos: null,
+      actor,
+    });
+
+    return { id: itemId };
   }
 
   async dashboard() {
@@ -537,33 +772,18 @@ export class EleccionesService {
     return dignidad;
   }
 
-  private validateCronograma(
-    dto: UpsertCronogramaDto,
-    before: CronogramaElectoral | null,
-  ) {
-    const dates = this.toCronogramaData(dto);
-
-    const camposFecha: Array<
-      [Exclude<keyof typeof dates, 'lugarVotacion'>, string]
-    > = [
-      ['fechaConvocatoria', 'La convocatoria'],
-      ['fechaPublicacionPadron', 'La publicacion del padron'],
-      ['fechaInicioInscripcion', 'El inicio de inscripcion de candidaturas'],
-      ['fechaFinInscripcion', 'El cierre de inscripcion de candidaturas'],
-      ['fechaInicioImpugnacionCandidaturas', 'El inicio de impugnacion de candidaturas'],
-      ['fechaFinImpugnacionCandidaturas', 'El cierre de impugnacion de candidaturas'],
-      ['fechaPublicacionCandidaturas', 'La publicacion de candidaturas'],
-      ['fechaInicioCampania', 'El inicio de campania'],
-      ['fechaFinCampania', 'El cierre de campania'],
-      ['fechaInicioVotacion', 'El inicio de la votacion'],
-      ['fechaFinVotacion', 'El cierre de la votacion'],
-      ['fechaPublicacionResultados', 'La publicacion de resultados'],
-      ['fechaFinImpugnacionResultados', 'El cierre de impugnacion de resultados'],
-      ['fechaResultadosFinales', 'Los resultados finales'],
-    ];
-    for (const [campo, label] of camposFecha) {
-      this.ensureNotPast(label, dates[campo], before?.[campo]);
+  private async findCronogramaItemOrFail(eleccionId: string, itemId: string) {
+    const item = await this.prisma.cronogramaItem.findFirst({
+      where: { id: itemId, eleccionId },
+    });
+    if (!item) {
+      throw new NotFoundException('Item de cronograma no encontrado.');
     }
+    return item;
+  }
+
+  private validateCronograma(dto: UpsertCronogramaDto) {
+    const dates = this.toCronogramaData(dto);
 
     this.ensureOrder(dates.fechaInicioInscripcion, dates.fechaFinInscripcion, 'La inscripcion debe cerrar despues de iniciar.');
     this.ensureOrder(
@@ -620,18 +840,24 @@ export class EleccionesService {
     }
   }
 
-  private ensureNotPast(
-    label: string,
-    next: Date | null | undefined,
-    previous: Date | null | undefined,
+  /**
+   * Un ítem del cronograma necesita al menos una fecha (inicio o fin) y, si
+   * tiene las dos, la de fin debe ser posterior a la de inicio.
+   */
+  private ensureFechasItem(
+    fecha: Date | null | undefined,
+    fechaFin: Date | null | undefined,
   ) {
-    if (!next) return;
-    const changed = !previous || previous.getTime() !== next.getTime();
-    if (changed && next.getTime() < Date.now()) {
+    if (!fecha && !fechaFin) {
       throw new BadRequestException(
-        `${label} no puede ser anterior a la fecha y hora actual.`,
+        'El ítem del cronograma necesita al menos una fecha (inicio o fin).',
       );
     }
+    this.ensureOrder(
+      fecha,
+      fechaFin,
+      'La fecha de fin del ítem debe ser posterior a la de inicio (día y hora).',
+    );
   }
 
   private toCronogramaData(dto: UpsertCronogramaDto) {
@@ -681,6 +907,35 @@ export class EleccionesService {
     }
     const trimmed = value.trim();
     return trimmed.length ? trimmed : null;
+  }
+
+  /**
+   * Normaliza el detalle opcional de los hitos fijos: solo conserva las claves
+   * con una fecha de fin valida y/o descripcion, y valida el orden de fechas.
+   */
+  private sanitizeDetallesHitos(
+    input:
+      | Record<string, { fechaFin?: string | null; descripcion?: string | null }>
+      | null
+      | undefined,
+  ): Prisma.InputJsonValue {
+    const limpio: Record<
+      string,
+      { fechaFin?: string; descripcion?: string }
+    > = {};
+    for (const [campo, valor] of Object.entries(input ?? {})) {
+      if (!valor || typeof valor !== 'object') continue;
+      const fechaFin = this.toDate(valor.fechaFin ?? null);
+      const descripcion =
+        typeof valor.descripcion === 'string'
+          ? valor.descripcion.trim().slice(0, 500)
+          : '';
+      const entrada: { fechaFin?: string; descripcion?: string } = {};
+      if (fechaFin) entrada.fechaFin = fechaFin.toISOString();
+      if (descripcion) entrada.descripcion = descripcion;
+      if (Object.keys(entrada).length) limpio[campo] = entrada;
+    }
+    return limpio as Prisma.InputJsonValue;
   }
 
   private audit(

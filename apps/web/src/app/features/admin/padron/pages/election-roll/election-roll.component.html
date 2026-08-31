@@ -1,8 +1,8 @@
 <div class="flex flex-col flex-auto p-6 sm:p-10">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <div class="text-4xl font-extrabold tracking-tight leading-tight">Padron electoral</div>
-      <p class="mt-2 text-secondary">Electores habilitados, observados o inhabilitados por eleccion</p>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Padrón electoral</div>
+      <p class="mt-2 text-secondary">Electores habilitados, observados o inhabilitados por elección</p>
     </div>
     <div class="flex flex-wrap gap-2">
       <button matButton="tonal" type="button" (click)="autoGenerar()" [disabled]="!selectedEleccionCtrl.value">
@@ -24,7 +24,7 @@
     <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 p-4 border-b">
         <mat-form-field appearance="outline" class="xl:col-span-2">
-          <mat-label>Eleccion</mat-label>
+          <mat-label>Elección</mat-label>
           <mat-select [formControl]="selectedEleccionCtrl">
             @for (eleccion of elecciones; track eleccion.id) {
             <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
@@ -54,13 +54,13 @@
 
         <mat-form-field appearance="outline" class="md:col-span-2">
           <mat-label>Buscar</mat-label>
-          <input matInput [formControl]="searchCtrl" placeholder="Cedula, nombres o unidad">
+          <input matInput [formControl]="searchCtrl" placeholder="Cédula, nombres o unidad">
           <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Buscar elector a asignar</mat-label>
-          <input matInput [formControl]="electorSearchCtrl" placeholder="Cedula o nombres">
+          <input matInput [formControl]="electorSearchCtrl" placeholder="Cédula o nombres">
           <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
 
@@ -75,7 +75,7 @@
             <mat-option disabled>No hay electores activos sin asignar</mat-option>
             }
           </mat-select>
-          <mat-hint>Ya no se muestran electores que estén en este padron</mat-hint>
+          <mat-hint>Ya no se muestran electores que estén en este padrón</mat-hint>
         </mat-form-field>
 
         <div class="flex items-center">
@@ -92,7 +92,7 @@
 
       <table mat-table [dataSource]="padron" class="w-full">
         <ng-container matColumnDef="identificacion">
-          <th mat-header-cell *matHeaderCellDef>Identificacion</th>
+          <th mat-header-cell *matHeaderCellDef>Identificación</th>
           <td mat-cell *matCellDef="let p" class="font-medium">{{ p.elector.identificacion }}</td>
         </ng-container>
 
@@ -170,7 +170,7 @@
       </table>
 
       @if (!loading && padron.length === 0) {
-      <div class="p-8 text-center text-secondary">No hay electores asignados al padron.</div>
+      <div class="p-8 text-center text-secondary">No hay electores asignados al padrón.</div>
       }
 
       <mat-paginator
@@ -182,7 +182,7 @@
     </div>
 
     <div class="rounded shadow bg-card p-4">
-      <div class="text-lg font-semibold">Estado en padron</div>
+      <div class="text-lg font-semibold">Estado en padrón</div>
       @if (selectedPadron) {
       <div class="mt-2 text-sm text-secondary">
         {{ selectedPadron.elector.identificacion }} - {{ selectedPadron.elector.apellidos }} {{ selectedPadron.elector.nombres }}
@@ -205,7 +205,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Observacion</mat-label>
+          <mat-label>Observación</mat-label>
           <textarea matInput rows="4" formControlName="observacion"></textarea>
         </mat-form-field>
       </form>

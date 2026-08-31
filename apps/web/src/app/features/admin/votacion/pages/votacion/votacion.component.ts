@@ -78,11 +78,11 @@ export default class VotacionComponent implements OnInit {
     if (!eleccionId) return;
     this._votacionService.abrir(eleccionId).subscribe({
       next: () => {
-        this._notify('Jornada de votacion abierta.');
+        this._notify('Jornada de votación abierta.');
         this.loadElecciones();
       },
       error: (err) =>
-        this._notifyError(this.errorMessage(err, 'No se pudo abrir la votacion.')),
+        this._notifyError(this.errorMessage(err, 'No se pudo abrir la votación.')),
     });
   }
 
@@ -110,7 +110,7 @@ export default class VotacionComponent implements OnInit {
   cargarTarjeton(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     if (this.identificacionCtrl.invalid) {
@@ -136,19 +136,19 @@ export default class VotacionComponent implements OnInit {
           }
         },
         error: (err) =>
-          this._notifyError(this.errorMessage(err, 'No se pudo cargar el tarjeton.')),
+          this._notifyError(this.errorMessage(err, 'No se pudo cargar el tarjetón.')),
       });
   }
 
   emitir(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId || !this.tarjeton) {
-      this._notify('Carga un tarjeton primero.');
+      this._notify('Carga un tarjetón primero.');
       return;
     }
     const identificacion = this.identificacionCtrl.value?.trim();
     if (!identificacion) {
-      this._notify('Ingresa la identificacion.');
+      this._notify('Ingresa la identificación.');
       return;
     }
 

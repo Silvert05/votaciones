@@ -165,7 +165,7 @@ export default class ListasComponent implements OnInit {
     if (!eleccionId) return;
     this._candidaturasService.abrir(eleccionId).subscribe({
       next: () => {
-        this._notify('Inscripcion de candidaturas abierta.');
+        this._notify('Inscripción de candidaturas abierta.');
         this.loadElecciones();
       },
       error: (err) => this._notifyError(this.errorMessage(err, 'No se pudo abrir candidaturas.')),
@@ -237,7 +237,7 @@ export default class ListasComponent implements OnInit {
   save(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     if (this.form.invalid) {

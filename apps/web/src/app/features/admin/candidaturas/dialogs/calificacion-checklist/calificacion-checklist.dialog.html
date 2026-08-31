@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>Calificar candidatura</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-secondary mb-4">
+    Criterios de elegibilidad del Art. 4, Capítulo 4 del reglamento para
+    <strong>{{ data.candidatura.elector.nombres }} {{ data.candidatura.elector.apellidos }}</strong>.
+  </p>
+
+  <form class="flex flex-col gap-3" [formGroup]="form">
+    <label class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border p-3"
+         [class.border-green-400]="cumpleAprobado" [class.bg-green-50]="cumpleAprobado"
+         [class.border-red-400]="!cumpleAprobado" [class.bg-red-50]="!cumpleAprobado">
+      <div class="flex items-center gap-2">
+        <mat-icon class="icon-size-5" [svgIcon]="cumpleAprobado ? 'lucide:check-circle' : 'lucide:x-circle'"
+          [class.text-green-600]="cumpleAprobado" [class.text-red-600]="!cumpleAprobado" />
+        <span class="font-medium">Al menos 40% de materias aprobadas de la carrera</span>
+      </div>
+      <mat-checkbox formControlName="cumpleAprobadoCarrera" />
+    </label>
+
+    <label class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border p-3"
+         [class.border-green-400]="cumplePromedio" [class.bg-green-50]="cumplePromedio"
+         [class.border-red-400]="!cumplePromedio" [class.bg-red-50]="!cumplePromedio">
+      <div class="flex items-center gap-2">
+        <mat-icon class="icon-size-5" [svgIcon]="cumplePromedio ? 'lucide:check-circle' : 'lucide:x-circle'"
+          [class.text-green-600]="cumplePromedio" [class.text-red-600]="!cumplePromedio" />
+        <span class="font-medium">Promedio académico mínimo del 80%</span>
+      </div>
+      <mat-checkbox formControlName="cumplePromedioAcademico" />
+    </label>
+
+    <div class="rounded-xl border p-3" [class.border-green-400]="cumpleSancion"
+         [class.bg-green-50]="cumpleSancion" [class.border-red-400]="!cumpleSancion"
+         [class.bg-red-50]="!cumpleSancion">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <mat-icon class="icon-size-5" [svgIcon]="cumpleSancion ? 'lucide:check-circle' : 'lucide:x-circle'"
+            [class.text-green-600]="cumpleSancion" [class.text-red-600]="!cumpleSancion" />
+          <span class="font-medium">No sancionado por una terna propuesta al Órgano Colegiado Superior</span>
+        </div>
+        <mat-slide-toggle formControlName="sancionado">Sancionado</mat-slide-toggle>
+      </div>
+    </div>
+
+    <div class="rounded-xl p-3 text-center font-bold" [class.bg-green-100]="apto"
+         [class.text-green-700]="apto" [class.bg-red-100]="!apto" [class.text-red-700]="!apto">
+      @if (apto) { Apto según los criterios del Art. 4 — se guardará como Calificada }
+      @else { No apto según los criterios del Art. 4 — se guardará como Rechazada }
+    </div>
+
+    <mat-form-field class="w-full">
+      <mat-label>Observación</mat-label>
+      <textarea matInput rows="3" formControlName="observacion"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button matButton="filled" [color]="apto ? 'primary' : 'warn'" type="button" (click)="save()">
+    <mat-icon [svgIcon]="apto ? 'lucide:check' : 'lucide:x-circle'" />
+    <span class="ml-1">{{ apto ? 'Guardar como Calificada' : 'Guardar como Rechazada' }}</span>
+  </button>
+</mat-dialog-actions>

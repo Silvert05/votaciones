@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { FuseAlertComponent, FuseAlertType } from '@core/components/alert';
 import { Perfil } from 'app/features/admin/security/models/security.model';
 import { SecurityService } from 'app/features/admin/security/services/security.service';
@@ -46,6 +47,7 @@ export interface UserFormData {
     MatAutocompleteModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatSlideToggleModule,
     FuseAlertComponent,
   ],
   templateUrl: './user-form.dialog.html',
@@ -91,6 +93,7 @@ export class UserFormDialog implements OnInit {
       email: [u?.email ?? '', [Validators.required, Validators.email]],
       rol: [u?.rol ?? 'USER', [Validators.required]],
       perfilId: [u?.perfilId ?? null],
+      encargadoCronograma: [u?.encargadoCronograma ?? false],
       password: [
         '',
         this.isEdit ? [] : [Validators.required, Validators.minLength(6)],
@@ -208,6 +211,7 @@ export class UserFormDialog implements OnInit {
           email: v.email,
           rol: v.rol,
           perfilId: v.perfilId || null,
+          encargadoCronograma: v.encargadoCronograma,
         })
       : this._usersService.create({
           usuario: v.usuario,
@@ -218,6 +222,7 @@ export class UserFormDialog implements OnInit {
           perfilId: v.perfilId || null,
           electorId:
             this.modo === 'elector' ? this.electorSeleccionado?.id : null,
+          encargadoCronograma: v.encargadoCronograma,
         });
 
     request$.subscribe({

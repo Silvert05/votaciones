@@ -44,6 +44,7 @@ const userSelect = {
   activo: true,
   cambiarPassword: true,
   fechaCaducidad: true,
+  encargadoCronograma: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.UsuarioSelect;
@@ -141,6 +142,7 @@ export class UsersService {
         activo: true,
         // Contraseña temporal: el usuario debe cambiarla en el primer ingreso.
         cambiarPassword: true,
+        encargadoCronograma: dto.encargadoCronograma ?? false,
       },
       select: userSelect,
     });
@@ -172,6 +174,9 @@ export class UsersService {
         ...(dto.email !== undefined ? { email: dto.email } : {}),
         ...(dto.rol !== undefined ? { rol: dto.rol } : {}),
         ...(dto.perfilId !== undefined ? { perfilId: dto.perfilId || null } : {}),
+        ...(dto.encargadoCronograma !== undefined
+          ? { encargadoCronograma: dto.encargadoCronograma }
+          : {}),
       },
       select: userSelect,
     });

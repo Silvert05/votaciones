@@ -28,6 +28,20 @@ export interface CronogramaPublico {
     fechaPublicacionResultados: string | null;
     fechaFinImpugnacionResultados: string | null;
     fechaResultadosFinales: string | null;
+    ordenHitos: string[];
+    etiquetasHitos: Record<string, string> | null;
+    detallesHitos: Record<
+        string,
+        { fechaFin?: string | null; descripcion?: string | null }
+    > | null;
+}
+
+export interface CronogramaItemPublico {
+    id: string;
+    nombre: string;
+    fecha: string | null;
+    fechaFin: string | null;
+    descripcion: string | null;
 }
 
 export interface LandingEleccion {
@@ -38,6 +52,7 @@ export interface LandingEleccion {
     estado: string;
     configuracion: ConfiguracionEleccion | null;
     cronograma: CronogramaPublico | null;
+    cronogramaItems: CronogramaItemPublico[];
     votarDisponible: boolean;
     resultadosDisponibles: boolean;
     fechaFinVotacion: string | null;

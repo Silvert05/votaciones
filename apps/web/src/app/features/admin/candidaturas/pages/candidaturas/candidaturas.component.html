@@ -2,7 +2,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <div class="text-4xl font-extrabold tracking-tight leading-tight">Candidaturas</div>
-      <p class="mt-2 text-secondary">Registro, validacion y calificacion de candidatos por dignidad</p>
+      <p class="mt-2 text-secondary">Registro, validación y calificación de candidatos por dignidad</p>
     </div>
     <div class="flex flex-wrap gap-2">
       <button matButton="tonal" type="button" (click)="abrirCandidaturas()" [disabled]="!selectedEleccionCtrl.value">
@@ -11,7 +11,7 @@
       </button>
       <button matButton="tonal" type="button" (click)="cerrarCalificacion()" [disabled]="!selectedEleccionCtrl.value">
         <mat-icon [svgIcon]="'lucide:badge-check'" />
-        <span class="ml-1">Cerrar calificacion</span>
+        <span class="ml-1">Cerrar calificación</span>
       </button>
       <button matButton="filled" color="primary" type="button" (click)="newCandidatura()" [disabled]="!selectedEleccionCtrl.value">
         <mat-icon [svgIcon]="'lucide:plus'" />
@@ -24,7 +24,7 @@
     <div class="xl:col-span-2 rounded shadow bg-card overflow-hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 p-4 border-b">
         <mat-form-field appearance="outline" class="xl:col-span-2">
-          <mat-label>Eleccion</mat-label>
+          <mat-label>Elección</mat-label>
           <mat-select [formControl]="selectedEleccionCtrl">
             @for (eleccion of elecciones; track eleccion.id) {
             <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
@@ -118,7 +118,7 @@
             <div class="text-xs text-secondary mt-1">{{ c.observacion }}</div>
             }
             @if (c.estado === 'OBSERVADA' && c.plazoSubsanacionAt) {
-            <div class="text-xs text-amber-700 mt-1">Plazo de subsanacion: {{ c.plazoSubsanacionAt | date: 'short' }}</div>
+            <div class="text-xs text-amber-700 mt-1">Plazo de subsanación: {{ c.plazoSubsanacionAt | date: 'short' }}</div>
             }
           </td>
         </ng-container>
@@ -149,13 +149,13 @@
               @if (c.estado === 'OBSERVADA') {
               <button mat-menu-item (click)="subsanar(c)">
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:file-up'" />
-                <span>Subsanar documentacion</span>
+                <span>Subsanar documentación</span>
               </button>
               }
               @if (c.estado === 'RECHAZADA') {
               <button mat-menu-item (click)="impugnarCalificacion(c)">
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:scale'" />
-                <span>Impugnar calificacion</span>
+                <span>Impugnar calificación</span>
               </button>
               }
             </mat-menu>

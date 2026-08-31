@@ -23,7 +23,7 @@
 
     <div class="p-4 border-b">
       <mat-form-field appearance="outline" class="w-full md:w-160">
-        <mat-label>Eleccion</mat-label>
+        <mat-label>Elección</mat-label>
         <mat-select [formControl]="selectedEleccionCtrl">
           @for (eleccion of elecciones; track eleccion.id) {
           <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
@@ -40,7 +40,7 @@
           <div class="text-lg font-semibold">{{ label(resumen.eleccion.estado) }}</div>
         </div>
         <div class="rounded border p-4">
-          <div class="text-sm text-secondary">Padron</div>
+          <div class="text-sm text-secondary">Padrón</div>
           <div class="text-lg font-semibold">{{ resumen.padronHabilitado }}</div>
         </div>
         <div class="rounded border p-4">
@@ -73,7 +73,7 @@
           </div>
 
           <div class="mt-4 rounded bg-gray-50 p-3 text-sm">
-            <div>Validos: <span class="font-semibold">{{ resultado.votosValidos }}</span></div>
+            <div>Válidos: <span class="font-semibold">{{ resultado.votosValidos }}</span></div>
             <div>Blancos: <span class="font-semibold">{{ resultado.votosBlancos }}</span></div>
             <div>Nulos: <span class="font-semibold">{{ resultado.votosNulos }}</span></div>
           </div>
@@ -96,12 +96,12 @@
           </div>
         </div>
         } @empty {
-        <div class="rounded border p-8 text-center text-secondary xl:col-span-2">Aun no existen actas para calcular ganadores.</div>
+        <div class="rounded border p-8 text-center text-secondary xl:col-span-2">Aún no existen actas para calcular ganadores.</div>
         }
       </div>
     </div>
     } @else {
-    <div class="p-8 text-center text-secondary">Selecciona una eleccion para consultar resultados finales.</div>
+    <div class="p-8 text-center text-secondary">Selecciona una elección para consultar resultados finales.</div>
     }
   </div>
 </div>

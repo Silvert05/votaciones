@@ -174,7 +174,7 @@ export default class ElectionRollComponent implements OnInit {
           this.padron = res.data;
           this.total = res.total;
         },
-        error: () => this._notifyError('No se pudo cargar el padron.'),
+        error: () => this._notifyError('No se pudo cargar el padrón.'),
       });
   }
 
@@ -201,7 +201,7 @@ export default class ElectionRollComponent implements OnInit {
     const eleccionId = this.selectedEleccionCtrl.value;
     const electorIds = this.asignarCtrl.value;
     if (!eleccionId || !electorIds.length) {
-      this._notify('Selecciona una eleccion y al menos un elector.');
+      this._notify('Selecciona una elección y al menos un elector.');
       return;
     }
 
@@ -220,25 +220,25 @@ export default class ElectionRollComponent implements OnInit {
   autoGenerar(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
 
     this._padronService.autoGenerar(eleccionId).subscribe({
       next: (res) => {
-        this._notify(`Padron generado. Nuevos: ${res.autogenerados}.`);
+        this._notify(`Padrón generado. Nuevos: ${res.autogenerados}.`);
         this.loadPadron();
         this.loadElectores();
       },
       error: (err) =>
-        this._notifyError(this.errorMessage(err, 'No se pudo generar el padron.')),
+        this._notifyError(this.errorMessage(err, 'No se pudo generar el padrón.')),
     });
   }
 
   publicar(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     this._institutionalDialog.confirm({
@@ -308,7 +308,7 @@ export default class ElectionRollComponent implements OnInit {
   saveEstado(): void {
     const eleccionId = this.selectedEleccionCtrl.value;
     if (!eleccionId || !this.selectedPadron) {
-      this._notify('Selecciona un elector del padron.');
+      this._notify('Selecciona un elector del padrón.');
       return;
     }
     if (this.form.invalid) {
@@ -328,7 +328,7 @@ export default class ElectionRollComponent implements OnInit {
       .subscribe({
         next: (item) => {
           this.selectedPadron = item;
-          this._notify('Estado del padron actualizado.');
+          this._notify('Estado del padrón actualizado.');
           this.loadPadron();
         },
         error: (err) =>

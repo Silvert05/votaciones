@@ -159,7 +159,7 @@ export default class VotarComponent implements OnInit, OnDestroy {
           this.fase = this.planchaDignidades.length ? 'plancha' : 'cedula';
         },
         error: (err) =>
-          this._notify(this._msg(err, 'No se pudo cargar la cedula.')),
+          this._notify(this._msg(err, 'No se pudo cargar la cédula.')),
       });
   }
 

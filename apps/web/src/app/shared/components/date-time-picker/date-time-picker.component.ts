@@ -36,7 +36,6 @@ import { Subscription, merge } from 'rxjs';
           matInput
           readonly
           [required]="required"
-          [min]="today"
           [matDatepicker]="calendar"
           [formControl]="dateCtrl"
           (blur)="markTouched()"
@@ -75,7 +74,6 @@ export class DateTimePickerComponent
   @Input() label = 'Fecha';
   @Input() required = false;
 
-  readonly today = DateTime.now().startOf('day');
   readonly dateCtrl = new FormControl<DateTime | null>(null);
   readonly timeCtrl = new FormControl<DateTime | null>(
     DateTime.now().set({ hour: 8, minute: 0, second: 0, millisecond: 0 }),

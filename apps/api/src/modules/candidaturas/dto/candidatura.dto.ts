@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsInt,
@@ -112,6 +113,27 @@ export class CalificarCandidaturaDto {
   @IsString()
   @MaxLength(255)
   observacion?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Cumple al menos 40% de materias aprobadas de la carrera (Art. 4, Cap. 4)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  cumpleAprobadoCarrera?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Cumple el promedio academico minimo del 80% (Art. 4, Cap. 4)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  cumplePromedioAcademico?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Sancionado por una terna propuesta al Organo Colegiado Superior (Art. 4, Cap. 4)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  sancionado?: boolean;
 }
 
 export class SubsanarCandidaturaDto {

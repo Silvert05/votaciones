@@ -1,5 +1,13 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class UpsertCronogramaDto {
   @ApiPropertyOptional()
@@ -80,4 +88,58 @@ export class UpsertCronogramaDto {
   @IsString()
   @MaxLength(255)
   lugarVotacion?: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Detalle opcional por hito fijo: fecha de fin (rango) y/o descripcion. Clave = nombre de campo de fecha fija.',
+    example: {
+      fechaInicioInscripcion: {
+        fechaFin: '2026-06-20T17:00:00.000Z',
+        descripcion: 'Recepcion de carpetas en Secretaria General.',
+      },
+    },
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  detallesHitos?: Record<
+    string,
+    { fechaFin?: string | null; descripcion?: string | null }
+  > | null;
+}
+
+export class UpdateOrdenCronogramaDto {
+  @ApiProperty({
+    description:
+      'Orden de publicacion de los hitos: nombres de campo de fecha fija (p.ej. "fechaInicioVotacion") o "item:<id>" para items libres.',
+    example: ['fechaConvocatoria', 'item:8f14e...', 'fechaInicioVotacion'],
+    type: [String],
+  })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  orden: string[];
+}
+
+export class PublicarCronogramaDto {
+  @ApiProperty({
+    description:
+      'true = el cronograma se muestra en el portal publico; false = queda como borrador.',
+    example: true,
+  })
+  @IsBoolean()
+  publicado: boolean;
+}
+
+export class UpdateEtiquetasCronogramaDto {
+  @ApiProperty({
+    description:
+      'Mapa "campo fijo -> titulo publico personalizado" (p.ej. { "fechaInicioVotacion": "Apertura de urnas" }).',
+    example: { fechaInicioVotacion: 'Apertura de urnas' },
+    type: 'object',
+    additionalProperties: { type: 'string' },
+  })
+  @IsObject()
+  etiquetas: Record<string, string>;
 }

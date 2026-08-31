@@ -44,6 +44,9 @@ export interface Candidatura {
   estado: EstadoCandidatura;
   observacion: string | null;
   plazoSubsanacionAt: string | null;
+  cumpleAprobadoCarrera: boolean | null;
+  cumplePromedioAcademico: boolean | null;
+  sancionado: boolean | null;
   createdAt: string;
   updatedAt: string;
   dignidad: Pick<Dignidad, 'id' | 'nombre' | 'tipoElectorPermitido' | 'requiereLista'>;
@@ -100,6 +103,9 @@ export interface UpdateCandidaturaPayload {
 export interface CalificarCandidaturaPayload {
   estado: EstadoCandidatura;
   observacion?: string | null;
+  cumpleAprobadoCarrera?: boolean;
+  cumplePromedioAcademico?: boolean;
+  sancionado?: boolean;
 }
 
 export interface EstadoEleccionResponse {

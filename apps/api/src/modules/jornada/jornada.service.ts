@@ -299,6 +299,9 @@ export class JornadaService {
 
     await this.prisma.$transaction(async (tx) => {
       if (eleccion.estado === EstadoEleccion.VOTACION_CERRADA) {
+        // Etapa 1 de resultados: PROVISIONALES. Se generan y quedan visibles
+        // para el administrador; NO se publican en el portal publico todavia
+        // (eso es la etapa 2, "Publicar resultados definitivos", desde Gestion).
         await tx.eleccion.update({
           where: { id: eleccionId },
           data: { estado: EstadoEleccion.RESULTADOS_PROVISIONALES },

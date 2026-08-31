@@ -23,7 +23,7 @@
 
     <div class="border-b p-5">
       <mat-form-field appearance="outline" class="w-full md:w-160">
-        <mat-label>Eleccion</mat-label>
+        <mat-label>Elección</mat-label>
         <mat-select [formControl]="selectedEleccionCtrl">
           @for (eleccion of elecciones; track eleccion.id) {
           <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
@@ -61,7 +61,7 @@
           <div class="text-xl font-semibold">{{ label(resultados.eleccion.estado) }}</div>
         </div>
         <div class="venp-admin-metric rounded-2xl p-5">
-          <div class="text-sm text-secondary">Padron habilitado</div>
+          <div class="text-sm text-secondary">Padrón habilitado</div>
           <div class="text-xl font-semibold">{{ resultados.padronHabilitado }}</div>
         </div>
         <div class="venp-admin-metric rounded-2xl p-5">
@@ -84,7 +84,7 @@
               <div class="text-sm text-secondary">Votos emitidos: {{ emitidos }}</div>
             </div>
             <div class="text-sm text-secondary">
-              {{ resultados.padronHabilitado ? porcentaje(emitidos, resultados.padronHabilitado) : 0 }}% participacion
+              {{ resultados.padronHabilitado ? porcentaje(emitidos, resultados.padronHabilitado) : 0 }}% participación
             </div>
           </div>
 
@@ -164,7 +164,7 @@
       }
     </div>
     } @else {
-    <div class="p-8 text-center text-secondary">Selecciona una eleccion para ver resultados.</div>
+    <div class="p-8 text-center text-secondary">Selecciona una elección para ver resultados.</div>
     }
   </div>
 </div>

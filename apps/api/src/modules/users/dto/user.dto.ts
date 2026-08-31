@@ -61,6 +61,14 @@ export class CreateUserDto {
   @ValidateIf((_, value) => value !== null && value !== '')
   @IsUUID()
   electorId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Recibe alertas por correo cuando el cronograma electoral esta incompleto',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  encargadoCronograma?: boolean;
 }
 
 export class UpdateUserDto {
@@ -87,6 +95,13 @@ export class UpdateUserDto {
   @ValidateIf((_, value) => value !== null && value !== '')
   @IsUUID()
   perfilId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Recibe alertas por correo cuando el cronograma electoral esta incompleto',
+  })
+  @IsOptional()
+  @IsBoolean()
+  encargadoCronograma?: boolean;
 }
 
 export class ToggleActivoDto {

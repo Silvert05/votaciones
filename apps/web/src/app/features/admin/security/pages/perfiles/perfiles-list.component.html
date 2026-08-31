@@ -2,7 +2,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <div class="text-4xl font-extrabold tracking-tight leading-tight">Perfiles</div>
-      <p class="mt-2 text-secondary">Agrupa opciones de menu y rutas para asignarlas a usuarios</p>
+      <p class="mt-2 text-secondary">Agrupa opciones de menú y rutas para asignarlas a usuarios</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="newPerfil()">
       <mat-icon [svgIcon]="'lucide:plus'" />
@@ -23,7 +23,7 @@
         </ng-container>
 
         <ng-container matColumnDef="descripcion">
-          <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+          <th mat-header-cell *matHeaderCellDef>Descripción</th>
           <td mat-cell *matCellDef="let p" class="text-secondary">{{ p.descripcion ?? '-' }}</td>
         </ng-container>
 
@@ -88,7 +88,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Descripcion</mat-label>
+          <mat-label>Descripción</mat-label>
           <input matInput formControlName="descripcion">
         </mat-form-field>
       </form>
@@ -104,7 +104,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <div class="text-lg font-semibold">Opciones asignadas</div>
-            <p class="text-sm text-secondary">Estas rutas construyen el menu y los accesos del usuario.</p>
+            <p class="text-sm text-secondary">Estas rutas construyen el menú y los accesos del usuario.</p>
           </div>
           <button matButton="filled" color="primary" type="button" (click)="saveOpciones()"
             [disabled]="!selectedPerfil || savingOptions">
@@ -121,7 +121,7 @@
             <span class="min-w-0">
               <span class="block font-medium">{{ opcion.titulo }}</span>
               <span class="block text-sm text-secondary">
-                {{ opcion.padre?.titulo ?? 'Raiz' }} - {{ opcion.ruta ?? 'Grupo de menu' }}
+                {{ opcion.padre?.titulo ?? 'Raíz' }} - {{ opcion.ruta ?? 'Grupo de menú' }}
               </span>
             </span>
           </label>

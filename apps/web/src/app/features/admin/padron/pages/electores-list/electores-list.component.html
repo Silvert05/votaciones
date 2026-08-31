@@ -29,7 +29,7 @@
                     <input
                         matInput
                         [formControl]="searchCtrl"
-                        placeholder="Cedula, nombres o unidad"
+                        placeholder="Cédula, nombres o unidad"
                     />
                     <mat-icon
                         matPrefix
@@ -71,7 +71,7 @@
 
             <table mat-table [dataSource]="electores" class="w-full">
                 <ng-container matColumnDef="identificacion">
-                    <th mat-header-cell *matHeaderCellDef>Identificacion</th>
+                    <th mat-header-cell *matHeaderCellDef>Identificación</th>
                     <td mat-cell *matCellDef="let e" class="font-medium">
                         {{ e.identificacion }}
                     </td>
@@ -290,7 +290,7 @@
                 </div>
 
                 <mat-form-field appearance="outline">
-                    <mat-label>Identificacion</mat-label>
+                    <mat-label>Identificación</mat-label>
                     <input matInput formControlName="identificacion" />
                 </mat-form-field>
 
@@ -331,7 +331,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                    <mat-label>Genero</mat-label>
+                    <mat-label>Género</mat-label>
                     <mat-select formControlName="genero">
                         <mat-option [value]="null">Sin especificar</mat-option>
                         @for (genero of generos; track genero.value) {
@@ -340,7 +340,7 @@
                             }}</mat-option>
                         }
                     </mat-select>
-                    <mat-hint>Requerido para calificar listas (Art. 12, equidad de genero).</mat-hint>
+                    <mat-hint>Requerido para calificar listas (Art. 12, equidad de género).</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">

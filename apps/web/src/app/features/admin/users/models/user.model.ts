@@ -22,6 +22,7 @@ export interface User {
   activo: boolean;
   cambiarPassword: boolean;
   fechaCaducidad: string | null;
+  encargadoCronograma: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +52,7 @@ export interface CreateUserPayload {
   rol: Rol;
   perfilId?: string | null;
   electorId?: string | null;
+  encargadoCronograma?: boolean;
 }
 
 export interface UpdateUserPayload {
@@ -58,4 +60,5 @@ export interface UpdateUserPayload {
   email: string;
   rol: Rol;
   perfilId?: string | null;
+  encargadoCronograma?: boolean;
 }

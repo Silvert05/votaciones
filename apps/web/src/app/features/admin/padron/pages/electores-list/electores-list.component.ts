@@ -122,7 +122,7 @@ export default class ElectoresListComponent implements OnInit {
                 this.jornadas = catalogos.jornadas;
                 this._changeDetectorRef.detectChanges();
             },
-            error: () => this._notifyError('No se pudieron cargar los catalogos.'),
+            error: () => this._notifyError('No se pudieron cargar los catálogos.'),
         });
         this.searchCtrl.valueChanges
             .pipe(debounceTime(350), distinctUntilChanged())

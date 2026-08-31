@@ -18,7 +18,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { InstitutionalDialogService } from 'app/shared/services/institutional-dialog.service';
-import { DateTimePickerComponent } from 'app/shared/components/date-time-picker/date-time-picker.component';
 import {
   ESTADOS_ELECCION,
   ESTADO_TRANSICIONES,
@@ -44,7 +43,6 @@ import { ElectionsService } from '../../services/elections.service';
     MatMenuModule,
     MatTooltipModule,
     MatProgressBarModule,
-    DateTimePickerComponent,
   ],
   templateUrl: './elections-list.component.html',
 })
@@ -59,7 +57,6 @@ export default class ElectionsListComponent implements OnInit {
     'nombre',
     'tipo',
     'estado',
-    'convocatoria',
     'dignidades',
     'acciones',
   ];
@@ -78,7 +75,6 @@ export default class ElectionsListComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.maxLength(180)]],
     descripcion: [''],
     tipo: ['INSTITUCIONAL' as TipoEleccion, Validators.required],
-    fechaConvocatoria: [''],
     vueltaActual: [1, [Validators.required, Validators.min(1), Validators.max(99)]],
   });
 
@@ -142,7 +138,6 @@ export default class ElectionsListComponent implements OnInit {
       nombre: '',
       descripcion: '',
       tipo: 'INSTITUCIONAL',
-      fechaConvocatoria: '',
       vueltaActual: 1,
     });
   }
@@ -155,11 +150,10 @@ export default class ElectionsListComponent implements OnInit {
           nombre: detalle.nombre,
           descripcion: detalle.descripcion ?? '',
           tipo: detalle.tipo,
-          fechaConvocatoria: this.toLocalDateTime(detalle.fechaConvocatoria),
           vueltaActual: detalle.vueltaActual,
         });
       },
-      error: () => this._notifyError('No se pudo cargar la eleccion.'),
+      error: () => this._notifyError('No se pudo cargar la elección.'),
     });
   }
 
@@ -174,7 +168,6 @@ export default class ElectionsListComponent implements OnInit {
       nombre: raw.nombre!,
       descripcion: raw.descripcion || null,
       tipo: raw.tipo!,
-      fechaConvocatoria: this.toIsoDateTime(raw.fechaConvocatoria),
       ...(this.selected
         ? { vueltaActual: Number(raw.vueltaActual ?? 1) }
         : {}),
@@ -189,7 +182,7 @@ export default class ElectionsListComponent implements OnInit {
     request$.pipe(finalize(() => (this.saving = false))).subscribe({
       next: (detalle) => {
         this.selected = detalle;
-        this._notify(isEdit ? 'Eleccion guardada.' : 'Eleccion creada.');
+        this._notify(isEdit ? 'Elección guardada.' : 'Elección creada.');
         this.load();
       },
       error: (err) =>
@@ -201,31 +194,84 @@ export default class ElectionsListComponent implements OnInit {
     return ESTADO_TRANSICIONES[eleccion.estado] ?? [];
   }
 
+  /** Texto del ítem de menú por estado destino (más claro que "Pasar a X"). */
+  transitionLabel(estado: EstadoEleccion): string {
+    const custom: Partial<Record<EstadoEleccion, string>> = {
+      RESULTADOS_DEFINITIVOS: 'Publicar resultados definitivos',
+      POSESIONADA: 'Registrar posesión de autoridades',
+      ANULADA: 'Anular la elección',
+    };
+    return custom[estado] ?? `Pasar a ${this.label(estado)}`;
+  }
+
   cambiarEstado(eleccion: Eleccion, estado: EstadoEleccion): void {
+    const mensajes: Partial<Record<EstadoEleccion, string>> = {
+      RESULTADOS_DEFINITIVOS: `Se publicarán los resultados como DEFINITIVOS: pasarán a mostrarse en el sitio público (página de Resultados) y la elección quedará lista para "Posesionada". Hazlo cuando ya socializaste los resultados provisionales.`,
+      POSESIONADA: `La elección pasará de ${this.label(eleccion.estado)} a Posesionada (Art. 22). Esto es definitivo: se publicará en el sitio público el acta de posesión con las autoridades electas de cada dignidad.`,
+      ANULADA: `La elección pasará de ${this.label(eleccion.estado)} a Anulada. Es un estado final: el proceso deja de estar activo.`,
+    };
     const message =
-      estado === 'POSESIONADA'
-        ? `La elección pasará de ${this.label(eleccion.estado)} a Posesionada (Art. 22). Esto es definitivo: se publicará en el sitio público el acta de posesión con las autoridades electas de cada dignidad.`
-        : `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`;
-    this._institutionalDialog.prompt({
-      title: 'Cambiar etapa de la elección',
-      message,
-      inputLabel: 'Comentario del cambio',
-      confirmText: 'Cambiar etapa',
-      icon: 'lucide:refresh-ccw-dot',
-    }).subscribe((comentario) => {
-      if (comentario === null) return;
-      this._electionsService
-        .cambiarEstado(eleccion.id, { estado, comentario: comentario || null })
-        .subscribe({
-          next: (detalle) => {
-            if (this.selected?.id === detalle.id) this.selected = detalle;
-            this._notify(`Estado actualizado a ${this.label(detalle.estado)}.`);
-            this.load();
-          },
-          error: (err) =>
-            this._notifyError(this.errorMessage(err, 'No se pudo cambiar el estado.')),
-        });
-    });
+      mensajes[estado] ??
+      `La elección pasará de ${this.label(eleccion.estado)} a ${this.label(estado)}.`;
+    this._institutionalDialog
+      .prompt({
+        title: 'Cambiar etapa de la elección',
+        message,
+        inputLabel: 'Comentario del cambio',
+        confirmText: 'Cambiar etapa',
+        icon: 'lucide:refresh-ccw-dot',
+      })
+      .subscribe((comentario) => {
+        if (comentario === null) return;
+        this._electionsService
+          .cambiarEstado(eleccion.id, { estado, comentario: comentario || null })
+          .subscribe({
+            next: (detalle) => {
+              if (this.selected?.id === detalle.id) this.selected = detalle;
+              this._notify(`Estado actualizado a ${this.label(detalle.estado)}.`);
+              this.load();
+            },
+            error: (err) =>
+              this._notifyError(
+                this.errorMessage(err, 'No se pudo cambiar el estado.'),
+              ),
+          });
+      });
+  }
+
+  togglePortalPublico(eleccion: Eleccion): void {
+    const activar = !eleccion.portalPublico;
+    this._institutionalDialog
+      .confirm({
+        title: activar
+          ? 'Mostrar en el portal público'
+          : 'Quitar del portal público',
+        message: activar
+          ? `"${eleccion.nombre}" pasará a ser el proceso que ven los electores en el portal público (nombre, cronograma, candidatos, participación y resultados). El proceso que estuviera visible se ocultará.`
+          : 'El portal público quedará sin proceso activo: los electores verán un aviso de que no hay una elección en curso.',
+        confirmText: activar ? 'Mostrar en el portal' : 'Quitar del portal',
+        danger: !activar,
+      })
+      .subscribe((ok) => {
+        if (!ok) return;
+        this._electionsService
+          .setPortalPublico(eleccion.id, activar)
+          .subscribe({
+            next: (detalle) => {
+              if (this.selected?.id === detalle.id) this.selected = detalle;
+              this._notify(
+                activar
+                  ? 'Portal público actualizado.'
+                  : 'El portal público quedó sin proceso activo.',
+              );
+              this.load();
+            },
+            error: (err) =>
+              this._notifyError(
+                this.errorMessage(err, 'No se pudo actualizar el portal público.'),
+              ),
+          });
+      });
   }
 
   label(value: string | null | undefined): string {
@@ -235,12 +281,6 @@ export default class ElectionsListComponent implements OnInit {
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
-  }
-
-  formatDate(value: string | null | undefined): string {
-    if (!value) return '-';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString();
   }
 
   estadoClass(estado: EstadoEleccion): string {
@@ -254,20 +294,6 @@ export default class ElectionsListComponent implements OnInit {
       return `${base} bg-amber-100 text-amber-700`;
     }
     return `${base} bg-slate-100 text-slate-700`;
-  }
-
-  private toIsoDateTime(value?: string | null): string | null {
-    if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
-  }
-
-  private toLocalDateTime(value?: string | null): string {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    const offset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
   }
 
   private _notify(message: string): void {

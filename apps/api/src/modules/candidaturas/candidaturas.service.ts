@@ -65,6 +65,9 @@ const candidaturaSelect = {
   estado: true,
   observacion: true,
   plazoSubsanacionAt: true,
+  cumpleAprobadoCarrera: true,
+  cumplePromedioAcademico: true,
+  sancionado: true,
   createdAt: true,
   updatedAt: true,
   dignidad: {
@@ -452,6 +455,13 @@ export class CandidaturasService {
           dto.estado === EstadoCandidatura.OBSERVADA
             ? new Date(Date.now() + 24 * 60 * 60 * 1000)
             : null,
+        ...(dto.cumpleAprobadoCarrera !== undefined
+          ? { cumpleAprobadoCarrera: dto.cumpleAprobadoCarrera }
+          : {}),
+        ...(dto.cumplePromedioAcademico !== undefined
+          ? { cumplePromedioAcademico: dto.cumplePromedioAcademico }
+          : {}),
+        ...(dto.sancionado !== undefined ? { sancionado: dto.sancionado } : {}),
       },
       select: candidaturaSelect,
     });

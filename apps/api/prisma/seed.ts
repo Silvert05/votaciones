@@ -784,7 +784,7 @@ async function seedProcesoElectoral(catalogos: Catalogos) {
         'Proceso de demostracion precargado para simular el voto electronico de principio a fin.',
       tipo: 'INSTITUCIONAL',
       estado: 'VOTACION_ABIERTA',
-      fechaConvocatoria: new Date('2026-06-01T08:00:00.000Z'),
+      portalPublico: true,
     },
   });
 
@@ -828,6 +828,7 @@ async function seedProcesoElectoral(catalogos: Catalogos) {
       fechaInicioVotacion: new Date('2026-06-30T08:00:00.000Z'),
       fechaFinVotacion: new Date('2026-06-30T18:00:00.000Z'),
       fechaPublicacionResultados: new Date('2026-06-30T19:00:00.000Z'),
+      publicado: true,
     },
   });
 

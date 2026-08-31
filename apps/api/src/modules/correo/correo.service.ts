@@ -18,6 +18,14 @@ export interface CredencialVotacionEmail {
   institucion?: string | null;
 }
 
+export interface AlertaCronogramaEmail {
+  email: string;
+  nombre: string;
+  eleccionNombre: string;
+  diasRestantes: number;
+  camposFaltantes: string[];
+}
+
 export interface CorreoPrueba {
   id: string;
   email: string;
@@ -123,6 +131,45 @@ export class CorreoService {
       });
       if (this.buzonPruebas.length > 500) this.buzonPruebas.length = 500;
     }
+  }
+
+  async enviarAlertaCronogramaIncompleto(
+    data: AlertaCronogramaEmail,
+  ): Promise<void> {
+    this.asegurarConfigurado();
+
+    const campos = data.camposFaltantes.join(', ');
+    const text = [
+      `Hola ${data.nombre},`,
+      '',
+      `El cronograma electoral de "${data.eleccionNombre}" sigue incompleto y faltan ${data.diasRestantes} dia(s) para el inicio de la votacion.`,
+      `Campos pendientes: ${campos}.`,
+      '',
+      'Por favor completa el cronograma electoral lo antes posible.',
+    ].join('\n');
+
+    const subject = `Cronograma incompleto - ${data.eleccionNombre}`;
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#172033">
+        <h2 style="color:#b45309">Cronograma electoral incompleto</h2>
+        <p>Hola <strong>${this.escapeHtml(data.nombre)}</strong>,</p>
+        <p>El cronograma electoral de <strong>${this.escapeHtml(data.eleccionNombre)}</strong> sigue incompleto y faltan <strong>${data.diasRestantes}</strong> dia(s) para el inicio de la votacion.</p>
+        <div style="background:#fef3c7;border-radius:12px;padding:20px;margin:20px 0">
+          <p style="margin:0"><strong>Campos pendientes:</strong> ${this.escapeHtml(campos)}</p>
+        </div>
+        <p>Por favor completa el cronograma electoral lo antes posible.</p>
+      </div>
+    `;
+
+    await this.transporter!.sendMail({
+      from:
+        envs.SMTP_FROM ??
+        'Elecciones Yavirac (pruebas) <preview@yavirac.edu.ec>',
+      to: data.email,
+      subject,
+      text,
+      html,
+    });
   }
 
   estado() {

@@ -56,6 +56,8 @@ export default class ElectionConfigComponent implements OnInit {
     escudoUrl: [''],
     colorPrimario: ['#183f84', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
     colorSecundario: ['#ea580c', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    // El "fondo del sitio público" ya no se edita en esta pantalla; se conserva
+    // el control para no perder el valor guardado al volver a guardar.
     colorAcento: ['#f3eadc', Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
     mensajeBienvenida: [''],
   });
@@ -106,13 +108,13 @@ export default class ElectionConfigComponent implements OnInit {
       )
       .subscribe({
         next: (config) => this.patchConfig(config),
-        error: () => this._notifyError('No se pudo cargar la configuracion.'),
+        error: () => this._notifyError('No se pudo cargar la configuración.'),
       });
   }
 
   save(): void {
     if (!this.selectedId) {
-      this._notify('Selecciona una eleccion.');
+      this._notify('Selecciona una elección.');
       return;
     }
     if (this.form.invalid) {
@@ -129,19 +131,11 @@ export default class ElectionConfigComponent implements OnInit {
       .subscribe({
         next: (config) => {
           this.patchConfig(config);
-          this._notify('Configuracion guardada.');
+          this._notify('Configuración guardada.');
         },
         error: (err) =>
           this._notifyError(this.errorMessage(err, 'No se pudo guardar.')),
       });
-  }
-
-  aplicarPaletaYavirac(): void {
-    this.form.patchValue({
-      colorPrimario: '#183f84',
-      colorSecundario: '#ea580c',
-      colorAcento: '#f3eadc',
-    });
   }
 
   private patchConfig(config: ConfiguracionEleccion | null): void {

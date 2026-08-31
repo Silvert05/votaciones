@@ -134,7 +134,7 @@ export default class OpcionesListComponent implements OnInit {
 
     request$.pipe(finalize(() => (this.saving = false))).subscribe({
       next: () => {
-        this._notify(this.editing ? 'Opcion actualizada.' : 'Opcion creada.');
+        this._notify(this.editing ? 'Opción actualizada.' : 'Opción creada.');
         this.cancelEdit();
         this.load();
       },
@@ -145,7 +145,7 @@ export default class OpcionesListComponent implements OnInit {
   toggle(opcion: Opcion): void {
     this._securityService.setOpcionActivo(opcion.id, !opcion.activo).subscribe({
       next: () => {
-        this._notify(`Opcion ${opcion.activo ? 'desactivada' : 'activada'}.`);
+        this._notify(`Opción ${opcion.activo ? 'desactivada' : 'activada'}.`);
         this.load();
       },
       error: (err) =>

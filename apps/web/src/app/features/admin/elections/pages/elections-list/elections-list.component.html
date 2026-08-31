@@ -6,7 +6,7 @@
     </div>
     <button matButton="filled" color="primary" type="button" (click)="newEleccion()">
       <mat-icon [svgIcon]="'lucide:plus'" />
-      <span class="ml-1">Nueva eleccion</span>
+      <span class="ml-1">Nueva elección</span>
     </button>
   </div>
 
@@ -15,7 +15,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border-b">
         <mat-form-field appearance="outline">
           <mat-label>Buscar</mat-label>
-          <input matInput [formControl]="searchCtrl" placeholder="Nombre o descripcion">
+          <input matInput [formControl]="searchCtrl" placeholder="Nombre o descripción">
           <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
 
@@ -36,9 +36,18 @@
 
       <table mat-table [dataSource]="elecciones" class="w-full">
         <ng-container matColumnDef="nombre">
-          <th mat-header-cell *matHeaderCellDef>Eleccion</th>
+          <th mat-header-cell *matHeaderCellDef>Elección</th>
           <td mat-cell *matCellDef="let e">
-            <div class="font-medium">{{ e.nombre }}</div>
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ e.nombre }}</span>
+              @if (e.portalPublico) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700"
+                  matTooltip="Este es el proceso que ve el portal público del elector">
+                  <mat-icon class="icon-size-3" [svgIcon]="'lucide:eye'" />
+                  Portal público
+                </span>
+              }
+            </div>
             <div class="text-sm text-secondary">{{ e.descripcion ?? '-' }}</div>
           </td>
         </ng-container>
@@ -53,11 +62,6 @@
           <td mat-cell *matCellDef="let e">
             <span [class]="estadoClass(e.estado)">{{ label(e.estado) }}</span>
           </td>
-        </ng-container>
-
-        <ng-container matColumnDef="convocatoria">
-          <th mat-header-cell *matHeaderCellDef>Convocatoria</th>
-          <td mat-cell *matCellDef="let e">{{ formatDate(e.fechaConvocatoria) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="dignidades">
@@ -76,10 +80,14 @@
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:square-pen'" />
                 <span>Editar</span>
               </button>
+              <button mat-menu-item (click)="togglePortalPublico(e)">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="e.portalPublico ? 'lucide:eye-off' : 'lucide:eye'" />
+                <span>{{ e.portalPublico ? 'Quitar del portal público' : 'Mostrar en el portal público' }}</span>
+              </button>
               @for (estado of nextStates(e); track estado) {
               <button mat-menu-item (click)="cambiarEstado(e, estado)">
                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'lucide:refresh-ccw-dot'" />
-                <span>Pasar a {{ label(estado) }}</span>
+                <span>{{ transitionLabel(estado) }}</span>
               </button>
               }
             </mat-menu>
@@ -104,7 +112,7 @@
 
     <div class="rounded shadow bg-card p-4">
       <div class="text-lg font-semibold">
-        {{ selected ? 'Editar eleccion' : 'Nueva eleccion' }}
+        {{ selected ? 'Editar elección' : 'Nueva elección' }}
       </div>
 
       <form class="mt-4 grid grid-cols-1 gap-3" [formGroup]="form">
@@ -114,11 +122,9 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Descripcion</mat-label>
+          <mat-label>Descripción</mat-label>
           <textarea matInput rows="3" formControlName="descripcion"></textarea>
         </mat-form-field>
-
-        <app-date-time-picker label="Fecha de convocatoria" formControlName="fechaConvocatoria" />
 
         <mat-form-field appearance="outline">
           <mat-label>Vuelta</mat-label>

@@ -96,8 +96,16 @@
         <mat-option [value]="perfil.id">{{ perfil.nombre }}</mat-option>
         }
       </mat-select>
-      <mat-hint>El perfil define las pantallas del menu permitidas</mat-hint>
+      <mat-hint>El perfil define las pantallas del menú permitidas</mat-hint>
     </mat-form-field>
+
+    <div class="flex items-center justify-between gap-2 py-1">
+      <div>
+        <div class="font-medium">Encargado de cronograma</div>
+        <div class="text-sm text-secondary">Recibe alertas por correo si el cronograma electoral queda incompleto cerca de la votación</div>
+      </div>
+      <mat-slide-toggle [formControlName]="'encargadoCronograma'" />
+    </div>
 
     @if (!isEdit) {
     <mat-form-field class="w-full">

@@ -8,7 +8,11 @@ interface ActividadCronograma {
   responsable: string;
   lugar: string | null;
   hora: string;
-  fecha: Date;
+  fecha: Date | null;
+  fechaFin: Date | null;
+  /** Fecha usada para ordenar/agrupar (inicio, o fin si no hay inicio). */
+  ancla: Date;
+  descripcion: string | null;
 }
 
 interface GrupoActividad {
@@ -19,14 +23,16 @@ interface GrupoActividad {
 
 type CampoCronograma = keyof CronogramaPublico;
 
+/** Mismos hitos y etiquetas por defecto que la pantalla de administración. */
 const EVENTOS: Array<{ campo: CampoCronograma; titulo: string }> = [
-  { campo: 'fechaConvocatoria', titulo: 'Convocatoria del proceso electoral' },
-  { campo: 'fechaPublicacionPadron', titulo: 'Publicacion del padron electoral' },
+  { campo: 'fechaConvocatoria', titulo: 'Convocatoria del proceso' },
+  { campo: 'fechaPublicacionPadron', titulo: 'Publicación del padrón' },
   { campo: 'fechaInicioInscripcion', titulo: 'Apertura de candidaturas' },
   { campo: 'fechaFinInscripcion', titulo: 'Cierre de candidaturas' },
-  { campo: 'fechaInicioVotacion', titulo: 'Inicio de la jornada de votacion' },
-  { campo: 'fechaFinVotacion', titulo: 'Cierre de la jornada de votacion' },
-  { campo: 'fechaPublicacionResultados', titulo: 'Publicacion de resultados' },
+  { campo: 'fechaInicioVotacion', titulo: 'Inicio de la votación' },
+  { campo: 'fechaFinVotacion', titulo: 'Cierre de la votación' },
+  { campo: 'fechaPublicacionResultados', titulo: 'Resultados provisionales' },
+  { campo: 'fechaResultadosFinales', titulo: 'Resultados definitivos' },
 ];
 
 @Component({
@@ -60,33 +66,102 @@ export default class ActividadesComponent implements OnInit {
   }
 
   private _crearCronograma(eleccion: LandingEleccion | null): GrupoActividad[] {
-    if (!eleccion?.cronograma) return [];
+    if (!eleccion) return [];
+    const cronograma = eleccion.cronograma;
+    const items = eleccion.cronogramaItems ?? [];
+    if (!cronograma && !items.length) return [];
+
     const institucion = eleccion.configuracion?.nombreInstitucion ?? 'Instituto Yavirac';
-    const eventos = EVENTOS.flatMap(({ campo, titulo }) => {
-      const value = eleccion.cronograma?.[campo];
-      if (!value) return [];
-      const fecha = new Date(value);
-      if (Number.isNaN(fecha.getTime())) return [];
-      return [{
-        title: titulo,
-        responsable: 'Comision Electoral',
+    const etiquetas = cronograma?.etiquetasHitos ?? {};
+    const detalles = cronograma?.detallesHitos ?? {};
+
+    const eventos: ActividadCronograma[] = [];
+
+    const agregar = (
+      title: string,
+      fecha: Date | null,
+      fechaFin: Date | null,
+      descripcion: string | null,
+    ) => {
+      const ancla = fecha ?? fechaFin;
+      if (!ancla) return;
+      eventos.push({
+        title,
+        responsable: 'Comisión Electoral',
         lugar: institucion,
-        hora: new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }).format(fecha),
+        hora: this._hora(ancla),
         fecha,
-      }];
-    }).sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+        fechaFin,
+        ancla,
+        descripcion,
+      });
+    };
+
+    // Hitos del proceso — respetan el título y las fechas que configuró el admin.
+    for (const { campo, titulo } of EVENTOS) {
+      const detalle = detalles[campo] ?? {};
+      const valor = cronograma?.[campo];
+      const fecha = typeof valor === 'string' ? this._fecha(valor) : null;
+      agregar(
+        (etiquetas as Record<string, string>)[campo] || titulo,
+        fecha,
+        this._fecha(detalle.fechaFin),
+        detalle.descripcion ?? null,
+      );
+    }
+
+    // Ítems adicionales que agregó el administrador.
+    for (const item of items) {
+      agregar(
+        item.nombre,
+        this._fecha(item.fecha),
+        this._fecha(item.fechaFin),
+        item.descripcion,
+      );
+    }
+
+    eventos.sort((a, b) => a.ancla.getTime() - b.ancla.getTime());
 
     const grupos = new Map<string, GrupoActividad>();
     for (const evento of eventos) {
-      const key = `${evento.fecha.getFullYear()}-${evento.fecha.getMonth()}-${evento.fecha.getDate()}`;
+      const d = evento.ancla;
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       const grupo = grupos.get(key) ?? {
         key,
-        fecha: new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }).format(evento.fecha),
+        fecha: new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }).format(d),
         actividad: [],
       };
       grupo.actividad.push(evento);
       grupos.set(key, grupo);
     }
     return Array.from(grupos.values());
+  }
+
+  private _fecha(value?: string | null): Date | null {
+    if (!value) return null;
+    const fecha = new Date(value);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+  }
+
+  private _hora(fecha: Date): string {
+    return new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }).format(fecha);
+  }
+
+  formatearFecha(fecha: Date): string {
+    return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }).format(fecha);
+  }
+
+  /** Fecha completa con hora, para mostrar inicio y fin sin ambigüedad. */
+  formatearFechaHora(fecha: Date | null): string {
+    if (!fecha) return '';
+    return new Intl.DateTimeFormat('es-EC', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(fecha);
   }
 }

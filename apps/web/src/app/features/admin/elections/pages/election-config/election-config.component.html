@@ -1,12 +1,12 @@
 <div class="flex flex-col flex-auto p-6 sm:p-10">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <div class="text-4xl font-extrabold tracking-tight leading-tight">Configuracion institucional</div>
-      <p class="mt-2 text-secondary">Personaliza la identidad visual de la jornada de votacion</p>
+      <div class="text-4xl font-extrabold tracking-tight leading-tight">Configuración institucional</div>
+      <p class="mt-2 text-secondary">Personaliza la identidad visual de la jornada de votación</p>
     </div>
     <button matButton="filled" color="primary" type="button" (click)="save()" [disabled]="saving || !selectedId">
       <mat-icon [svgIcon]="'lucide:paintbrush'" />
-      <span class="ml-1">Guardar configuracion</span>
+      <span class="ml-1">Guardar configuración</span>
     </button>
   </div>
 
@@ -17,7 +17,7 @@
 
     <div class="p-4 border-b">
       <mat-form-field appearance="outline" class="w-full md:w-160">
-        <mat-label>Eleccion</mat-label>
+        <mat-label>Elección</mat-label>
         <mat-select [formControl]="selectedIdCtrl">
           @for (eleccion of elecciones; track eleccion.id) {
           <mat-option [value]="eleccion.id">{{ eleccion.nombre }}</mat-option>
@@ -29,7 +29,7 @@
     @if (selectedId) {
     <form class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3" [formGroup]="form">
       <mat-form-field appearance="outline" class="md:col-span-2">
-        <mat-label>Nombre de la institucion</mat-label>
+        <mat-label>Nombre de la institución</mat-label>
         <input matInput type="text" formControlName="nombreInstitucion" maxlength="200">
       </mat-form-field>
 
@@ -43,17 +43,6 @@
         <input matInput type="url" formControlName="escudoUrl" placeholder="https://...">
       </mat-form-field>
 
-      <div class="md:col-span-2 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p class="font-bold text-slate-900">Identidad oficial Yavirac</p>
-          <p class="text-sm text-secondary">Azul institucional, naranja y un fondo neutro sin tonos morados.</p>
-        </div>
-        <button matButton="outlined" color="primary" type="button" (click)="aplicarPaletaYavirac()">
-          <mat-icon [svgIcon]="'lucide:palette'" />
-          Aplicar paleta Yavirac
-        </button>
-      </div>
-
       <label class="flex cursor-pointer items-center gap-4 rounded-xl border p-4">
         <input class="h-12 w-16 cursor-pointer rounded border-0 bg-transparent p-0" type="color" formControlName="colorPrimario">
         <span><span class="block font-semibold">Color primario</span><span class="text-sm text-secondary">Encabezados y botones principales</span></span>
@@ -62,11 +51,6 @@
       <label class="flex cursor-pointer items-center gap-4 rounded-xl border p-4">
         <input class="h-12 w-16 cursor-pointer rounded border-0 bg-transparent p-0" type="color" formControlName="colorSecundario">
         <span><span class="block font-semibold">Color secundario</span><span class="text-sm text-secondary">Detalles y elementos complementarios</span></span>
-      </label>
-
-      <label class="flex cursor-pointer items-center gap-4 rounded-xl border p-4 md:col-span-2">
-        <input class="h-12 w-16 cursor-pointer rounded border-0 bg-transparent p-0" type="color" formControlName="colorAcento">
-        <span><span class="block font-semibold">Fondo del sitio público</span><span class="text-sm text-secondary">Solo se ve en el sitio público de los electores, no en este panel administrativo</span></span>
       </label>
 
       <mat-form-field appearance="outline" class="md:col-span-2">
@@ -82,15 +66,15 @@
             @if (form.value.escudoUrl) { <img [src]="form.value.escudoUrl" alt="Escudo" class="h-16 w-16 rounded-xl bg-white p-1 object-contain"> }
             @if (form.value.logoUrl) { <img [src]="form.value.logoUrl" alt="Logo" class="h-12 max-w-48 rounded-lg bg-white px-2 object-contain"> }
           </div>
-          <h3 class="mt-5 text-2xl font-extrabold">{{ form.value.nombreInstitucion || 'Instituto Superior Tecnologico Yavirac' }}</h3>
-          <p class="mx-auto mt-2 max-w-xl text-sm text-white/85">{{ form.value.mensajeBienvenida || 'El mensaje de bienvenida aparecera en este espacio.' }}</p>
-          <span class="mt-5 inline-flex rounded-full px-4 py-2 text-sm font-bold text-slate-950" [style.background]="form.value.colorAcento || '#f3eadc'">Vista previa publica</span>
+          <h3 class="mt-5 text-2xl font-extrabold">{{ form.value.nombreInstitucion || 'Instituto Superior Tecnológico Yavirac' }}</h3>
+          <p class="mx-auto mt-2 max-w-xl text-sm text-white/85">{{ form.value.mensajeBienvenida || 'El mensaje de bienvenida aparecerá en este espacio.' }}</p>
+          <span class="mt-5 inline-flex rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-slate-950">Vista previa pública</span>
         </div>
-        <div class="bg-slate-50 px-5 py-3 text-xs text-secondary">Los cambios se aplican en el encabezado, portada, botones, cronograma, candidatos, participacion y resultados.</div>
+        <div class="bg-slate-50 px-5 py-3 text-xs text-secondary">Los cambios se aplican en el encabezado, portada, botones, cronograma, candidatos, participación y resultados.</div>
       </div>
     </form>
     } @else {
-    <div class="p-8 text-center text-secondary">No hay una eleccion seleccionada.</div>
+    <div class="p-8 text-center text-secondary">No hay una elección seleccionada.</div>
     }
   </div>
 </div>

@@ -54,8 +54,8 @@ export default class JornadaComponent implements OnInit, OnDestroy {
   pasos: PasoInfo[] = [
     { numero: 1, titulo: 'Inicializar Jornada', icono: 'lucide:play' },
     { numero: 2, titulo: 'Puesta a Cero', icono: 'lucide:scale' },
-    { numero: 3, titulo: 'Iniciar Votacion', icono: 'lucide:mouse-pointer-click' },
-    { numero: 4, titulo: 'Cierre de Votacion', icono: 'lucide:lock' },
+    { numero: 3, titulo: 'Iniciar Votación', icono: 'lucide:mouse-pointer-click' },
+    { numero: 4, titulo: 'Cierre de Votación', icono: 'lucide:lock' },
     { numero: 5, titulo: 'Resultados Electorales', icono: 'lucide:chart-bar' },
   ];
 
@@ -124,9 +124,9 @@ export default class JornadaComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (estado: JornadaEstado) => {
           this.applyEstado(estado);
-          this._notify('Accion aplicada correctamente.');
+          this._notify('Acción aplicada correctamente.');
         },
-        error: (err: any) => this._notifyError(this._msg(err, 'No se pudo completar la accion.')),
+        error: (err: any) => this._notifyError(this._msg(err, 'No se pudo completar la acción.')),
       });
   }
 
