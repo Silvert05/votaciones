@@ -25,7 +25,7 @@
   [navigation]="navigation.default" [opened]="false">
   <ng-container fuseVerticalNavigationContentHeader>
     <div class="flex h-14 items-center px-6 pt-4">
-      <img class="h-7" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
+      <img class="h-7 object-contain" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </div>
   </ng-container>
 </fuse-vertical-navigation>
@@ -57,7 +57,7 @@
       <mat-icon [svgIcon]="'lucide:menu'"></mat-icon>
     </button>
     <a [routerLink]="'/inicio'" class="absolute left-1/2 -translate-x-1/2">
-      <img class="h-8" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
+      <img class="h-8 object-contain" [src]="theme().logoUrl" (error)="onImageError($event)" alt="Logo del Instituto Yavirac">
     </a>
     <a [routerLink]="'admin/auth/login'" target="_blank"
       class="inline-flex items-center gap-1 px-3 h-8 rounded-md bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity duration-150">

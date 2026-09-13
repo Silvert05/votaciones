@@ -1,6 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
-  ApplicationConfig
+  ApplicationConfig,
+  ErrorHandler
 } from '@angular/core';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
@@ -12,13 +13,16 @@ import { provideIcons } from '@core/services/icons';
 import { fuseLoadingInterceptor } from '@core/services/loading';
 import { appRoutes } from 'app/app.routes';
 import { authInterceptor } from 'app/features/admin/auth/interceptors/auth.interceptor';
+import { retryInterceptor } from 'app/shared/interceptors/retry.interceptor';
+import { GlobalErrorHandler } from 'app/shared/services/global-error-handler';
 import { spanishPaginatorIntl } from 'app/shared/spanish-paginator-intl';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAnimations(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideHttpClient(
-      withInterceptors([authInterceptor, fuseLoadingInterceptor])
+      withInterceptors([authInterceptor, fuseLoadingInterceptor, retryInterceptor])
     ),
     provideRouter(
       appRoutes,

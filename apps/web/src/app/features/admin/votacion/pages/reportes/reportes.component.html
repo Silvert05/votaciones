@@ -1,0 +1,65 @@
+<div class="venp-admin-page flex flex-auto flex-col p-6 sm:p-10">
+  <div class="flex items-center gap-4">
+    <span class="venp-admin-icon flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg">
+      <mat-icon class="icon-size-7" [svgIcon]="'lucide:file-chart-column'" />
+    </span>
+    <div>
+      <p class="venp-section-kicker text-orange-600">Analítica institucional</p>
+      <div class="mt-1 text-4xl font-extrabold tracking-tight leading-tight">Reportes</div>
+      <p class="mt-1 text-secondary">Documentos y actas descargables por elección</p>
+    </div>
+  </div>
+
+  <div class="venp-admin-surface mt-7 overflow-hidden">
+    <div class="border-b p-5">
+      <mat-form-field appearance="outline" class="w-full md:w-160">
+        <mat-label>Elección</mat-label>
+        <mat-select [formControl]="selectedEleccionCtrl">
+          @for (eleccion of elecciones; track eleccion.id) {
+          <mat-option [value]="eleccion.id">{{ eleccion.nombre }} - {{ label(eleccion.estado) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (!selectedEleccionCtrl.value) {
+      <p class="mt-3 flex items-center gap-2 text-sm text-secondary">
+        <mat-icon class="icon-size-4 shrink-0" [svgIcon]="'lucide:info'" />
+        Selecciona una elección para habilitar las descargas.
+      </p>
+      }
+    </div>
+
+    <div class="p-5 sm:p-7">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        @for (reporte of reportes; track reporte.key) {
+        <button
+          type="button"
+          class="venp-admin-report group flex flex-col rounded-2xl p-6 text-left transition disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          [disabled]="!selectedEleccionCtrl.value || !!descargando"
+          (click)="descargar(reporte)"
+        >
+          <span class="venp-admin-icon flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md">
+            <mat-icon class="icon-size-6" [svgIcon]="reporte.icono" />
+          </span>
+
+          <h3 class="mt-5 text-lg font-black leading-snug">{{ reporte.titulo }}</h3>
+          <p class="mt-2 flex-auto text-sm leading-relaxed text-secondary">{{ reporte.descripcion }}</p>
+
+          <div class="mt-6 flex items-center justify-between border-t pt-4">
+            <span class="venp-section-kicker text-slate-400">PDF</span>
+            <span class="inline-flex items-center gap-1.5 text-sm font-bold text-primary transition group-hover:gap-2.5">
+              @if (descargando === reporte.key) {
+              <mat-icon class="icon-size-4 animate-spin" [svgIcon]="'lucide:refresh-cw'" />
+              Generando…
+              } @else {
+              Descargar
+              <mat-icon class="icon-size-4" [svgIcon]="'lucide:download'" />
+              }
+            </span>
+          </div>
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

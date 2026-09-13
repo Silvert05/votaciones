@@ -270,56 +270,73 @@ export class VotacionService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const voto of dto.votos) {
-        const opcionKey = this.opcionKey(voto.tipo, voto.candidaturaId);
-        await tx.votoEmitido.create({
-          data: {
-            eleccionId,
-            dignidadId: voto.dignidadId,
-            electorId: elector.id,
-          },
-        });
-        await tx.conteoVoto.upsert({
-          where: {
-            eleccionId_dignidadId_opcionKey: {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (const voto of dto.votos) {
+          const opcionKey = this.opcionKey(voto.tipo, voto.candidaturaId);
+          await tx.votoEmitido.create({
+            data: {
               eleccionId,
               dignidadId: voto.dignidadId,
-              opcionKey,
+              electorId: elector.id,
             },
-          },
-          update: { total: { increment: 1 } },
-          create: {
-            eleccionId,
-            dignidadId: voto.dignidadId,
-            candidaturaId:
-              voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
-            tipo: voto.tipo,
-            opcionKey,
-            total: 1,
+          });
+          await tx.conteoVoto.upsert({
+            where: {
+              eleccionId_dignidadId_opcionKey: {
+                eleccionId,
+                dignidadId: voto.dignidadId,
+                opcionKey,
+              },
+            },
+            update: { total: { increment: 1 } },
+            create: {
+              eleccionId,
+              dignidadId: voto.dignidadId,
+              candidaturaId:
+                voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
+              tipo: voto.tipo,
+              opcionKey,
+              total: 1,
+            },
+          });
+          if (elector.carreraId) {
+            await this.incrementarConteoCarrera(tx, {
+              eleccionId,
+              dignidadId: voto.dignidadId,
+              carreraId: elector.carreraId,
+              candidaturaId:
+                voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
+              tipo: voto.tipo,
+              opcionKey,
+            });
+          }
+        }
+        await tx.padronElectoral.updateMany({
+          where: { eleccionId, electorId: elector.id },
+          data: {
+            credencialHash: null,
+            credencialRevocadaAt: new Date(),
+            credencialEnvioError: null,
           },
         });
-        if (elector.carreraId) {
-          await this.incrementarConteoCarrera(tx, {
-            eleccionId,
-            dignidadId: voto.dignidadId,
-            carreraId: elector.carreraId,
-            candidaturaId:
-              voto.tipo === TipoVoto.CANDIDATO ? voto.candidaturaId! : null,
-            tipo: voto.tipo,
-            opcionKey,
-          });
-        }
-      }
-      await tx.padronElectoral.updateMany({
-        where: { eleccionId, electorId: elector.id },
-        data: {
-          credencialHash: null,
-          credencialRevocadaAt: new Date(),
-          credencialEnvioError: null,
-        },
       });
-    });
+    } catch (error) {
+      // Ventana de carrera: dos solicitudes casi simultaneas (doble clic,
+      // reintento de red) pueden pasar la verificacion de "ya voto" de arriba
+      // antes de que la primera confirme. El unique constraint de la tabla
+      // corta el duplicado, pero sin este catch el elector veria el error
+      // crudo de Prisma en vez de un motivo entendible.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'El elector ya registro su voto en esta eleccion.',
+        );
+      }
+      throw error;
+    }
 
     await this.audit(
       AuditTabla.VOTOS_EMITIDOS,

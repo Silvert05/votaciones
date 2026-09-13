@@ -188,8 +188,12 @@ export default class JornadaComponent implements OnInit, OnDestroy {
           )
           .subscribe({
             next: (res) => {
+              const detalle =
+                res.fallidas > 0
+                  ? ` Revisa "Padrón electoral > Solo con error de envío" para ver a quiénes y por qué.`
+                  : '';
               this._notify(
-                `Proceso terminado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.`,
+                `Proceso terminado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.${detalle}`,
               );
               this.loadEstado(eleccionId);
             },
@@ -247,8 +251,8 @@ export default class JornadaComponent implements OnInit, OnDestroy {
       ? new Date(this.publicacionProgramada).toLocaleString('es-EC')
       : 'la fecha configurada en el cronograma';
     this._institutionalDialog.confirm({
-      title: 'Publicar resultados antes de lo programado',
-      message: `Vas a publicar los resultados antes de lo programado en el cronograma (${fecha}). ¿Continuar?`,
+      title: 'Publicar resultados provisionales antes de lo programado',
+      message: `Vas a publicar los resultados provisionales antes de lo programado en el cronograma (${fecha}). ¿Continuar?`,
       confirmText: 'Publicar anticipadamente',
       danger: true,
     }).subscribe((confirmed) => {

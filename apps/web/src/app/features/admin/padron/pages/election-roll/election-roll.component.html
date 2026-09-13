@@ -58,6 +58,12 @@
           <mat-icon matPrefix [svgIcon]="'lucide:search'" />
         </mat-form-field>
 
+        <div class="flex items-center">
+          <mat-checkbox [formControl]="conErrorCtrl" (change)="onFilterChange()">
+            Solo con error de envío
+          </mat-checkbox>
+        </div>
+
         <mat-form-field appearance="outline">
           <mat-label>Buscar elector a asignar</mat-label>
           <input matInput [formControl]="electorSearchCtrl" placeholder="Cédula o nombres">

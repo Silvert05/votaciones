@@ -6,7 +6,7 @@
       </span>
       <div>
         <p class="venp-section-kicker text-orange-600">Analítica institucional</p>
-        <div class="mt-1 text-4xl font-extrabold tracking-tight leading-tight">Resultados y reportes</div>
+        <div class="mt-1 text-4xl font-extrabold tracking-tight leading-tight">Resultados</div>
         <p class="mt-1 text-secondary">Participación, conteos y estadísticas agregadas por carrera</p>
       </div>
     </div>
@@ -34,27 +34,6 @@
 
     @if (resultados) {
     <div class="p-5 sm:p-7">
-      <section class="mb-7">
-        <div class="mb-4">
-          <p class="venp-section-kicker text-orange-600">Reportes</p>
-          <h2 class="mt-1 text-xl font-black">Documentos disponibles</h2>
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <button matButton="outlined" type="button" (click)="descargarActaPorLista()">
-            <mat-icon [svgIcon]="'lucide:file-chart-column'" />
-            <span class="ml-1">Acta por lista</span>
-          </button>
-          <button matButton="outlined" type="button" (click)="descargarParticipacionPorTipo()">
-            <mat-icon [svgIcon]="'lucide:users-round'" />
-            <span class="ml-1">Participación docentes/estudiantes</span>
-          </button>
-          <button matButton="outlined" type="button" (click)="descargarActaPorDignidades()">
-            <mat-icon [svgIcon]="'lucide:clipboard-check'" />
-            <span class="ml-1">Acta por dignidad</span>
-          </button>
-        </div>
-      </section>
-
       <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
         <div class="venp-admin-metric rounded-2xl p-5">
           <div class="text-sm text-secondary">Estado</div>

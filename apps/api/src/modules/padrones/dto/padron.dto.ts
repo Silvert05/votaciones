@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -44,6 +45,14 @@ export class QueryPadronDto {
   @IsOptional()
   @IsEnum(TipoElector)
   tipo?: TipoElector;
+
+  @ApiPropertyOptional({
+    description: 'Si es true, solo devuelve electores cuyo ultimo envio de credencial fallo.',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  conError?: boolean;
 }
 
 export class AsignarElectoresDto {

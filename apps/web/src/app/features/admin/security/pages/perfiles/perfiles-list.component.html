@@ -68,10 +68,19 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" class="cursor-pointer" (click)="select(row)"></tr>
       </table>
 
-      @if (!loading && perfiles.length === 0) {
+      @if (!loading && loadError) {
+      <div class="flex flex-col items-center gap-3 p-8 text-center">
+        <mat-icon class="icon-size-8 text-red-500" [svgIcon]="'lucide:triangle-alert'" />
+        <p class="text-secondary">{{ loadError }}</p>
+        <button matButton="tonal" type="button" (click)="load()">
+          <mat-icon [svgIcon]="'lucide:refresh-cw'" />
+          <span class="ml-1">Reintentar</span>
+        </button>
+      </div>
+      } @else if (!loading && perfiles.length === 0) {
       <div class="p-8 text-center text-secondary">No hay perfiles registrados.</div>
       }
     </div>

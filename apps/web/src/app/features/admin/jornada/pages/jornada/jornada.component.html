@@ -231,18 +231,21 @@
       }
       @case (5) {
       <div class="text-2xl font-extrabold">5. RESULTADOS ELECTORALES</div>
-      <p class="text-secondary mt-1">Publica los resultados electorales.</p>
+      <p class="text-secondary mt-1">
+        Publica los resultados provisionales (solo visibles para el administrador). Los resultados
+        definitivos, que sí se muestran en el portal público, se publican aparte desde Gestión.
+      </p>
       <div class="mt-3 text-sm text-secondary">
         Fecha programada: {{ publicacionProgramada ? (publicacionProgramada | date: 'medium') : 'Pendiente en cronograma' }}
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button matButton="filled" color="primary" [disabled]="working || !puedePublicarPorFecha || !!estado.jornada.resultadosAt" (click)="generarResultados()">
           <mat-icon [svgIcon]="'lucide:chart-bar'" />
-          <span class="ml-1">{{ estado.jornada.resultadosAt ? 'Resultados publicados' : 'Publicar resultados' }}</span>
+          <span class="ml-1">{{ estado.jornada.resultadosAt ? 'Resultados provisionales publicados' : 'Publicar resultados provisionales' }}</span>
         </button>
         @if (!puedePublicarPorFecha && !estado.jornada.resultadosAt) {
         <button matButton="outlined" color="primary" [disabled]="working" (click)="generarResultadosAnticipado()"
-          matTooltip="Publica los resultados ahora mismo, antes de la fecha programada en el cronograma">
+          matTooltip="Publica los resultados provisionales ahora mismo, antes de la fecha programada en el cronograma">
           <span class="ml-1">Publicar anticipadamente</span>
         </button>
         }

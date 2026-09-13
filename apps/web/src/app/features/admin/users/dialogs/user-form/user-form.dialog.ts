@@ -104,6 +104,13 @@ export class UserFormDialog implements OnInit {
       next: (perfiles) => {
         this.perfiles = perfiles.filter((perfil) => perfil.activo);
       },
+      error: () => {
+        this.alert = {
+          show: true,
+          type: 'error',
+          message: 'No se pudieron cargar los perfiles disponibles.',
+        };
+      },
     });
 
     if (!this.isEdit) {

@@ -6,6 +6,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -44,6 +45,7 @@ import { PadronService } from '../../services/padron.service';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatCheckboxModule,
     MatMenuModule,
     MatTooltipModule,
     MatProgressBarModule,
@@ -82,6 +84,7 @@ export default class ElectionRollComponent implements OnInit {
   searchCtrl = new FormControl('');
   estadoCtrl = new FormControl<EstadoPadronElector | ''>('');
   tipoCtrl = new FormControl<TipoElector | ''>('');
+  conErrorCtrl = new FormControl<boolean>(false, { nonNullable: true });
   asignarCtrl = new FormControl<string[]>([], { nonNullable: true });
   electorSearchCtrl = new FormControl('');
 
@@ -160,6 +163,7 @@ export default class ElectionRollComponent implements OnInit {
     this._query.estado =
       (this.estadoCtrl.value as EstadoPadronElector) || undefined;
     this._query.tipo = (this.tipoCtrl.value as TipoElector) || undefined;
+    this._query.conError = this.conErrorCtrl.value || undefined;
 
     this._padronService
       .listPadron(eleccionId, this._query)
@@ -265,10 +269,17 @@ export default class ElectionRollComponent implements OnInit {
     if (!eleccionId) return;
     this._padronService.reenviarCredencialesPendientes(eleccionId).subscribe({
       next: (res) => {
-        this._notify(
-          `Reenvío completado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}.`,
-        );
-        this.loadPadron();
+        if (res.fallidas > 0) {
+          this._notify(
+            `Reenvío completado. Enviadas: ${res.enviadas}; fallidas: ${res.fallidas}; sin correo: ${res.sinCorreo}. Mostrando solo los que fallaron.`,
+          );
+          this.conErrorCtrl.setValue(true);
+        } else {
+          this._notify(
+            `Reenvío completado. Enviadas: ${res.enviadas}; sin correo: ${res.sinCorreo}.`,
+          );
+        }
+        this.onFilterChange();
       },
       error: (err) =>
         this._notifyError(this.errorMessage(err, 'No se pudieron reenviar las credenciales.')),

@@ -83,6 +83,7 @@ export default class UsersListComponent implements OnInit {
       next: (perfiles) => {
         this.perfiles = perfiles;
       },
+      error: () => this._notifyError('No se pudieron cargar los perfiles.'),
     });
     this.load();
   }

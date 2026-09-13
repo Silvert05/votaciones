@@ -146,45 +146,6 @@ export default class ResultadosComponent implements OnInit {
       .join(' ');
   }
 
-  descargarActaPorLista(): void {
-    const eleccionId = this.selectedEleccionCtrl.value;
-    if (!eleccionId) return;
-    this._votacionService.reporteActaPorLista(eleccionId).subscribe({
-      next: (blob) => this._downloadBlob('acta-por-lista.pdf', blob),
-      error: (err) =>
-        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
-    });
-  }
-
-  descargarParticipacionPorTipo(): void {
-    const eleccionId = this.selectedEleccionCtrl.value;
-    if (!eleccionId) return;
-    this._votacionService.reporteParticipacionPorTipo(eleccionId).subscribe({
-      next: (blob) => this._downloadBlob('participacion-por-tipo.pdf', blob),
-      error: (err) =>
-        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
-    });
-  }
-
-  descargarActaPorDignidades(): void {
-    const eleccionId = this.selectedEleccionCtrl.value;
-    if (!eleccionId) return;
-    this._votacionService.reporteActaPorDignidades(eleccionId).subscribe({
-      next: (blob) => this._downloadBlob('acta-por-dignidades.pdf', blob),
-      error: (err) =>
-        this._notifyError(this.errorMessage(err, 'No se pudo generar el reporte.')),
-    });
-  }
-
-  private _downloadBlob(filename: string, blob: Blob): void {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   private _notifyError(message: string): void {
     this._notifyService.error(message);
   }

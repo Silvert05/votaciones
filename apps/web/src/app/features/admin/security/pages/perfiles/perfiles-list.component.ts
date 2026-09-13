@@ -47,6 +47,7 @@ export default class PerfilesListComponent implements OnInit {
   selectedPerfil: PerfilDetalle | null = null;
   selectedOpcionIds = new Set<string>();
   loading = false;
+  loadError: string | null = null;
   saving = false;
   savingOptions = false;
 
@@ -61,10 +62,12 @@ export default class PerfilesListComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.loadError = null;
     this._securityService.listOpciones().subscribe({
       next: (opciones) => {
         this.opciones = opciones;
       },
+      error: () => this._notifyError('No se pudieron cargar las opciones disponibles.'),
     });
     this._securityService
       .listPerfiles()
@@ -78,7 +81,17 @@ export default class PerfilesListComponent implements OnInit {
         next: (perfiles) => {
           this.perfiles = perfiles;
         },
-        error: () => this._notifyError('No se pudieron cargar los perfiles.'),
+        error: (err) => {
+          // Una tabla vacia por error de red/servidor se ve identica a "no hay
+          // perfiles registrados" si no se distingue explicitamente: el admin
+          // no tiene forma de saber si de verdad no existen perfiles o si la
+          // carga fallo. Se guarda el motivo aparte para mostrar un aviso
+          // persistente (no solo el toast, que se cierra solo a los pocos
+          // segundos) con boton de reintentar.
+          this.perfiles = [];
+          this.loadError = this._errorMessage(err, 'No se pudieron cargar los perfiles.');
+          this._notifyError(this.loadError);
+        },
       });
   }
 

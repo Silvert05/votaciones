@@ -49,7 +49,7 @@ export const DataNavigation: Navigation = {
       icon: 'lucide:log-in',
       link: '/admin/auth/login',
       classes: {
-        wrapper: 'px-2 bg-yellow-300 text-black rounded-full'
+        wrapper: 'px-2 bg-primary text-on-primary rounded-full'
       },
     },
   ],

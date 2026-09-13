@@ -72,6 +72,7 @@ export interface PadronQuery {
   search?: string;
   estado?: EstadoPadronElector;
   tipo?: TipoElector;
+  conError?: boolean;
 }
 
 export type ElectoresPaginated = Paginated<Elector>;

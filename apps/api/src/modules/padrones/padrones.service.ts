@@ -247,11 +247,12 @@ export class PadronesService {
 
   async listPadron(eleccionId: string, query: QueryPadronDto) {
     await this.ensureEleccion(eleccionId);
-    const { page, limit, search, estado, tipo } = query;
+    const { page, limit, search, estado, tipo, conError } = query;
     const where: Prisma.PadronElectoralWhereInput = { eleccionId };
     const electorWhere: Prisma.ElectorWhereInput = {};
 
     if (estado) where.estado = estado;
+    if (conError) where.credencialEnvioError = { not: null };
     if (tipo) electorWhere.tipo = tipo;
     if (search) {
       electorWhere.OR = [

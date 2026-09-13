@@ -146,6 +146,12 @@ const routes: Routes = [
         loadComponent: () =>
           import('./votacion/pages/resultados/resultados.component')
       },
+      {
+        path: 'elecciones/reportes',
+        canActivate: [roleGuard(['ADMIN']), optionGuard],
+        loadComponent: () =>
+          import('./votacion/pages/reportes/reportes.component')
+      },
       // Votacion administrativa, escrutinio, impugnaciones y resultados finales
       // quedan centralizados en Jornada electoral. Se conserva Resultados.
       {

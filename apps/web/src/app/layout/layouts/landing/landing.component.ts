@@ -64,6 +64,7 @@ export class LandingLayout implements OnInit, OnDestroy {
           elecciones.find((item) => item.resultadosDisponibles) ?? elecciones[0];
         this._publicTheme.apply(activa?.configuracion);
       },
+      error: () => {},
     });
 
     this._fuseMediaWatcherService.onMediaChange$

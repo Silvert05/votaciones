@@ -154,7 +154,12 @@ export default class OpcionesListComponent implements OnInit {
   }
 
   parentOptions(): Opcion[] {
-    return this.opciones.filter((opcion) => opcion.id !== this.editing?.id);
+    // Solo los Grupos pueden ser padre: una Pantalla es una hoja del menu y
+    // nunca renderiza hijos, asi que ofrecerla aqui solo llevaria a un error
+    // del backend o, peor, a una sub-opcion que desaparece del menu en silencio.
+    return this.opciones.filter(
+      (opcion) => opcion.tipo === 'GRUPO' && opcion.id !== this.editing?.id,
+    );
   }
 
   private _notify(message: string): void {

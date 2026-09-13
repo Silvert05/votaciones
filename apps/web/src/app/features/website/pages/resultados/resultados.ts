@@ -105,6 +105,7 @@ export default class ResultadosComponent implements OnInit {
                     this.eleccionCtrl.setValue(this.elecciones[0].id);
                 this._cdr.detectChanges();
             },
+            error: () => this._cdr.detectChanges(),
         });
         this.eleccionCtrl.valueChanges.subscribe((id) => id && this.cargar(id));
         this.dignidadCtrl.valueChanges.subscribe(() => {

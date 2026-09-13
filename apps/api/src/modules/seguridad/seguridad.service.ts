@@ -125,7 +125,7 @@ export class SeguridadService {
       throw new BadRequestException('Una opcion no puede ser padre de si misma.');
     }
     if (dto.padreId !== undefined) {
-      await this.validatePadre(dto.padreId);
+      await this.validatePadre(dto.padreId, id);
     }
 
     const opcion = await this.prisma.opcion.update({
@@ -446,17 +446,45 @@ export class SeguridadService {
     return perfil;
   }
 
-  private async validatePadre(padreId?: string | null) {
+  private async validatePadre(padreId?: string | null, currentId?: string) {
     if (!padreId) {
       return;
     }
 
     const padre = await this.prisma.opcion.findUnique({
       where: { id: padreId },
-      select: { id: true },
+      select: { id: true, tipo: true, padreId: true },
     });
     if (!padre) {
       throw new BadRequestException('La opcion padre no existe.');
+    }
+    if (padre.tipo !== TipoOpcion.GRUPO) {
+      throw new BadRequestException(
+        'La opcion padre debe ser de tipo Grupo: una Pantalla no puede tener sub-opciones.',
+      );
+    }
+
+    if (currentId) {
+      // Sube por la cadena de padres del candidato: si en algun punto llega a
+      // la propia opcion que se esta editando, seria un ciclo (A padre de B,
+      // B padre de A, etc.). Sin este chequeo, ambas opciones desaparecerian
+      // en silencio del menu para todos los usuarios.
+      let cursor: { id: string; padreId: string | null } | null = padre;
+      const visitados = new Set<string>();
+      while (cursor) {
+        if (cursor.id === currentId) {
+          throw new BadRequestException(
+            'Esa opcion no puede ser el padre: crearia un ciclo con la opcion actual.',
+          );
+        }
+        if (visitados.has(cursor.id)) break;
+        visitados.add(cursor.id);
+        if (!cursor.padreId) break;
+        cursor = await this.prisma.opcion.findUnique({
+          where: { id: cursor.padreId },
+          select: { id: true, padreId: true },
+        });
+      }
     }
   }
 

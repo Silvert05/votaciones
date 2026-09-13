@@ -81,6 +81,7 @@ export class PadronService {
         if (query.search) params = params.set('search', query.search);
         if (query.estado) params = params.set('estado', query.estado);
         if (query.tipo) params = params.set('tipo', query.tipo);
+        if (query.conError) params = params.set('conError', query.conError);
         return this._http.get<PadronPaginated>(
             `/padrones/elecciones/${eleccionId}`,
             {
