@@ -74,6 +74,7 @@ export interface CandidatoVotante {
         codigo: string;
         nombre: string;
         color: string | null;
+        propuesta: string | null;
     } | null;
 }
 

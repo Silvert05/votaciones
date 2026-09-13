@@ -7,7 +7,12 @@ import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import {
+  PreloadAllModules,
+  provideRouter,
+  withInMemoryScrolling,
+  withPreloading,
+} from '@angular/router';
 import { provideCore } from '@core/core.provider';
 import { provideIcons } from '@core/services/icons';
 import { fuseLoadingInterceptor } from '@core/services/loading';
@@ -26,7 +31,8 @@ export const appConfig: ApplicationConfig = {
     ),
     provideRouter(
       appRoutes,
-      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+      withPreloading(PreloadAllModules)
     ),
 
     // Material Date Adapter

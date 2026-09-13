@@ -1,9 +1,12 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { PublicThemeService } from '../../services/public-theme.service';
 import { LandingEleccion, VenpService } from '../../services/venp.service';
+
+/** Refresca el estado del portal para reflejar cambios del admin sin recargar la página. */
+const REFRESCO_MS = 20000;
 
 @Component({
   selector: 'app-home',
@@ -21,25 +24,33 @@ export default class HomeComponent implements OnInit, OnDestroy {
   countdown = '';
   votacionFinalizada = false;
   private _timer: any = null;
+  private _sub?: Subscription;
 
   ngOnInit(): void {
-    this._venp.listElecciones().pipe(
-      finalize(() => {
-        this.cargando = false;
-        this._cdr.detectChanges();
-      }),
-    ).subscribe({
-      next: (data) => {
-        this.eleccion = this._elegirActiva(data);
-        this._publicTheme.apply(this.eleccion?.configuracion);
-        this._setupCountdown();
-      },
-      error: () => (this.eleccion = null),
-    });
+    this._sub = interval(REFRESCO_MS)
+      .pipe(
+        startWith(0),
+        switchMap(() => this._venp.listElecciones()),
+      )
+      .subscribe({
+        next: (data) => {
+          this.eleccion = this._elegirActiva(data);
+          this._publicTheme.apply(this.eleccion?.configuracion);
+          this._setupCountdown();
+          this.cargando = false;
+          this._cdr.detectChanges();
+        },
+        error: () => {
+          this.eleccion = null;
+          this.cargando = false;
+          this._cdr.detectChanges();
+        },
+      });
   }
 
   ngOnDestroy(): void {
     if (this._timer) clearInterval(this._timer);
+    this._sub?.unsubscribe();
   }
 
   get config() {

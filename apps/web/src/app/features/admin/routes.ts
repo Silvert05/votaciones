@@ -156,7 +156,7 @@ const routes: Routes = [
       // quedan centralizados en Jornada electoral. Se conserva Resultados.
       {
         path: '',
-        redirectTo: 'elecciones/jornada',
+        redirectTo: 'seguridad/auditoria',
         pathMatch: 'full'
       },
       {
@@ -166,8 +166,8 @@ const routes: Routes = [
         data: {
           title: 'Página administrativa no encontrada',
           description: 'La sección solicitada no existe dentro del panel.',
-          homeLink: '/admin/elecciones/jornada',
-          homeLabel: 'Volver a la jornada electoral'
+          homeLink: '/admin/seguridad/auditoria',
+          homeLabel: 'Volver a auditoría'
         }
       }
     ],

@@ -7,6 +7,7 @@ export interface MenuItem {
   type: 'group' | 'basic';
   icon?: string;
   link?: string;
+  exactMatch?: boolean;
   children?: MenuItem[];
 }
 

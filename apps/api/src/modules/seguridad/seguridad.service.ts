@@ -33,6 +33,7 @@ export interface MenuItem {
   type: 'group' | 'basic';
   icon?: string;
   link?: string;
+  exactMatch?: boolean;
   children?: MenuItem[];
 }
 
@@ -80,8 +81,15 @@ const perfilSelect = {
   },
 } satisfies Prisma.PerfilSelect;
 
+const ACCESS_CACHE_TTL_MS = 15_000;
+
 @Injectable()
 export class SeguridadService {
+  private readonly accessCache = new Map<
+    string,
+    { access: UserAccess; expiresAt: number }
+  >();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
@@ -153,6 +161,7 @@ export class SeguridadService {
       actor,
     });
 
+    this.clearAccessCache();
     return opcion;
   }
 
@@ -174,6 +183,7 @@ export class SeguridadService {
       actor,
     });
 
+    this.clearAccessCache();
     return opcion;
   }
 
@@ -264,6 +274,7 @@ export class SeguridadService {
       actor,
     });
 
+    this.clearAccessCache();
     return perfil;
   }
 
@@ -300,10 +311,33 @@ export class SeguridadService {
       actor,
     });
 
+    this.clearAccessCache();
     return perfil;
   }
 
+  clearAccessCache() {
+    this.accessCache.clear();
+  }
+
   async getAccessForUser(userId: string, rol?: Rol): Promise<UserAccess> {
+    const cacheKey = `${userId}:${rol ?? ''}`;
+    const cached = this.accessCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.access;
+    }
+
+    const access = await this.loadAccessForUser(userId, rol);
+    this.accessCache.set(cacheKey, {
+      access,
+      expiresAt: Date.now() + ACCESS_CACHE_TTL_MS,
+    });
+    return access;
+  }
+
+  private async loadAccessForUser(
+    userId: string,
+    rol?: Rol,
+  ): Promise<UserAccess> {
     const user = await this.prisma.usuario.findUnique({
       where: { id: userId },
       select: {
@@ -385,13 +419,18 @@ export class SeguridadService {
     const roots: Array<MenuItem & { orden: number; padreId: string | null }> = [];
 
     for (const opcion of opciones) {
+      const esGrupo = opcion.tipo === TipoOpcion.GRUPO;
       byId.set(opcion.id, {
         id: opcion.codigo,
         title: opcion.titulo,
         ...(opcion.subtitulo ? { subtitle: opcion.subtitulo } : {}),
-        type: opcion.tipo === TipoOpcion.GRUPO ? 'group' : 'basic',
+        type: esGrupo ? 'group' : 'basic',
         ...(opcion.icono ? { icon: opcion.icono } : {}),
         ...(opcion.ruta ? { link: opcion.ruta } : {}),
+        // Las pantallas son rutas hoja: sin esto, una pantalla cuya ruta es
+        // prefijo de otra (p. ej. /admin/elecciones vs /admin/elecciones/cronograma)
+        // quedaría marcada activa en el menú aunque no sea la pantalla actual.
+        ...(esGrupo ? {} : { exactMatch: true }),
         children: [],
         orden: opcion.orden,
         padreId: opcion.padreId,

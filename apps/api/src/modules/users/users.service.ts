@@ -12,6 +12,7 @@ import {
 } from '../auditoria/auditoria.constants';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { AuthUser } from '../auth/entities/auth.entity';
+import { SeguridadService } from '../seguridad/seguridad.service';
 import { PrismaService } from 'src/prisma';
 import {
   CreateUserDto,
@@ -59,6 +60,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly seguridad: SeguridadService,
   ) {}
 
   async findAll(query: QueryUsersDto) {
@@ -190,6 +192,10 @@ export class UsersService {
       usuario: actor.user.usuario,
       ip: actor.ip,
     });
+
+    if (dto.rol !== undefined || dto.perfilId !== undefined) {
+      this.seguridad.clearAccessCache();
+    }
 
     return user;
   }

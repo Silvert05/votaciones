@@ -399,14 +399,18 @@ export class VotacionService {
       },
     });
 
-    const emitidos = await Promise.all(
-      dignidades.map(async (dignidad) => ({
-        dignidadId: dignidad.id,
-        total: await this.prisma.votoEmitido.count({
-          where: { eleccionId, dignidadId: dignidad.id },
-        }),
-      })),
+    const conteosEmitidosPorDignidad = await this.prisma.votoEmitido.groupBy({
+      by: ['dignidadId'],
+      where: { eleccionId },
+      _count: { _all: true },
+    });
+    const totalEmitidosPorDignidadId = new Map(
+      conteosEmitidosPorDignidad.map((c) => [c.dignidadId, c._count._all]),
     );
+    const emitidos = dignidades.map((dignidad) => ({
+      dignidadId: dignidad.id,
+      total: totalEmitidosPorDignidadId.get(dignidad.id) ?? 0,
+    }));
 
     const estadisticasCarrera =
       await this.estadisticasPorCarrera(eleccionId);

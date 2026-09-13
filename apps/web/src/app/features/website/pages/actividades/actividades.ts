@@ -1,7 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { PublicThemeService } from '../../services/public-theme.service';
 import { CronogramaPublico, LandingEleccion, VenpService } from '../../services/venp.service';
+
+/** Refresca el cronograma para reflejar publicar/ocultar del admin sin recargar la página. */
+const REFRESCO_MS = 20000;
 
 interface ActividadCronograma {
   title: string;
@@ -40,29 +44,39 @@ const EVENTOS: Array<{ campo: CampoCronograma; titulo: string }> = [
   imports: [MatIconModule],
   templateUrl: './actividades.html',
 })
-export default class ActividadesComponent implements OnInit {
+export default class ActividadesComponent implements OnInit, OnDestroy {
   private _venp = inject(VenpService);
   private _cdr = inject(ChangeDetectorRef);
   private _theme = inject(PublicThemeService);
+  private _sub?: Subscription;
 
   cargando = true;
   eleccion: LandingEleccion | null = null;
   actividad: GrupoActividad[] = [];
 
   ngOnInit(): void {
-    this._venp.listElecciones().subscribe({
-      next: (elecciones) => {
-        this.eleccion = elecciones.find((item) => item.votarDisponible) ?? elecciones[0] ?? null;
-        this._theme.apply(this.eleccion?.configuracion);
-        this.actividad = this._crearCronograma(this.eleccion);
-        this.cargando = false;
-        this._cdr.detectChanges();
-      },
-      error: () => {
-        this.cargando = false;
-        this._cdr.detectChanges();
-      },
-    });
+    this._sub = interval(REFRESCO_MS)
+      .pipe(
+        startWith(0),
+        switchMap(() => this._venp.listElecciones()),
+      )
+      .subscribe({
+        next: (elecciones) => {
+          this.eleccion = elecciones.find((item) => item.votarDisponible) ?? elecciones[0] ?? null;
+          this._theme.apply(this.eleccion?.configuracion);
+          this.actividad = this._crearCronograma(this.eleccion);
+          this.cargando = false;
+          this._cdr.detectChanges();
+        },
+        error: () => {
+          this.cargando = false;
+          this._cdr.detectChanges();
+        },
+      });
+  }
+
+  ngOnDestroy(): void {
+    this._sub?.unsubscribe();
   }
 
   private _crearCronograma(eleccion: LandingEleccion | null): GrupoActividad[] {

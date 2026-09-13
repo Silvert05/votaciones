@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -15,13 +15,16 @@ import {
     ApexYAxis,
     NgApexchartsModule,
 } from 'ng-apexcharts';
-import { finalize } from 'rxjs';
+import { Subscription, finalize, interval, startWith, switchMap } from 'rxjs';
 import {
     LandingEleccion,
     ResultadosPublicos,
     VenpService,
 } from '../../services/venp.service';
 import { PublicThemeService } from '../../services/public-theme.service';
+
+/** Refresca la lista de elecciones para reflejar publicar/ocultar del admin sin recargar. */
+const REFRESCO_MS = 20000;
 
 interface FilaResultado {
     etiqueta: string;
@@ -53,10 +56,11 @@ interface AutoridadElecta {
     ],
     templateUrl: './resultados.html',
 })
-export default class ResultadosComponent implements OnInit {
+export default class ResultadosComponent implements OnInit, OnDestroy {
     private _venp = inject(VenpService);
     private _cdr = inject(ChangeDetectorRef);
     private _theme = inject(PublicThemeService);
+    private _sub?: Subscription;
 
     elecciones: LandingEleccion[] = [];
     resultados: ResultadosPublicos | null = null;
@@ -98,20 +102,34 @@ export default class ResultadosComponent implements OnInit {
     };
 
     ngOnInit(): void {
-        this._venp.listElecciones().subscribe({
-            next: (data) => {
-                this.elecciones = data.filter((e) => e.resultadosDisponibles);
-                if (this.elecciones.length)
-                    this.eleccionCtrl.setValue(this.elecciones[0].id);
-                this._cdr.detectChanges();
-            },
-            error: () => this._cdr.detectChanges(),
-        });
+        this._sub = interval(REFRESCO_MS)
+            .pipe(
+                startWith(0),
+                switchMap(() => this._venp.listElecciones()),
+            )
+            .subscribe({
+                next: (data) => {
+                    this.elecciones = data.filter((e) => e.resultadosDisponibles);
+                    const sigueDisponible = this.elecciones.some(
+                        (e) => e.id === this.eleccionCtrl.value,
+                    );
+                    if (!sigueDisponible) {
+                        this.resultados = null;
+                        this.eleccionCtrl.setValue(this.elecciones[0]?.id ?? '');
+                    }
+                    this._cdr.detectChanges();
+                },
+                error: () => this._cdr.detectChanges(),
+            });
         this.eleccionCtrl.valueChanges.subscribe((id) => id && this.cargar(id));
         this.dignidadCtrl.valueChanges.subscribe(() => {
             this._buildChart();
             this._cdr.detectChanges();
         });
+    }
+
+    ngOnDestroy(): void {
+        this._sub?.unsubscribe();
     }
 
     cargar(eleccionId: string): void {

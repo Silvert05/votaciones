@@ -11,7 +11,7 @@ import {
 
 const TOKEN_KEY = 'access_token';
 const USER_KEY = 'auth_user';
-const ADMIN_HOME = '/admin/elecciones/jornada';
+const ADMIN_HOME = '/admin/seguridad/auditoria';
 const HIDDEN_ADMIN_ROUTES = [
   '/admin/dashboard',
   '/admin/elecciones/votacion',

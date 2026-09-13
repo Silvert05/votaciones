@@ -1,4 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,6 +33,7 @@ import { VotacionService } from '../../services/votacion.service';
     MatProgressBarModule,
   ],
   templateUrl: './resultados.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ResultadosComponent implements OnInit {
   private _electionsService = inject(ElectionsService);
@@ -37,6 +44,13 @@ export default class ResultadosComponent implements OnInit {
   elecciones: Eleccion[] = [];
   resultados: ResultadosResponse | null = null;
   loading = false;
+
+  private _conteosPorDignidadId = new Map<string, ConteoVoto[]>();
+  private _emitidosPorDignidadId = new Map<string, number>();
+  private _opcionesPorCarreraYDignidad = new Map<
+    string,
+    Map<string, EstadisticaCarrera['opciones']>
+  >();
 
   selectedEleccionCtrl = new FormControl<string>('', { nonNullable: true });
 
@@ -75,23 +89,43 @@ export default class ResultadosComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.resultados = res;
+          this._indexarResultados(res);
         },
         error: (err) =>
           this._notifyError(this.errorMessage(err, 'No se pudieron cargar resultados.')),
       });
   }
 
-  conteosPorDignidad(dignidadId: string): ConteoVoto[] {
-    return (this.resultados?.conteos ?? []).filter(
-      (conteo) => conteo.dignidadId === dignidadId,
+  private _indexarResultados(res: ResultadosResponse): void {
+    this._conteosPorDignidadId.clear();
+    for (const conteo of res.conteos) {
+      const lista = this._conteosPorDignidadId.get(conteo.dignidadId) ?? [];
+      lista.push(conteo);
+      this._conteosPorDignidadId.set(conteo.dignidadId, lista);
+    }
+
+    this._emitidosPorDignidadId = new Map(
+      res.emitidos.map((item) => [item.dignidadId, item.total]),
     );
+
+    this._opcionesPorCarreraYDignidad.clear();
+    for (const carrera of res.estadisticasCarrera) {
+      const porDignidad = new Map<string, EstadisticaCarrera['opciones']>();
+      for (const opcion of carrera.opciones) {
+        const lista = porDignidad.get(opcion.dignidadId) ?? [];
+        lista.push(opcion);
+        porDignidad.set(opcion.dignidadId, lista);
+      }
+      this._opcionesPorCarreraYDignidad.set(carrera.carreraId, porDignidad);
+    }
+  }
+
+  conteosPorDignidad(dignidadId: string): ConteoVoto[] {
+    return this._conteosPorDignidadId.get(dignidadId) ?? [];
   }
 
   emitidosPorDignidad(dignidadId: string): number {
-    return (
-      this.resultados?.emitidos.find((item) => item.dignidadId === dignidadId)
-        ?.total ?? 0
-    );
+    return this._emitidosPorDignidadId.get(dignidadId) ?? 0;
   }
 
   get totalVotantes(): number {
@@ -105,8 +139,8 @@ export default class ResultadosComponent implements OnInit {
     carrera: EstadisticaCarrera,
     dignidadId: string,
   ): EstadisticaCarrera['opciones'] {
-    return carrera.opciones.filter(
-      (opcion) => opcion.dignidadId === dignidadId,
+    return (
+      this._opcionesPorCarreraYDignidad.get(carrera.carreraId)?.get(dignidadId) ?? []
     );
   }
 

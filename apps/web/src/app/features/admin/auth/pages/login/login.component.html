@@ -155,6 +155,8 @@
                         <mat-progress-spinner class="[--mdc-circular-progress-active-indicator-color:white]" [diameter]="22" [mode]="'indeterminate'"></mat-progress-spinner>
                         } @else {
                         <span>Iniciar sesión</span>
+                        }
+                        @if (!loginForm.disabled) {
                         <mat-icon class="icon-size-5 transition-transform duration-300 group-hover:translate-x-1" [svgIcon]="'lucide:arrow-right'"></mat-icon>
                         }
                     </button>

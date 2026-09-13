@@ -186,7 +186,13 @@ export class PublicoService {
               },
             },
             lista: {
-              select: { id: true, codigo: true, nombre: true, color: true },
+              select: {
+                id: true,
+                codigo: true,
+                nombre: true,
+                color: true,
+                propuesta: true,
+              },
             },
           },
         },
@@ -233,16 +239,20 @@ export class PublicoService {
       }),
     ]);
 
-    const emitidosPorDignidad = await Promise.all(
-      dignidades.map(async (d) => ({
-        dignidadId: d.id,
-        nombre: d.nombre,
-        requiereLista: d.requiereLista,
-        total: await this.prisma.votoEmitido.count({
-          where: { eleccionId, dignidadId: d.id },
-        }),
-      })),
+    const conteosPorDignidad = await this.prisma.votoEmitido.groupBy({
+      by: ['dignidadId'],
+      where: { eleccionId },
+      _count: { _all: true },
+    });
+    const totalPorDignidadId = new Map(
+      conteosPorDignidad.map((c) => [c.dignidadId, c._count._all]),
     );
+    const emitidosPorDignidad = dignidades.map((d) => ({
+      dignidadId: d.id,
+      nombre: d.nombre,
+      requiereLista: d.requiereLista,
+      total: totalPorDignidadId.get(d.id) ?? 0,
+    }));
 
     // Las dignidades que requieren lista se votan en una sola plancha (Art.
     // 16), por lo que su participacion siempre coincide: se consolidan en
