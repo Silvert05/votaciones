@@ -131,17 +131,16 @@
               <p class="text-sm font-semibold">
                 {{ editingFijoCampo ? 'Editar hito del proceso' : editingItemId ? 'Editar ítem' : 'Nuevo ítem' }}
               </p>
-              <p class="text-xs text-secondary">
-                {{ editingFijoCampo ? 'Ajusta su título público y sus fechas.' : 'Se agrega a la lista de la izquierda.' }}
-                Pon <strong>al menos una</strong> fecha: solo inicio, solo fin (fecha límite), o ambas.
-              </p>
+              <p class="text-xs text-secondary">{{ ayudaEdicion }}</p>
               <form class="mt-3 grid grid-cols-1 gap-3" [formGroup]="itemForm">
                 <mat-form-field appearance="outline">
                   <mat-label>{{ editingFijoCampo ? 'Título del hito' : 'Nombre del ítem' }}</mat-label>
                   <input matInput formControlName="nombre">
                 </mat-form-field>
-                <app-date-time-picker label="Fecha de inicio (opcional)" formControlName="fecha" />
-                <app-date-time-picker label="Fecha de fin (opcional)" formControlName="fechaFin" />
+                <app-date-time-picker [label]="labelFechaPrincipal" formControlName="fecha" />
+                @if (!ocultarFechaFin) {
+                  <app-date-time-picker label="Fecha de fin (opcional)" formControlName="fechaFin" />
+                }
                 <mat-form-field appearance="outline">
                   <mat-label>Descripción (opcional)</mat-label>
                   <textarea matInput rows="2" formControlName="descripcion"></textarea>

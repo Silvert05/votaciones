@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Subscription, filter, finalize, interval, startWith, switchMap } from 'rxjs';
 import {
   CandidatoVotante,
   ComprobanteVotacion,
@@ -23,6 +23,14 @@ import {
 } from '../../services/venp.service';
 
 type Fase = 'seleccion' | 'login' | 'plancha' | 'cedula' | 'confirmar' | 'listo';
+
+/**
+ * Mientras se espera a elegir elección (nadie ha iniciado sesión ni está
+ * votando todavía) refrescamos la lista para detectar sin recargar cuando el
+ * admin abre la votación. Una vez elegida la elección dejamos de consultar:
+ * no queremos interferir con una sesión de voto en curso.
+ */
+const REFRESCO_MS = 15000;
 type SeleccionValue = 'BLANCO' | 'NULO' | `CANDIDATO:${string}`;
 /** string = id de la lista elegida para la plancha. */
 type PlanchaSeleccion = string | 'BLANCO' | 'NULO' | null;
@@ -74,25 +82,22 @@ export default class VotarComponent implements OnInit, OnDestroy {
 
   redirectSegundos = 90;
   private _redirectTimer: any = null;
+  private _sub?: Subscription;
 
   ngOnInit(): void {
-    this.loadElecciones();
-  }
-
-  ngOnDestroy(): void {
-    if (this._timer) clearInterval(this._timer);
-    if (this._redirectTimer) clearInterval(this._redirectTimer);
-  }
-
-  loadElecciones(): void {
     this.loading = true;
-    this._venp
-      .listElecciones()
+    this._sub = interval(REFRESCO_MS)
       .pipe(
-        finalize(() => {
-          this.loading = false;
-          this._cdr.detectChanges();
-        }),
+        startWith(0),
+        filter(() => this.fase === 'seleccion'),
+        switchMap(() =>
+          this._venp.listElecciones().pipe(
+            finalize(() => {
+              this.loading = false;
+              this._cdr.detectChanges();
+            }),
+          ),
+        ),
       )
       .subscribe({
         next: (data) => {
@@ -104,6 +109,12 @@ export default class VotarComponent implements OnInit, OnDestroy {
         },
         error: () => this._notify('No se pudieron cargar las elecciones.'),
       });
+  }
+
+  ngOnDestroy(): void {
+    if (this._timer) clearInterval(this._timer);
+    if (this._redirectTimer) clearInterval(this._redirectTimer);
+    this._sub?.unsubscribe();
   }
 
   elegir(e: LandingEleccion): void {

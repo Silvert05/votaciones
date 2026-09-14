@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -12,6 +13,17 @@ import {
   Min,
 } from 'class-validator';
 import { EstadoListaElectoral } from 'prisma/generated/enums';
+
+/**
+ * Una lista solo se inscribe o se retira: no hay flujo de calificación propio
+ * a nivel de lista (eso vive en cada Candidatura). El resto del enum de
+ * Prisma se conserva por compatibilidad con datos históricos, pero ya no es
+ * asignable desde la API.
+ */
+const ESTADOS_LISTA_ASIGNABLES = [
+  EstadoListaElectoral.INSCRITA,
+  EstadoListaElectoral.RETIRADA,
+] as const;
 
 export class QueryListasDto {
   @ApiPropertyOptional({ default: 1 })
@@ -101,9 +113,9 @@ export class UpdateListaDto {
   @IsString()
   propuesta?: string | null;
 
-  @ApiPropertyOptional({ enum: EstadoListaElectoral })
+  @ApiPropertyOptional({ enum: ESTADOS_LISTA_ASIGNABLES })
   @IsOptional()
-  @IsEnum(EstadoListaElectoral)
+  @IsIn(ESTADOS_LISTA_ASIGNABLES)
   estado?: EstadoListaElectoral;
 
   @ApiPropertyOptional()

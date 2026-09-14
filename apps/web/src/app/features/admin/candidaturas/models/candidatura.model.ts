@@ -113,13 +113,13 @@ export interface EstadoEleccionResponse {
   estado: EstadoEleccion;
 }
 
-export const ESTADOS_LISTA: EstadoListaElectoral[] = [
-  'BORRADOR',
-  'INSCRITA',
-  'CALIFICADA',
-  'RECHAZADA',
-  'RETIRADA',
-];
+/**
+ * Una lista solo se inscribe o se retira: no hay flujo de calificación propio
+ * a nivel de lista (lo que califica a un candidato es su propia Candidatura).
+ * `EstadoListaElectoral` conserva los valores históricos para poder mostrar
+ * listas antiguas, pero solo estos dos son asignables desde el admin.
+ */
+export const ESTADOS_LISTA: EstadoListaElectoral[] = ['INSCRITA', 'RETIRADA'];
 
 export const ESTADOS_CANDIDATURA: EstadoCandidatura[] = [
   'INSCRITA',

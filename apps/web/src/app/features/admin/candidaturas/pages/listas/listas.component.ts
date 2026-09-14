@@ -80,7 +80,7 @@ export default class ListasComponent implements OnInit {
     ],
     descripcion: [''],
     propuesta: [''],
-    estado: ['BORRADOR' as EstadoListaElectoral],
+    estado: ['INSCRITA' as EstadoListaElectoral],
     observacion: [''],
   });
 
@@ -181,7 +181,7 @@ export default class ListasComponent implements OnInit {
       color: '#2563eb',
       descripcion: '',
       propuesta: '',
-      estado: 'BORRADOR',
+      estado: 'INSCRITA',
       observacion: '',
     });
   }

@@ -394,12 +394,48 @@ export default class ElectionScheduleComponent implements OnInit {
     if (!hito.campo) return;
     this.editingItemId = null;
     this.editingFijoCampo = hito.campo;
+    // Inicio/cierre de la votación son los dos extremos de una sola ventana:
+    // cada uno guarda un único instante (su propia columna). Cualquier
+    // "fecha de fin" residual de una versión anterior del formulario se
+    // ignora aquí y se limpia al guardar, para no arrastrar rangos que
+    // parecen chocar entre los dos hitos.
+    const esVentanaVotacion = this.esVentanaVotacion(hito.campo);
     this.itemForm.reset({
       nombre: hito.label,
       fecha: this.toLocalDateTime(hito.fecha),
-      fechaFin: this.toLocalDateTime(hito.fechaFin),
+      fechaFin: esVentanaVotacion ? '' : this.toLocalDateTime(hito.fechaFin),
       descripcion: hito.descripcion ?? '',
     });
+  }
+
+  /** Inicio y cierre de la votación son un único instante cada uno, no un rango. */
+  private esVentanaVotacion(campo: CampoFijo | null): boolean {
+    return campo === 'fechaInicioVotacion' || campo === 'fechaFinVotacion';
+  }
+
+  /** Oculta el segundo selector de fecha mientras se edita inicio/cierre de la votación. */
+  get ocultarFechaFin(): boolean {
+    return this.esVentanaVotacion(this.editingFijoCampo);
+  }
+
+  /** "Fecha de inicio" para el hito de apertura, "Fecha de fin" para el de cierre. */
+  get labelFechaPrincipal(): string {
+    if (this.editingFijoCampo === 'fechaFinVotacion') return 'Fecha y hora de cierre';
+    if (this.editingFijoCampo === 'fechaInicioVotacion') return 'Fecha y hora de inicio';
+    return 'Fecha de inicio (opcional)';
+  }
+
+  get ayudaEdicion(): string {
+    if (this.editingFijoCampo === 'fechaInicioVotacion') {
+      return 'Este hito marca cuándo abre la votación; el cierre se define aparte, en "Cierre de la votación".';
+    }
+    if (this.editingFijoCampo === 'fechaFinVotacion') {
+      return 'Este hito marca cuándo cierra la votación (ya definiste la apertura en "Inicio de la votación").';
+    }
+    if (this.editingFijoCampo) {
+      return 'Ajusta su título público y sus fechas. Pon al menos una fecha: solo inicio, solo fin (fecha límite), o ambas.';
+    }
+    return 'Se agrega a la lista de la izquierda. Pon al menos una fecha: solo inicio, solo fin (fecha límite), o ambas.';
   }
 
   resetItemForm(): void {
@@ -478,7 +514,11 @@ export default class ElectionScheduleComponent implements OnInit {
     const campo = this.editingFijoCampo;
     const raw = this.itemForm.getRawValue();
     const iso = this.toIsoDateTime(raw.fecha);
-    const fechaFinIso = this.toIsoDateTime(raw.fechaFin);
+    // Inicio/cierre de la votación no tienen "fecha de fin" propia: su único
+    // instante ya es el otro extremo de la ventana de votación.
+    const fechaFinIso = this.esVentanaVotacion(campo)
+      ? null
+      : this.toIsoDateTime(raw.fechaFin);
     if (!iso && !fechaFinIso) {
       this._notifyService.warning('Indica al menos una fecha: de inicio o de fin.');
       return;

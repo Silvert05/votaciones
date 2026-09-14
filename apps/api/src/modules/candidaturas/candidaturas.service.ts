@@ -271,6 +271,7 @@ export class CandidaturasService {
         color: this.emptyToNull(dto.color),
         descripcion: this.emptyToNull(dto.descripcion),
         propuesta: this.emptyToNull(dto.propuesta),
+        estado: EstadoListaElectoral.INSCRITA,
       },
       select: listaSelect,
     });
@@ -291,13 +292,6 @@ export class CandidaturasService {
   ) {
     await this.ensureCanEdit(eleccionId);
     const before = await this.findListaOrFail(eleccionId, listaId);
-
-    if (
-      dto.estado === EstadoListaElectoral.CALIFICADA &&
-      before.estado !== EstadoListaElectoral.CALIFICADA
-    ) {
-      await this.validarParidadGenero(listaId);
-    }
 
     const lista = await this.prisma.listaElectoral.update({
       where: { id: listaId },
@@ -597,45 +591,6 @@ export class CandidaturasService {
     );
 
     return impugnacion;
-  }
-
-  /**
-   * Art. 12: las candidaturas se presentan en lista respetando la equidad
-   * de genero. Se exige un minimo del 40% de representacion de cada genero
-   * declarado entre los integrantes vigentes de la lista.
-   */
-  private async validarParidadGenero(listaId: string) {
-    const candidaturas = await this.prisma.candidatura.findMany({
-      where: {
-        listaId,
-        estado: { not: EstadoCandidatura.RETIRADA },
-      },
-      select: { elector: { select: { genero: true } } },
-    });
-    if (candidaturas.length < 2) return;
-
-    const sinGenero = candidaturas.some((item) => !item.elector.genero);
-    if (sinGenero) {
-      throw new BadRequestException(
-        'Todos los integrantes de la lista deben tener el genero registrado antes de calificarla (Art. 12, equidad de genero).',
-      );
-    }
-
-    const total = candidaturas.length;
-    const conteo = new Map<string, number>();
-    for (const item of candidaturas) {
-      const genero = item.elector.genero as string;
-      conteo.set(genero, (conteo.get(genero) ?? 0) + 1);
-    }
-    const maximoPermitido = Math.ceil(total * 0.6);
-    const generoDominante = [...conteo.values()].some(
-      (cantidad) => cantidad > maximoPermitido,
-    );
-    if (conteo.size < 2 || generoDominante) {
-      throw new BadRequestException(
-        `La lista no cumple la equidad de genero exigida (Art. 12): ningun genero puede superar el ${Math.round((maximoPermitido / total) * 100)}% de los integrantes.`,
-      );
-    }
   }
 
   private async expirarSubsanacionesVencidas(eleccionId: string) {
