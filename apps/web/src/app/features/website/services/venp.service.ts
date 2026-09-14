@@ -139,6 +139,12 @@ export interface ResultadosPublicos {
         nombre: string;
         cantidadGanadores: number;
         requiereLista: boolean;
+        /** Universo completo de opciones calificadas (incluye las que no recibieron ningún voto). */
+        candidaturas: Array<{
+            id: string;
+            elector: { identificacion: string; nombres: string; apellidos: string; fotoUrl: string | null };
+            lista: { id: string; codigo: string; nombre: string; color: string | null } | null;
+        }>;
     }>;
     emitidos: Array<{ dignidadId: string; total: number }>;
     conteos: Array<{

@@ -76,29 +76,15 @@
     </div>
     }
 
-    <!-- Selector de cédula -->
-    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 print:hidden">
-      <div class="venp-premium-card p-5">
-        <label class="venp-section-kicker venp-text-primary mb-2 block">Proceso electoral</label>
-        <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800"
-          [formControl]="eleccionCtrl">
-          @for (e of elecciones; track e.id) {
-          <option [value]="e.id">{{ e.nombre }}</option>
-          }
-        </select>
-      </div>
-      @if (resultados) {
-      <div class="venp-premium-card p-5">
-        <label class="venp-section-kicker venp-text-primary mb-2 block">Seleccione la cédula de
-          votación</label>
-        <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800"
-          [formControl]="dignidadCtrl">
-          @for (d of resultados.dignidades; track d.id) {
-          <option [value]="d.id">{{ d.nombre }}</option>
-          }
-        </select>
-      </div>
-      }
+    <!-- Selector de proceso -->
+    <div class="mt-6 venp-premium-card p-5 print:hidden">
+      <label class="venp-section-kicker venp-text-primary mb-2 block">Proceso electoral</label>
+      <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800 md:w-1/2"
+        [formControl]="eleccionCtrl">
+        @for (e of elecciones; track e.id) {
+        <option [value]="e.id">{{ e.nombre }}</option>
+        }
+      </select>
     </div>
 
     @if (loading) {
@@ -113,107 +99,199 @@
     </div>
     }
 
-    @if (resultados && dignidadSel) {
-    <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+    @if (resultados && (dignidadesPlancha.length || dignidadesIndividuales.length)) {
 
-      <div class="lg:col-span-3 flex flex-col gap-6">
+    <!-- ======================= RESULTADOS DE LA PLANCHA ======================= -->
+    @if (dignidadPlanchaRef) {
+    <section class="mt-10">
+      <div class="mb-5">
+        <p class="venp-section-kicker venp-text-secondary">Voto en plancha — Art. 16</p>
+        <h2 class="mt-1 text-2xl font-black text-slate-900 sm:text-3xl dark:text-white">Resultado de la jornada electoral</h2>
+        <p class="text-secondary mt-2 max-w-2xl text-sm">
+          Se elige una lista completa para todas las dignidades de este bloque, por eso comparten un único resultado.
+        </p>
+      </div>
 
-        <!-- Tiles -->
-        <div class="venp-premium-card grid grid-cols-2 overflow-hidden md:grid-cols-4">
-          <div class="p-4 border-r border-b md:border-b-0">
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Cédula</div>
-            <div class="font-bold mt-1 leading-tight text-sm">{{ dignidadSel.nombre }}</div>
-          </div>
-          <div class="p-4 border-r border-b md:border-b-0 text-center">
-            <div class="venp-text-primary text-3xl font-extrabold">{{ resultados.padronHabilitado }}</div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Electores hábiles</div>
-          </div>
-          <div class="p-4 border-r text-center">
-            <div class="venp-text-primary text-3xl font-extrabold">{{ emitidosDignidad }}</div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Participación</div>
-          </div>
-          <div class="p-4 text-center">
-            <div class="venp-text-primary text-3xl font-extrabold">{{ porcentajeParticipacion | number: '1.0-2' }}%</div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">(%) Participación</div>
-          </div>
-        </div>
-
-        <!-- Lista lider (dignidades de plancha, Art. 16) -->
-        @if (listaLiderPlancha) {
-        <div class="venp-premium-card flex flex-wrap items-center gap-4 overflow-hidden p-5">
-          <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow"
+      <!-- Hero: lista ganadora -->
+      @if (listaLiderPlancha) {
+      <div class="venp-premium-card relative overflow-hidden p-6 sm:p-8">
+        <div class="absolute inset-0 opacity-[0.08]" [style.background]="listaLiderPlancha.color"></div>
+        <span class="absolute inset-x-0 top-0 h-1.5" [style.background]="listaLiderPlancha.color"></span>
+        <div class="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+          <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg"
             [style.background]="listaLiderPlancha.color">
-            <mat-icon [svgIcon]="'lucide:trophy'" />
+            <mat-icon class="icon-size-8" [svgIcon]="'lucide:trophy'" />
           </span>
           <div class="min-w-0 flex-auto">
-            <p class="venp-section-kicker venp-text-secondary">Lista con más votos en esta plancha</p>
-            <p class="mt-0.5 truncate text-lg font-black">{{ listaLiderPlancha.detalle }}</p>
+            <p class="venp-section-kicker" [style.color]="listaLiderPlancha.color">Lista ganadora</p>
+            <h3 class="mt-1 truncate text-2xl font-black sm:text-3xl">{{ listaLiderPlancha.detalle }}</h3>
+            <p class="text-secondary mt-1 text-sm">
+              {{ listaLiderPlancha.etiqueta }} · {{ dignidadPlanchaRef.nombre }}
+            </p>
           </div>
-          <p class="text-secondary max-w-xs text-xs leading-relaxed">
-            Esta dignidad se vota en plancha junto con las demás de este proceso: se elige una lista completa,
-            por eso la participación coincide entre todas ellas.
-          </p>
-        </div>
-        }
-
-        <!-- Gráfico ApexCharts -->
-        <div class="venp-premium-card relative overflow-hidden p-4 sm:p-7">
-          <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
-          <div class="mb-4 text-center text-sm font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
-            Resultados — {{ dignidadSel.nombre | uppercase }}
-          </div>
-          <apx-chart [series]="series" [chart]="chart" [colors]="colors" [plotOptions]="plotOptions"
-            [dataLabels]="dataLabels" [xaxis]="xaxis" [yaxis]="yaxis" [grid]="grid" [legend]="legend" [fill]="fill"
-            [tooltip]="tooltip" />
-
-          <!-- Leyenda con fotos -->
-          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            @for (f of filas; track f.etiqueta) {
-            <div class="venp-soft-panel flex items-center gap-3 px-4 py-3">
-              @if (f.fotoUrl) {
-              <img [src]="f.fotoUrl" [alt]="f.etiqueta" class="w-10 h-10 rounded-full object-cover">
-              } @else {
-              <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                [style.background]="f.color">—</span>
-              }
-              <div class="flex-auto min-w-0">
-                <div class="font-semibold text-sm truncate">{{ f.etiqueta }}</div>
-                @if (f.detalle) {
-                <div class="text-[11px] text-secondary truncate">{{ f.detalle }}</div>
-                }
-              </div>
-              <div class="text-right">
-                <div class="font-bold text-sm" [style.color]="f.color">{{ f.porcentaje | number: '1.0-2' }}%</div>
-                <div class="text-[11px] text-secondary">{{ f.total }} votos</div>
-              </div>
+          <div class="shrink-0 text-right">
+            <div class="text-3xl font-black" [style.color]="listaLiderPlancha.color">
+              {{ listaLiderPlancha.porcentaje | number: '1.0-2' }}%
             </div>
-            }
+            <div class="text-secondary text-xs font-semibold uppercase tracking-wide">
+              {{ listaLiderPlancha.total }} voto{{ listaLiderPlancha.total === 1 ? '' : 's' }}
+            </div>
           </div>
         </div>
       </div>
+      } @else {
+      <div class="venp-soft-panel flex items-center gap-3 p-5">
+        <mat-icon class="venp-text-secondary shrink-0" [svgIcon]="'lucide:info'" />
+        <p class="text-secondary text-sm">Todavía no se registran votos para la plancha.</p>
+      </div>
+      }
 
-      <!-- Panel lateral -->
-      <div class="venp-premium-card h-fit p-6">
-        <div class="venp-border-primary border-l-4 pl-4 flex flex-col gap-4">
-          <div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha inicio</div>
-            <div class="font-medium text-sm">{{ resultados.fechaInicio ? (resultados.fechaInicio | date: 'medium') :
-              '—' }}</div>
-          </div>
-          <div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha fin</div>
-            <div class="font-medium text-sm">{{ resultados.fechaFin ? (resultados.fechaFin | date: 'medium') : '—' }}
+      <!-- Tiles de participación -->
+      <div class="venp-premium-card mt-5 grid grid-cols-2 overflow-hidden md:grid-cols-3">
+        <div class="p-4 border-r border-b md:border-b-0 text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ resultados.padronHabilitado }}</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Electores hábiles</div>
+        </div>
+        <div class="p-4 border-r text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ emitidosDe(dignidadPlanchaRef.id) }}</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Participación</div>
+        </div>
+        <div class="p-4 text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ porcentajeDe(dignidadPlanchaRef.id) | number: '1.0-2' }}%</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">(%) Participación</div>
+        </div>
+      </div>
+
+      <!-- Gráfico + leyenda: todas las listas, incluidas las que no recibieron votos -->
+      <div class="venp-premium-card relative mt-5 overflow-hidden p-4 sm:p-7">
+        <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+        <div class="mb-4 text-center text-sm font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
+          Votos por lista
+        </div>
+        <apx-chart [series]="chartPlancha.series" [chart]="chart" [colors]="chartPlancha.colors" [plotOptions]="plotOptions"
+          [dataLabels]="chartPlancha.dataLabels" [xaxis]="chartPlancha.xaxis" [yaxis]="yaxis" [grid]="grid" [legend]="legend" [fill]="fill"
+          [tooltip]="tooltip" />
+
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          @for (f of filasPlancha; track f.etiqueta) {
+          <div class="venp-soft-panel flex items-center gap-3 px-4 py-3" [class.opacity-60]="!f.total">
+            @if (f.fotoUrl) {
+            <img [src]="f.fotoUrl" [alt]="f.etiqueta" class="w-10 h-10 rounded-full object-cover">
+            } @else {
+            <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              [style.background]="f.color">—</span>
+            }
+            <div class="flex-auto min-w-0">
+              <div class="font-semibold text-sm truncate">{{ f.etiqueta }}</div>
+              @if (f.detalle) {
+              <div class="text-[11px] text-secondary truncate">{{ f.detalle }}</div>
+              }
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-sm" [style.color]="f.color">{{ f.porcentaje | number: '1.0-2' }}%</div>
+              <div class="text-[11px] text-secondary">{{ f.total }} voto{{ f.total === 1 ? '' : 's' }}</div>
             </div>
           </div>
-          <div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Estado</div>
-            <div class="font-medium text-sm">{{ resultados.eleccion.estado }}</div>
+          }
+        </div>
+      </div>
+    </section>
+    }
+
+    <!-- ======================= RESULTADOS POR DIGNIDAD INDIVIDUAL ======================= -->
+    @if (dignidadesIndividuales.length) {
+    <section class="mt-12">
+      <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="venp-section-kicker venp-text-secondary">Voto por candidato</p>
+          <h2 class="mt-1 text-2xl font-black text-slate-900 sm:text-3xl dark:text-white">Resultados por dignidad</h2>
+          <p class="text-secondary mt-2 max-w-2xl text-sm">Cada una se vota por separado y puede tener un resultado distinto.</p>
+        </div>
+        <div class="venp-premium-card w-full p-4 sm:w-72 print:hidden">
+          <label class="venp-section-kicker venp-text-primary mb-2 block">Seleccione la cédula de votación</label>
+          <select class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-700/10 dark:border-slate-700 dark:bg-gray-800"
+            [formControl]="dignidadCtrl">
+            @for (d of dignidadesIndividuales; track d.id) {
+            <option [value]="d.id">{{ d.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (dignidadSel) {
+      <div class="venp-premium-card grid grid-cols-2 overflow-hidden md:grid-cols-4">
+        <div class="p-4 border-r border-b md:border-b-0">
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Cédula</div>
+          <div class="font-bold mt-1 leading-tight text-sm">{{ dignidadSel.nombre }}</div>
+        </div>
+        <div class="p-4 border-r border-b md:border-b-0 text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ resultados.padronHabilitado }}</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Electores hábiles</div>
+        </div>
+        <div class="p-4 border-r text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ emitidosDe(dignidadSel.id) }}</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Participación</div>
+        </div>
+        <div class="p-4 text-center">
+          <div class="venp-text-primary text-3xl font-extrabold">{{ porcentajeDe(dignidadSel.id) | number: '1.0-2' }}%</div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">(%) Participación</div>
+        </div>
+      </div>
+
+      <div class="venp-premium-card relative mt-5 overflow-hidden p-4 sm:p-7">
+        <span class="venp-brand-rule absolute inset-x-0 top-0"></span>
+        <div class="mb-4 text-center text-sm font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
+          Resultados — {{ dignidadSel.nombre | uppercase }}
+        </div>
+        <apx-chart [series]="chartIndividual.series" [chart]="chart" [colors]="chartIndividual.colors" [plotOptions]="plotOptions"
+          [dataLabels]="chartIndividual.dataLabels" [xaxis]="chartIndividual.xaxis" [yaxis]="yaxis" [grid]="grid" [legend]="legend" [fill]="fill"
+          [tooltip]="tooltip" />
+
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          @for (f of filasIndividual; track f.etiqueta) {
+          <div class="venp-soft-panel flex items-center gap-3 px-4 py-3" [class.opacity-60]="!f.total">
+            @if (f.fotoUrl) {
+            <img [src]="f.fotoUrl" [alt]="f.etiqueta" class="w-10 h-10 rounded-full object-cover">
+            } @else {
+            <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              [style.background]="f.color">—</span>
+            }
+            <div class="flex-auto min-w-0">
+              <div class="font-semibold text-sm truncate">{{ f.etiqueta }}</div>
+              @if (f.detalle) {
+              <div class="text-[11px] text-secondary truncate">{{ f.detalle }}</div>
+              }
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-sm" [style.color]="f.color">{{ f.porcentaje | number: '1.0-2' }}%</div>
+              <div class="text-[11px] text-secondary">{{ f.total }} voto{{ f.total === 1 ? '' : 's' }}</div>
+            </div>
           </div>
-          <div>
-            <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha consulta</div>
-            <div class="font-medium text-sm">{{ consultadoAt | date: 'medium' }}</div>
-          </div>
+          }
+        </div>
+      </div>
+      }
+    </section>
+    }
+
+    <!-- ======================= FICHA DEL PROCESO ======================= -->
+    <div class="venp-premium-card mt-10 p-6">
+      <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
+        <div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha inicio</div>
+          <div class="font-medium text-sm">{{ resultados.fechaInicio ? (resultados.fechaInicio | date: 'medium') : '—' }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha fin</div>
+          <div class="font-medium text-sm">{{ resultados.fechaFin ? (resultados.fechaFin | date: 'medium') : '—' }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Estado</div>
+          <div class="font-medium text-sm">{{ resultados.eleccion.estado }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-secondary uppercase tracking-wide">Fecha consulta</div>
+          <div class="font-medium text-sm">{{ consultadoAt | date: 'medium' }}</div>
         </div>
       </div>
     </div>
@@ -227,7 +305,7 @@
             Resultados y participación por carrera
           </h2>
           <p class="text-secondary mt-2 max-w-3xl text-sm">
-            Desglose agregado para {{ dignidadSel.nombre }}. No se almacena ni publica la selección individual de ningún elector.
+            Desglose agregado para {{ dignidadCarreraRef?.nombre }}. No se almacena ni publica la selección individual de ningún elector.
           </p>
         </div>
         <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 shadow-sm">

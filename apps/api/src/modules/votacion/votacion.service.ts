@@ -367,7 +367,33 @@ export class VotacionService {
     const dignidades = await this.prisma.dignidad.findMany({
       where: { eleccionId, activo: true },
       orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
-      select: { id: true, nombre: true, cantidadGanadores: true, requiereLista: true },
+      select: {
+        id: true,
+        nombre: true,
+        cantidadGanadores: true,
+        requiereLista: true,
+        // El universo completo de opciones calificadas, para poder mostrar
+        // en 0 a quien no recibio ningun voto (ConteoVoto solo tiene fila
+        // para las opciones que sí recibieron al menos uno).
+        candidaturas: {
+          where: { estado: EstadoCandidatura.CALIFICADA },
+          orderBy: [{ lista: { codigo: 'asc' } }, { orden: 'asc' }],
+          select: {
+            id: true,
+            elector: {
+              select: {
+                identificacion: true,
+                nombres: true,
+                apellidos: true,
+                fotoUrl: true,
+              },
+            },
+            lista: {
+              select: { id: true, codigo: true, nombre: true, color: true },
+            },
+          },
+        },
+      },
     });
     const conteos = await this.prisma.conteoVoto.findMany({
       where: { eleccionId },
